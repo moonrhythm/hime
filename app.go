@@ -27,6 +27,7 @@ type App struct {
 	minifier           *minify.M
 	namedPath          map[string]string
 	shutdownTimeout    time.Duration
+	gracefulShutdown   bool
 }
 
 // consts
@@ -88,6 +89,12 @@ func (app *App) Minify() *App {
 	return app
 }
 
+// GracefulShutdown sets graceful shutdown to true
+func (app *App) GracefulShutdown() *App {
+	app.gracefulShutdown = true
+	return app
+}
+
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, ctxKeyApp, app)
@@ -96,15 +103,14 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListenAndServe is the shotcut for http.ListenAndServe
-func (app *App) ListenAndServe(addr string) error {
-	return http.ListenAndServe(addr, app)
-}
-
-// ListenAndServeGracefully listens to addr with graceful shutdown
-func (app *App) ListenAndServeGracefully(addr string) (err error) {
+func (app *App) ListenAndServe(addr string) (err error) {
 	srv := http.Server{
 		Addr:    addr,
 		Handler: app,
+	}
+
+	if !app.gracefulShutdown {
+		return srv.ListenAndServe()
 	}
 
 	serverCtx, cancelServer := context.WithCancel(context.Background())

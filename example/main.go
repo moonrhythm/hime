@@ -29,5 +29,6 @@ func main() {
 		Path("about", "/about").
 		Router(mux).
 		ShutdownTimeout(5 * time.Second).
-		ListenAndServeGracefully(":8080")
+		GracefulShutdown().
+		ListenAndServe(":8080")
 }
