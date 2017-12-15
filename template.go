@@ -26,6 +26,12 @@ func (app *app) Template(name string, filename ...string) App {
 
 	t := template.New("")
 
+	t.Funcs(template.FuncMap{
+		"templateName": func() string {
+			return name
+		},
+	})
+
 	// register funcs
 	for _, fn := range app.templateFuncs {
 		t.Funcs(fn)
