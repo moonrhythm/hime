@@ -17,7 +17,7 @@ import (
 )
 
 type app struct {
-	router             http.Handler
+	handler            http.Handler
 	templateFuncs      []template.FuncMap
 	templateComponents []string
 	templateRoot       string
@@ -73,9 +73,9 @@ func (app *app) TemplateDir(path string) App {
 	return app
 }
 
-// Router sets app router
-func (app *app) Router(factory RouterFactory) App {
-	app.router = factory(app)
+// Handler sets app handler
+func (app *app) Handler(factory HandlerFactory) App {
+	app.handler = factory(app)
 	return app
 }
 
@@ -98,7 +98,7 @@ func (app *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, ctxKeyApp, app)
 	r = r.WithContext(ctx)
-	app.router.ServeHTTP(w, r)
+	app.handler.ServeHTTP(w, r)
 }
 
 // ListenAndServe is the shotcut for http.ListenAndServe

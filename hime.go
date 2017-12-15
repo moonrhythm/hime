@@ -18,7 +18,7 @@ type App interface {
 	Component(filename ...string) App
 	Template(name string, filename ...string) App
 	Minify() App
-	Router(factory RouterFactory) App
+	Handler(factory HandlerFactory) App
 	Path(name, path string) App
 	GracefulShutdown() App
 	ShutdownTimeout(d time.Duration) App
@@ -27,8 +27,8 @@ type App interface {
 	GetPath(name string) string
 }
 
-// RouterFactory is the function for create router
-type RouterFactory func(App) http.Handler
+// HandlerFactory is the function for create router
+type HandlerFactory func(App) http.Handler
 
 // Handler is the hime handler
 type Handler func(Context) Result

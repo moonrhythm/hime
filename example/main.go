@@ -17,7 +17,7 @@ func main() {
 		Minify().
 		Path("index", "/").
 		Path("about", "/about").
-		Router(routerFactory).
+		Handler(routerFactory).
 		GracefulShutdown().
 		ShutdownTimeout(5 * time.Second).
 		ListenAndServe(":8080")
