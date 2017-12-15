@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"net/http"
 	"time"
+
+	"github.com/acoshift/middleware"
 )
 
 // App is the hime app
@@ -17,6 +19,7 @@ type App interface {
 	TemplateFuncs(funcs ...template.FuncMap) App
 	Component(filename ...string) App
 	Template(name string, filename ...string) App
+	BeforeRender(m middleware.Middleware) App
 	Minify() App
 	Handler(factory HandlerFactory) App
 	Path(name, path string) App

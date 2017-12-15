@@ -28,6 +28,7 @@ func main() {
 		Minify().
 		Path("index", "/").
 		Path("about", "/about").
+		BeforeRender(addHeaderRender).
 		Handler(routerFactory).
 		GracefulShutdown().
 		ShutdownTimeout(5 * time.Second).
@@ -54,6 +55,13 @@ func logRequestURI(h http.Handler) http.Handler {
 func logRequestMethod(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.Method)
+		h.ServeHTTP(w, r)
+	})
+}
+
+func addHeaderRender(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Custom-Header", "Hello")
 		h.ServeHTTP(w, r)
 	})
 }

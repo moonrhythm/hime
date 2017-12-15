@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/acoshift/middleware"
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/html"
@@ -27,6 +28,7 @@ type app struct {
 	namedPath          map[string]string
 	shutdownTimeout    time.Duration
 	gracefulShutdown   bool
+	beforeRender       middleware.Middleware
 }
 
 // consts
@@ -85,6 +87,11 @@ func (app *app) Minify() App {
 	app.minifier.AddFunc("text/html", html.Minify)
 	app.minifier.AddFunc("text/css", css.Minify)
 	app.minifier.AddFunc("text/javascript", js.Minify)
+	return app
+}
+
+func (app *app) BeforeRender(m middleware.Middleware) App {
+	app.beforeRender = m
 	return app
 }
 

@@ -2,6 +2,7 @@ package hime
 
 import (
 	"bytes"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -54,29 +55,41 @@ func (ctx *appContext) ViewWithCode(name string, code int, data interface{}) Res
 			log.Panicf("hime: template %s not found", name)
 		}
 
-		wh := ctx.w.Header()
-		wh.Set(header.ContentType, "text/html; charset=utf-8")
-		wh.Set(header.CacheControl, "no-cache, no-store, must-revalidate, max-age=0")
-		ctx.w.WriteHeader(code)
-
-		if ctx.app.minifier == nil {
-			err := t.Execute(ctx.w, data)
-			if err != nil {
-				panic(err)
-			}
+		// call before render
+		if ctx.app.beforeRender != nil {
+			ctx.app.beforeRender(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				ctx.renderView(t, code, data)
+			})).ServeHTTP(ctx.w, ctx.r)
 			return
 		}
 
-		buf := bytes.Buffer{}
-		err := t.Execute(&buf, data)
-		if err != nil {
-			panic(err)
-		}
-		err = ctx.app.minifier.Minify("text/html", ctx.w, &buf)
-		if err != nil {
-			panic(err)
-		}
+		ctx.renderView(t, code, data)
 	})
+}
+
+func (ctx *appContext) renderView(t *template.Template, code int, data interface{}) {
+	wh := ctx.w.Header()
+	wh.Set(header.ContentType, "text/html; charset=utf-8")
+	wh.Set(header.CacheControl, "no-cache, no-store, must-revalidate, max-age=0")
+	ctx.w.WriteHeader(code)
+
+	if ctx.app.minifier == nil {
+		err := t.Execute(ctx.w, data)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	buf := bytes.Buffer{}
+	err := t.Execute(&buf, data)
+	if err != nil {
+		panic(err)
+	}
+	err = ctx.app.minifier.Minify("text/html", ctx.w, &buf)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (ctx *appContext) Handle(h http.Handler) Result {
