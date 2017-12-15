@@ -1,18 +1,27 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/acoshift/hime"
 	"github.com/acoshift/middleware"
 )
 
+var tmplFunc = template.FuncMap{
+	"toUpper": func(s string) string {
+		return strings.ToUpper(s)
+	},
+}
+
 func main() {
 	hime.New().
 		TemplateDir("view").
 		TemplateRoot("layout").
+		TemplateFuncs(tmplFunc).
 		Component("_navbar.component.tmpl").
 		Template("index", "index.tmpl", "_layout.tmpl").
 		Template("about", "about.tmpl", "_layout.tmpl").
