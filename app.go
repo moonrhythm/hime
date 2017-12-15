@@ -16,8 +16,7 @@ import (
 	"github.com/tdewolff/minify/js"
 )
 
-// App is the hime app
-type App struct {
+type app struct {
 	router             http.Handler
 	templateFuncs      []template.FuncMap
 	templateComponents []string
@@ -32,9 +31,9 @@ type App struct {
 
 // consts
 const (
-	defaultTemplateRoot    = "layout"
-	defaultTemplateDir     = "view"
-	defaultShutdownTimeout = 30 * time.Second
+	defTemplateRoot    = "layout"
+	defTemplateDir     = "view"
+	defShutdownTimeout = 30 * time.Second
 )
 
 var (
@@ -46,42 +45,42 @@ func init() {
 }
 
 // New creates new app
-func New() *App {
-	app := &App{}
+func New() App {
+	app := &app{}
 	app.template = make(map[string]*template.Template)
-	app.templateRoot = defaultTemplateRoot
-	app.templateDir = defaultTemplateDir
+	app.templateRoot = defTemplateRoot
+	app.templateDir = defTemplateDir
 	app.namedPath = make(map[string]string)
-	app.shutdownTimeout = defaultShutdownTimeout
+	app.shutdownTimeout = defShutdownTimeout
 	return app
 }
 
 // ShutdownTimeout sets shutdown timeout for graceful shutdown
-func (app *App) ShutdownTimeout(d time.Duration) *App {
+func (app *app) ShutdownTimeout(d time.Duration) App {
 	app.shutdownTimeout = d
 	return app
 }
 
 // TemplateRoot sets template root to select when load
-func (app *App) TemplateRoot(name string) *App {
+func (app *app) TemplateRoot(name string) App {
 	app.templateRoot = name
 	return app
 }
 
 // TemplateDir sets template dir
-func (app *App) TemplateDir(path string) *App {
+func (app *app) TemplateDir(path string) App {
 	app.templateDir = path
 	return app
 }
 
 // Router sets app router
-func (app *App) Router(h http.Handler) *App {
-	app.router = h
+func (app *app) Router(factory RouterFactory) App {
+	app.router = factory(app)
 	return app
 }
 
 // Minify sets app minifier
-func (app *App) Minify() *App {
+func (app *app) Minify() App {
 	app.minifier = minify.New()
 	app.minifier.AddFunc("text/html", html.Minify)
 	app.minifier.AddFunc("text/css", css.Minify)
@@ -90,12 +89,12 @@ func (app *App) Minify() *App {
 }
 
 // GracefulShutdown sets graceful shutdown to true
-func (app *App) GracefulShutdown() *App {
+func (app *app) GracefulShutdown() App {
 	app.gracefulShutdown = true
 	return app
 }
 
-func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (app *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, ctxKeyApp, app)
 	r = r.WithContext(ctx)
@@ -103,7 +102,7 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListenAndServe is the shotcut for http.ListenAndServe
-func (app *App) ListenAndServe(addr string) (err error) {
+func (app *app) ListenAndServe(addr string) (err error) {
 	srv := http.Server{
 		Addr:    addr,
 		Handler: app,

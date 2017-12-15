@@ -7,19 +7,19 @@ import (
 )
 
 // TemplateFuncs adds template funcs
-func (app *App) TemplateFuncs(funcs ...template.FuncMap) *App {
+func (app *app) TemplateFuncs(funcs ...template.FuncMap) App {
 	app.templateFuncs = append(app.templateFuncs, funcs...)
 	return app
 }
 
 // Component adds global template component
-func (app *App) Component(filename ...string) *App {
+func (app *app) Component(filename ...string) App {
 	app.templateComponents = append(app.templateComponents, filename...)
 	return app
 }
 
 // Template registers new template
-func (app *App) Template(name string, filename ...string) *App {
+func (app *app) Template(name string, filename ...string) App {
 	if _, ok := app.template[name]; ok {
 		log.Panicf("hime: template %s already exist", name)
 	}
