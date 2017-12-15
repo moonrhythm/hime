@@ -72,7 +72,10 @@ func (ctx *appContext) ViewWithCode(name string, code int, data interface{}) Res
 		if err != nil {
 			panic(err)
 		}
-		ctx.app.minifier.Minify("text/html", ctx.w, &buf)
+		err = ctx.app.minifier.Minify("text/html", ctx.w, &buf)
+		if err != nil {
+			panic(err)
+		}
 	})
 }
 
