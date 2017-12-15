@@ -61,4 +61,5 @@ type Context interface {
 	Error(error string, code int) Result
 	View(name string, data interface{}) Result
 	ViewWithCode(name string, code int, data interface{}) Result
+	Handle(h http.Handler) Result
 }

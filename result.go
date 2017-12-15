@@ -75,3 +75,9 @@ func (ctx *appContext) ViewWithCode(name string, code int, data interface{}) Res
 		ctx.app.minifier.Minify("text/html", ctx.w, &buf)
 	})
 }
+
+func (ctx *appContext) Handle(h http.Handler) Result {
+	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(ctx.w, ctx.r)
+	})
+}

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/acoshift/hime"
+	"github.com/acoshift/middleware"
 )
 
 func main() {
@@ -27,7 +29,24 @@ func routerFactory(app hime.App) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(app.GetPath("index"), hime.Wrap(indexHandler))
 	mux.Handle(app.GetPath("about"), hime.Wrap(aboutHandler))
-	return mux
+	return middleware.Chain(
+		logRequestMethod,
+		logRequestURI,
+	)(mux)
+}
+
+func logRequestURI(h http.Handler) http.Handler {
+	return hime.Wrap(func(ctx hime.Context) hime.Result {
+		log.Println(ctx.Request().RequestURI)
+		return ctx.Handle(h)
+	})
+}
+
+func logRequestMethod(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.Method)
+		h.ServeHTTP(w, r)
+	})
 }
 
 func indexHandler(ctx hime.Context) hime.Result {
