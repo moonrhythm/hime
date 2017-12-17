@@ -7,5 +7,9 @@ func (app *app) Route(name, path string) App {
 }
 
 func (app *app) GetRoute(name string) string {
-	return app.namedRoute[name]
+	route, ok := app.namedRoute[name]
+	if !ok {
+		panic("hime: route not found")
+	}
+	return route
 }
