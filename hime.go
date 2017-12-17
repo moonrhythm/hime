@@ -66,7 +66,7 @@ type Context interface {
 	Error(error string) Result
 	View(name string, data interface{}) Result
 	JSON(data interface{}) Result
-	String(data string) Result
+	String(format string, a ...interface{}) Result
 	CopyFrom(src io.Reader) Result
 	Bytes(b []byte) Result
 	Handle(h http.Handler) Result
