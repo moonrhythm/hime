@@ -8,7 +8,7 @@ Hime is a Go Web Framework.
 ## Why Framework
 
 I like net/http but... there are many duplicated code when working on multiple projects,
-and no standard. Framework creates a standard which make developers to follow.
+plus no standard. Framework creates a standard for developers.
 
 ### Why Another Framework
 
