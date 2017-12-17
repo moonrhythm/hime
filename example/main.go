@@ -26,8 +26,10 @@ func main() {
 		Template("index", "index.tmpl", "_layout.tmpl").
 		Template("about", "about.tmpl", "_layout.tmpl").
 		Minify().
-		Route("index", "/").
-		Route("about", "/about").
+		Routes(hime.Routes{
+			"index": "/",
+			"about": "/about",
+		}).
 		BeforeRender(addHeaderRender).
 		Handler(routerFactory).
 		GracefulShutdown().
@@ -37,8 +39,8 @@ func main() {
 
 func routerFactory(app hime.App) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle(app.GetRoute("index"), hime.Wrap(indexHandler))
-	mux.Handle(app.GetRoute("about"), hime.Wrap(aboutHandler))
+	mux.Handle(app.Route("index"), hime.Wrap(indexHandler))
+	mux.Handle(app.Route("about"), hime.Wrap(aboutHandler))
 	return middleware.Chain(
 		logRequestMethod,
 		logRequestURI,

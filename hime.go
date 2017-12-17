@@ -15,21 +15,53 @@ type App interface {
 	http.Handler
 
 	// Builder
+
+	// TemplateDir sets directory to load template,
+	// default is "view"
 	TemplateDir(path string) App
+
+	// TemplateRoot sets root layout using t.Lookup,
+	// default is "layout"
 	TemplateRoot(name string) App
+
+	// TemplateFuncs adds template funcs while load template
 	TemplateFuncs(funcs ...template.FuncMap) App
+
+	// Component adds given templates to every templates
 	Component(filename ...string) App
+
+	// Template loads template into memory
 	Template(name string, filename ...string) App
+
+	// BeforeRender runs given middleware for before render,
+	// ex. View, JSON, String, Bytes, CopyForm, etc.
 	BeforeRender(m middleware.Middleware) App
+
+	// Minify enables minify when render html, css, js
 	Minify() App
+
+	// Handler sets the handler factory
 	Handler(factory HandlerFactory) App
-	Route(name, path string) App
+
+	// Routes registers route name and path
+	Routes(routes Routes) App
+
+	// GracefulShutdown runs server as graceful shutdown,
+	// can works only when start server with app.ListenAndServe
 	GracefulShutdown() App
+
+	// ShutdownTimeout sets graceful shutdown timeout
 	ShutdownTimeout(d time.Duration) App
+
+	// ListenAndServe starts web server
 	ListenAndServe(addr string) error
 
-	GetRoute(name string) string
+	// Route gets route path from given name
+	Route(name string) string
 }
+
+// Routes is the map for route name => path
+type Routes map[string]string
 
 // HandlerFactory is the function for create router
 type HandlerFactory func(App) http.Handler
