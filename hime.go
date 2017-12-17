@@ -86,20 +86,44 @@ func (f ResultFunc) Response(w http.ResponseWriter, r *http.Request) {
 type Context interface {
 	context.Context
 
+	// Request returns http.Request from context
 	Request() *http.Request
+
+	// ResponseWrite returns http.ResponseWriter from context
 	ResponseWriter() http.ResponseWriter
 
+	// Status sets response status
 	Status(code int) Context
 
 	// Results
+
+	// Redirect redirects to given url
 	Redirect(url string) Result
+
+	// SafeRedirect extracts only path from url then redirect
 	SafeRedirect(url string) Result
+
+	// RedirectTo redirects to named route
 	RedirectTo(name string) Result
+
+	// Error wraps http.Error
 	Error(error string) Result
+
+	// View renders template
 	View(name string, data interface{}) Result
+
+	// JSON renders json
 	JSON(data interface{}) Result
+
+	// String renders string with format
 	String(format string, a ...interface{}) Result
+
+	// CopyFrom copies source into response writer
 	CopyFrom(src io.Reader) Result
+
+	// Bytes renders bytes
 	Bytes(b []byte) Result
+
+	// Handle wrap h with Result
 	Handle(h http.Handler) Result
 }
