@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"syscall"
 
 	"github.com/acoshift/header"
 )
@@ -104,7 +105,9 @@ func (ctx *appContext) renderView(t *template.Template, code int, data interface
 
 	if ctx.app.minifier == nil {
 		err := t.Execute(ctx.w, data)
-		if err != nil {
+		if err == syscall.EPIPE {
+			// ignore
+		} else if err != nil {
 			panic(err)
 		}
 		return
@@ -116,7 +119,9 @@ func (ctx *appContext) renderView(t *template.Template, code int, data interface
 		panic(err)
 	}
 	err = ctx.app.minifier.Minify("text/html", ctx.w, &buf)
-	if err != nil {
+	if err == syscall.EPIPE {
+		// ignore
+	} else if err != nil {
 		panic(err)
 	}
 }
