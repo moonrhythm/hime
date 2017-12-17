@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"syscall"
@@ -96,31 +97,34 @@ func (ctx *appContext) setContentType(value string) {
 	}
 }
 
+func panicRenderError(err error) {
+	if err == nil {
+		return
+	}
+	if _, ok := err.(*net.OpError); ok {
+		return
+	}
+	if err == syscall.EPIPE {
+		return
+	}
+	panic(err)
+}
+
 func (ctx *appContext) renderView(t *template.Template, code int, data interface{}) {
 	ctx.setContentType("text/html; charset=utf-8")
 	ctx.w.WriteHeader(code)
 
 	if ctx.app.minifier == nil {
 		err := t.Execute(ctx.w, data)
-		if err == syscall.EPIPE {
-			// ignore
-		} else if err != nil {
-			panic(err)
-		}
+		panicRenderError(err)
 		return
 	}
 
 	buf := bytes.Buffer{}
 	err := t.Execute(&buf, data)
-	if err != nil {
-		panic(err)
-	}
+	panicRenderError(err)
 	err = ctx.app.minifier.Minify("text/html", ctx.w, &buf)
-	if err == syscall.EPIPE {
-		// ignore
-	} else if err != nil {
-		panic(err)
-	}
+	panicRenderError(err)
 }
 
 func (ctx *appContext) JSON(data interface{}) Result {
