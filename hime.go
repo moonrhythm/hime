@@ -3,6 +3,7 @@ package hime
 import (
 	"context"
 	"html/template"
+	"io"
 	"net/http"
 	"time"
 
@@ -56,13 +57,17 @@ type Context interface {
 	Request() *http.Request
 	ResponseWriter() http.ResponseWriter
 
+	Status(code int) Context
+
 	// Results
 	Redirect(url string) Result
-	RedirectWithCode(url string, code int) Result
+	SafeRedirect(url string) Result
 	RedirectTo(name string) Result
-	RedirectToWithCode(name string, code int) Result
-	Error(error string, code int) Result
+	Error(error string) Result
 	View(name string, data interface{}) Result
-	ViewWithCode(name string, code int, data interface{}) Result
+	JSON(data interface{}) Result
+	String(data string) Result
+	CopyFrom(src io.Reader) Result
+	Bytes(b []byte) Result
 	Handle(h http.Handler) Result
 }
