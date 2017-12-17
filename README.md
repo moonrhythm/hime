@@ -1,13 +1,16 @@
 # Hime
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/acoshift/hime)](https://goreportcard.com/report/github.com/acoshift/hime)
+[![GoDoc](https://godoc.org/github.com/acoshift/hime?status.svg)](https://godoc.org/github.com/acoshift/hime)
+
 Hime is a Go Web Framework.
 
-## Why Framework ?
+## Why Framework
 
 I like net/http but... there are many duplicated code when working on multiple projects,
 and no standard. Framework creates a standard which make developers to follow.
 
-### Why Another Framework ?
+### Why Another Framework
 
 There're many Go framework out there. But I want a framework that works with any net/http compatible libraries seamlessly.
 
@@ -33,4 +36,3 @@ Other framework don't allow this. They have built-in router, framework-specific 
 ## License
 
 MIT
-
