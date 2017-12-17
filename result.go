@@ -56,7 +56,7 @@ func (ctx *appContext) SafeRedirect(url string) Result {
 }
 
 func (ctx *appContext) RedirectTo(name string) Result {
-	path, ok := ctx.app.namedPath[name]
+	path, ok := ctx.app.namedRoute[name]
 	if !ok {
 		log.Panicf("hime: path name %s not found", name)
 	}

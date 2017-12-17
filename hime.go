@@ -23,12 +23,12 @@ type App interface {
 	BeforeRender(m middleware.Middleware) App
 	Minify() App
 	Handler(factory HandlerFactory) App
-	Path(name, path string) App
+	Route(name, path string) App
 	GracefulShutdown() App
 	ShutdownTimeout(d time.Duration) App
 	ListenAndServe(addr string) error
 
-	GetPath(name string) string
+	GetRoute(name string) string
 }
 
 // HandlerFactory is the function for create router

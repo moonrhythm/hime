@@ -25,7 +25,7 @@ type app struct {
 	templateDir        string
 	template           map[string]*template.Template
 	minifier           *minify.M
-	namedPath          map[string]string
+	namedRoute         map[string]string
 	shutdownTimeout    time.Duration
 	gracefulShutdown   bool
 	beforeRender       middleware.Middleware
@@ -52,7 +52,7 @@ func New() App {
 	app.template = make(map[string]*template.Template)
 	app.templateRoot = defTemplateRoot
 	app.templateDir = defTemplateDir
-	app.namedPath = make(map[string]string)
+	app.namedRoute = make(map[string]string)
 	app.shutdownTimeout = defShutdownTimeout
 	return app
 }
