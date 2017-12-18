@@ -107,6 +107,7 @@ type Context interface {
 	FormFile(key string) (multipart.File, *multipart.FileHeader, error)
 	MultipartForm() *multipart.Form
 	MultipartReader() (*multipart.Reader, error)
+	Method() string
 
 	// Results
 

@@ -40,3 +40,7 @@ func (ctx *appContext) MultipartForm() *multipart.Form {
 func (ctx *appContext) MultipartReader() (*multipart.Reader, error) {
 	return ctx.r.MultipartReader()
 }
+
+func (ctx *appContext) Method() string {
+	return ctx.r.Method
+}
