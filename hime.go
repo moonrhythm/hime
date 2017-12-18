@@ -4,7 +4,9 @@ import (
 	"context"
 	"html/template"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/acoshift/middleware"
@@ -94,6 +96,17 @@ type Context interface {
 
 	// Status sets response status
 	Status(code int) Context
+
+	// Request functions
+	ParseForm() error
+	ParseMultipartForm(maxMemory int64) error
+	Form() url.Values
+	PostForm() url.Values
+	FormValue(key string) string
+	PostFormValue(key string) string
+	FormFile(key string) (multipart.File, *multipart.FileHeader, error)
+	MultipartForm() *multipart.Form
+	MultipartReader() (*multipart.Reader, error)
 
 	// Results
 
