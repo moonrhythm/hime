@@ -28,7 +28,7 @@ Other framework don't allow this. They have built-in router, framework-specific 
 - Built-in core functions for build web server
 - Reduce developer bug
 
-## What this framework DO NOT focus
+## What is this framework DO NOT focus
 
 - Speed
 - One framework do everything
