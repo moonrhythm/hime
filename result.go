@@ -68,6 +68,12 @@ func (ctx *appContext) Error(error string) Result {
 	})
 }
 
+func (ctx *appContext) NotFound() Result {
+	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+}
+
 func (ctx *appContext) View(name string, data interface{}) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		t, ok := ctx.app.template[name]

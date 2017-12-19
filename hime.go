@@ -123,6 +123,9 @@ type Context interface {
 	// Error wraps http.Error
 	Error(error string) Result
 
+	// NotFound wraps http.NotFound
+	NotFound() Result
+
 	// View renders template
 	View(name string, data interface{}) Result
 
