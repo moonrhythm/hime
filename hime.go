@@ -141,6 +141,9 @@ type Context interface {
 	// Bytes renders bytes
 	Bytes(b []byte) Result
 
+	// File renders file
+	File(name string) Result
+
 	// Handle wrap h with Result
 	Handle(h http.Handler) Result
 }

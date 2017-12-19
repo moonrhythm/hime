@@ -164,6 +164,12 @@ func (ctx *appContext) Bytes(b []byte) Result {
 	return ctx.CopyFrom(bytes.NewReader(b))
 }
 
+func (ctx *appContext) File(name string) Result {
+	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, name)
+	})
+}
+
 func (ctx *appContext) Handle(h http.Handler) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(ctx.w, ctx.r)
