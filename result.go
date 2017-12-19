@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"syscall"
 
 	"github.com/acoshift/header"
@@ -39,9 +40,19 @@ func (ctx *appContext) statusCodeError() int {
 	return ctx.code
 }
 
-func (ctx *appContext) Redirect(url string) Result {
+func buildPath(base string, params ...interface{}) string {
+	xs := make([]string, len(params)+1)
+	xs[0] = base
+	for i, p := range params {
+		xs[i+1] = fmt.Sprint(p)
+	}
+	return path.Join(xs...)
+}
+
+func (ctx *appContext) Redirect(url string, params ...interface{}) Result {
+	p := buildPath(url, params...)
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(ctx.w, ctx.r, url, ctx.statusCodeRedirect())
+		http.Redirect(ctx.w, ctx.r, p, ctx.statusCodeRedirect())
 	})
 }
 
@@ -53,13 +64,14 @@ func safeRedirectPath(p string) string {
 	return l.Path
 }
 
-func (ctx *appContext) SafeRedirect(url string) Result {
-	return ctx.Redirect(safeRedirectPath(url))
+func (ctx *appContext) SafeRedirect(url string, params ...interface{}) Result {
+	p := buildPath(url, params...)
+	return ctx.Redirect(safeRedirectPath(p))
 }
 
-func (ctx *appContext) RedirectTo(name string) Result {
-	path := ctx.app.Route(name)
-	return ctx.Redirect(path)
+func (ctx *appContext) RedirectTo(name string, params ...interface{}) Result {
+	p := buildPath(ctx.app.Route(name), params...)
+	return ctx.Redirect(p)
 }
 
 func (ctx *appContext) Error(error string) Result {

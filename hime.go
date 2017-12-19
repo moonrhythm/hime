@@ -112,13 +112,13 @@ type Context interface {
 	// Results
 
 	// Redirect redirects to given url
-	Redirect(url string) Result
+	Redirect(url string, params ...interface{}) Result
 
 	// SafeRedirect extracts only path from url then redirect
-	SafeRedirect(url string) Result
+	SafeRedirect(url string, params ...interface{}) Result
 
 	// RedirectTo redirects to named route
-	RedirectTo(name string) Result
+	RedirectTo(name string, params ...interface{}) Result
 
 	// Error wraps http.Error
 	Error(error string) Result
