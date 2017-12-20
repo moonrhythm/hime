@@ -177,6 +177,20 @@ Hime try to reduce developer errors,
 some error can detect while development.
 Hime will panic for that type of errors.
 
+## Useful handlers and middlewares
+
+- [acoshift/middleware](https://github.com/acoshift/middleware)
+- [acoshift/header](https://github.com/acoshift/header)
+- [acoshift/session](https://github.com/acoshift/session)
+- [acoshift/flash](https://github.com/acoshift/flash)
+- [acoshift/webstatic](https://github.com/acoshift/webstatic)
+- [acoshift/httprouter](https://github.com/acoshift/httprouter)
+- [acoshift/redirecthttps](https://github.com/acoshift/redirecthttps)
+- [acoshift/cors](https://github.com/acoshift/cors)
+- [acoshift/hsts](https://github.com/acoshift/hsts)
+- [acoshift/cachestatic](https://github.com/acoshift/cachestatic)
+- [acoshift/gzip](https://github.com/acoshift/gzip)
+
 ## License
 
 MIT
