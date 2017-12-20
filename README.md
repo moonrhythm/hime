@@ -33,6 +33,150 @@ Other framework don't allow this. They have built-in router, framework-specific 
 - Speed
 - One framework do everything
 
+## Example
+
+```go
+func main() {
+	hime.New().
+		Template("index", "index.tmpl", "_layout.tmpl").
+		Minify().
+		Routes(hime.Routes{
+			"index": "/",
+		}).
+		BeforeRender(addHeaderRender).
+		Handler(routerFactory).
+		GracefulShutdown().
+		ListenAndServe(":8080")
+}
+
+func routerFactory(app hime.App) http.Handler {
+	mux := http.NewServeMux()
+	mux.Handle(app.Route("index"), hime.Wrap(indexHandler))
+	return middleware.Chain(
+		logRequestMethod,
+		logRequestURI,
+	)(mux)
+}
+
+func logRequestURI(h http.Handler) http.Handler {
+	return hime.Wrap(func(ctx hime.Context) hime.Result {
+		log.Println(ctx.Request().RequestURI)
+		return ctx.Handle(h)
+	})
+}
+
+func logRequestMethod(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.Method)
+		h.ServeHTTP(w, r)
+	})
+}
+
+func addHeaderRender(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		h.ServeHTTP(w, r)
+	})
+}
+
+func indexHandler(ctx hime.Context) hime.Result {
+	if ctx.Request().URL.Path != "/" {
+		return ctx.RedirectTo("index")
+	}
+	return ctx.View("index", map[string]interface{}{
+		"Name": "Acoshift",
+	})
+}
+```
+
+## Compatibility with net/http
+
+### Handler
+
+Hime doesn't have built-in router, you can use any http.Handler.
+
+`hime.Wrap` wraps hime.Handler into http.Handler, so you can use hime's handler anywhere in your router that support http.Handler.
+
+### Middleware
+
+Hime use native func(http.Handler) http.Handler for middleware.
+You can use any middleware that compatible with this type.
+
+```go
+func logRequestMethod(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.Method)
+		h.ServeHTTP(w, r)
+	})
+}
+```
+
+You can also use hime's handler with middleware
+
+```go
+func logRequestURI(h http.Handler) http.Handler {
+	return hime.Wrap(func(ctx hime.Context) hime.Result {
+		log.Println(ctx.Request().RequestURI)
+		return ctx.Handle(h)
+	})
+}
+```
+
+## Why return Result
+
+Bacause many developers forgot to return to end handler
+
+```go
+func signInHandler(w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("username")
+	if username == "" {
+		http.Error(w, "username required", http.StatusBadRequest)
+		return // many return like this, sometime developers forgot about it
+	}
+	...
+}
+```
+
+with Result
+
+```go
+func signInHandler(ctx hime.Context) hime.Result {
+	username := r.FormValue("username")
+	if username == "" {
+		return ctx.Status(http.StatusBadRequest).Error("username required")
+	}
+	...
+}
+```
+
+Why not return error, like this...
+
+```go
+func signInHandler(ctx hime.Context) error {
+	username := r.FormValue("username")
+	if username == "" {
+		return ctx.Status(http.StatusBadRequest).Error("username required")
+	}
+	...
+}
+```
+
+Then, what if you return an error ?
+
+```go
+return err
+```
+
+Hime won't handle error for you :D
+
+You can see that hime won't response anything, you must handle on your own.
+
+## Why some functions use panic
+
+Hime try to reduce developer errors,
+some error can detect while development.
+Hime will panic for that type of errors.
+
 ## License
 
 MIT
