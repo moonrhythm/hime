@@ -135,6 +135,9 @@ type Context interface {
 	// String renders string with format
 	String(format string, a ...interface{}) Result
 
+	// StatusText renders String when http.StatusText
+	StatusText() Result
+
 	// CopyFrom copies source into response writer
 	CopyFrom(src io.Reader) Result
 

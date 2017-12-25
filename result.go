@@ -163,6 +163,10 @@ func (ctx *appContext) String(format string, a ...interface{}) Result {
 	})
 }
 
+func (ctx *appContext) StatusText() Result {
+	return ctx.String(http.StatusText(ctx.statusCode()))
+}
+
 func (ctx *appContext) CopyFrom(src io.Reader) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx.invokeBeforeRender(func() {
