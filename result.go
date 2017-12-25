@@ -86,6 +86,12 @@ func (ctx *appContext) NotFound() Result {
 	})
 }
 
+func (ctx *appContext) NoContent() Result {
+	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
 func (ctx *appContext) View(name string, data interface{}) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		t, ok := ctx.app.template[name]

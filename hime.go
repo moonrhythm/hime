@@ -126,6 +126,9 @@ type Context interface {
 	// NotFound wraps http.NotFound
 	NotFound() Result
 
+	// NoContent renders empty body with http.StatusNoContent
+	NoContent() Result
+
 	// View renders template
 	View(name string, data interface{}) Result
 
