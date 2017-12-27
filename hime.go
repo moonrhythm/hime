@@ -59,7 +59,7 @@ type App interface {
 	ListenAndServe(addr string) error
 
 	// Route gets route path from given name
-	Route(name string) string
+	Route(name string, params ...interface{}) string
 }
 
 // Routes is the map for route name => path

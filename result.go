@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"syscall"
 
 	"github.com/acoshift/header"
@@ -38,15 +37,6 @@ func (ctx *appContext) statusCodeError() int {
 		return http.StatusInternalServerError
 	}
 	return ctx.code
-}
-
-func buildPath(base string, params ...interface{}) string {
-	xs := make([]string, len(params)+1)
-	xs[0] = base
-	for i, p := range params {
-		xs[i+1] = fmt.Sprint(p)
-	}
-	return path.Join(xs...)
 }
 
 func (ctx *appContext) Redirect(url string, params ...interface{}) Result {
