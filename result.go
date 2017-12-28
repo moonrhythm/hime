@@ -154,7 +154,7 @@ func (ctx *appContext) String(format string, a ...interface{}) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx.invokeBeforeRender(func() {
 			ctx.setContentType("text/plain; charset=utf-8")
-			fmt.Fprintf(w, format, a)
+			fmt.Fprintf(w, format, a...)
 		})
 	})
 }
