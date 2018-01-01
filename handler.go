@@ -16,3 +16,8 @@ func Wrap(h Handler) http.Handler {
 		h(ctx).Response(w, r)
 	})
 }
+
+// H is the short hand for Wrap
+func H(h Handler) http.Handler {
+	return Wrap(h)
+}

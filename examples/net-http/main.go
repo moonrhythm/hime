@@ -42,8 +42,8 @@ func main() {
 
 func routerFactory(app hime.App) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle(app.Route("index"), hime.Wrap(indexHandler))
-	mux.Handle(app.Route("about"), hime.Wrap(aboutHandler))
+	mux.Handle(app.Route("index"), hime.H(indexHandler))
+	mux.Handle(app.Route("about"), hime.H(aboutHandler))
 	return middleware.Chain(
 		logRequestMethod,
 		logRequestURI,
