@@ -30,6 +30,9 @@ func main() {
 			"index": "/",
 			"about": "/about",
 		}).
+		Globals(hime.Globals{
+			"github": "https://github.com/acoshift/hime",
+		}).
 		BeforeRender(addHeaderRender).
 		Handler(routerFactory).
 		GracefulShutdown().

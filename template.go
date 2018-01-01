@@ -30,7 +30,8 @@ func (app *app) Template(name string, filename ...string) App {
 		"templateName": func() string {
 			return name
 		},
-		"route": app.Route,
+		"route":  app.Route,
+		"global": app.Global,
 	})
 
 	// register funcs
