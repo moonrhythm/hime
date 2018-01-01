@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"syscall"
 
 	"github.com/acoshift/header"
@@ -48,10 +49,17 @@ func (ctx *appContext) Redirect(url string, params ...interface{}) Result {
 
 func safeRedirectPath(p string) string {
 	l, err := url.ParseRequestURI(p)
-	if err != nil || len(l.Path) == 0 {
+	if err != nil {
 		return "/"
 	}
-	return l.Path
+	r := l.EscapedPath()
+	if len(r) == 0 {
+		r = "/"
+	}
+	if l.ForceQuery || l.RawQuery != "" {
+		r += "?" + l.RawQuery
+	}
+	return path.Clean(r)
 }
 
 func (ctx *appContext) SafeRedirect(url string, params ...interface{}) Result {
