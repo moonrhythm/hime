@@ -122,6 +122,26 @@ func logRequestURI(h http.Handler) http.Handler {
 }
 ```
 
+### Use hime.App as Handler
+
+If you don't want to use hime's built-in graceful shutdown,
+you can use hime.App as normal handler.
+
+```go
+func main() {
+	app := hime.New().
+		Template("index", "index.tmpl", "_layout.tmpl").
+		Minify().
+		Routes(hime.Routes{
+			"index": "/",
+		}).
+		BeforeRender(addHeaderRender).
+		Handler(routerFactory)
+
+	http.ListenAndServe(":8080", app)
+}
+```
+
 ## Why return Result
 
 Bacause many developers forgot to return to end handler
@@ -190,6 +210,14 @@ Hime will panic for that type of errors.
 - [acoshift/hsts](https://github.com/acoshift/hsts)
 - [acoshift/cachestatic](https://github.com/acoshift/cachestatic)
 - [acoshift/gzip](https://github.com/acoshift/gzip)
+
+## FAQ
+
+- Will hime support automated let's encrypt ?
+  > No, you can use hime as normal handler and use other lib to do this.
+
+- Do you use hime in production ?
+  > Yes, why not ? :D
 
 ## License
 

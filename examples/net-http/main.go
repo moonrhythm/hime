@@ -18,7 +18,7 @@ var tmplFunc = template.FuncMap{
 }
 
 func main() {
-	hime.New().
+	err := hime.New().
 		TemplateDir("view").
 		TemplateRoot("layout").
 		TemplateFuncs(tmplFunc).
@@ -38,6 +38,9 @@ func main() {
 		GracefulShutdown().
 		ShutdownTimeout(5 * time.Second).
 		ListenAndServe(":8080")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func routerFactory(app hime.App) http.Handler {
