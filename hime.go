@@ -48,6 +48,9 @@ type App interface {
 	// Routes registers route name and path
 	Routes(routes Routes) App
 
+	// Globals registers global constants
+	Globals(Globals) App
+
 	// GracefulShutdown runs server as graceful shutdown,
 	// can works only when start server with app.ListenAndServe
 	GracefulShutdown() App
@@ -60,10 +63,16 @@ type App interface {
 
 	// Route gets route path from given name
 	Route(name string, params ...interface{}) string
+
+	// Global gets value from global storage
+	Global(key interface{}) interface{}
 }
 
 // Routes is the map for route name => path
 type Routes map[string]string
+
+// Globals is the global const map
+type Globals map[interface{}]interface{}
 
 // HandlerFactory is the function for create router
 type HandlerFactory func(App) http.Handler
@@ -87,6 +96,16 @@ func (f ResultFunc) Response(w http.ResponseWriter, r *http.Request) {
 // Context is the hime context
 type Context interface {
 	context.Context
+
+	// App data
+
+	// Route gets route path from given name
+	Route(name string, params ...interface{}) string
+
+	// Global gets value from global storage
+	Global(key interface{}) interface{}
+
+	// HTTP data
 
 	// Request returns http.Request from context
 	Request() *http.Request
