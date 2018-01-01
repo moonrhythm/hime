@@ -51,7 +51,7 @@ func main() {
 
 func routerFactory(app hime.App) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle(app.Route("index"), hime.Wrap(indexHandler))
+	mux.Handle(app.Route("index"), hime.H(indexHandler))
 	return middleware.Chain(
 		logRequestMethod,
 		logRequestURI,
@@ -59,7 +59,7 @@ func routerFactory(app hime.App) http.Handler {
 }
 
 func logRequestURI(h http.Handler) http.Handler {
-	return hime.Wrap(func(ctx hime.Context) hime.Result {
+	return hime.H(func(ctx hime.Context) hime.Result {
 		log.Println(ctx.Request().RequestURI)
 		return ctx.Handle(h)
 	})
@@ -95,7 +95,7 @@ func indexHandler(ctx hime.Context) hime.Result {
 
 Hime doesn't have built-in router, you can use any http.Handler.
 
-`hime.Wrap` wraps hime.Handler into http.Handler, so you can use hime's handler anywhere in your router that support http.Handler.
+`hime.Wrap` (or `hime.H` for short-hand) wraps hime.Handler into http.Handler, so you can use hime's handler anywhere in your router that support http.Handler.
 
 ### Middleware
 
@@ -115,7 +115,7 @@ You can also use hime's handler with middleware
 
 ```go
 func logRequestURI(h http.Handler) http.Handler {
-	return hime.Wrap(func(ctx hime.Context) hime.Result {
+	return hime.H(func(ctx hime.Context) hime.Result {
 		log.Println(ctx.Request().RequestURI)
 		return ctx.Handle(h)
 	})
