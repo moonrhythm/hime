@@ -130,6 +130,9 @@ type Context interface {
 
 	// Results
 
+	// Nothing does nothing
+	Nothing() Result
+
 	// Redirect redirects to given url
 	Redirect(url string, params ...interface{}) Result
 

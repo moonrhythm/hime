@@ -78,6 +78,12 @@ func (ctx *appContext) Error(error string) Result {
 	})
 }
 
+func (ctx *appContext) Nothing() Result {
+	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+		// do nothing
+	})
+}
+
 func (ctx *appContext) NotFound() Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
