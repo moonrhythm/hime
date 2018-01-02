@@ -3,15 +3,18 @@ package hime
 import (
 	"fmt"
 	"path"
+	"strings"
 )
 
 func buildPath(base string, params ...interface{}) string {
-	xs := make([]string, len(params)+1)
-	xs[0] = base
+	xs := make([]string, len(params))
 	for i, p := range params {
-		xs[i+1] = fmt.Sprint(p)
+		xs[i] = fmt.Sprint(p)
 	}
-	return path.Join(xs...)
+	if base == "" || (len(xs) > 0 && !strings.HasSuffix(base, "/")) {
+		base += "/"
+	}
+	return base + path.Join(xs...)
 }
 
 func (app *app) Routes(routes Routes) App {
