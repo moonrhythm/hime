@@ -27,8 +27,10 @@ func main() {
 		Template("about", "about.tmpl", "_layout.tmpl").
 		Minify().
 		Routes(hime.Routes{
-			"index": "/",
-			"about": "/about",
+			"index":          "/",
+			"about":          "/about",
+			"api/json":       "/api/json",
+			"api/json/error": "/api/json/error",
 		}).
 		Globals(hime.Globals{
 			"github": "https://github.com/acoshift/hime",
@@ -47,6 +49,8 @@ func routerFactory(app hime.App) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(app.Route("index"), hime.H(indexHandler))
 	mux.Handle(app.Route("about"), hime.H(aboutHandler))
+	mux.Handle(app.Route("api/json"), hime.H(apiJSONHandler))
+	mux.Handle(app.Route("api/json/error"), hime.H(apiJSONErrorHandler))
 	return middleware.Chain(
 		logRequestMethod,
 		logRequestURI,
@@ -85,4 +89,16 @@ func indexHandler(ctx hime.Context) hime.Result {
 
 func aboutHandler(ctx hime.Context) hime.Result {
 	return ctx.View("about", nil)
+}
+
+func apiJSONHandler(ctx hime.Context) hime.Result {
+	return ctx.JSON(map[string]interface{}{
+		"success": "ok",
+	})
+}
+
+func apiJSONErrorHandler(ctx hime.Context) hime.Result {
+	return ctx.Status(http.StatusBadRequest).JSON(map[string]interface{}{
+		"error": "bad request",
+	})
 }

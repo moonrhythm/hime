@@ -40,6 +40,12 @@ func (ctx *appContext) statusCodeError() int {
 	return ctx.code
 }
 
+func (ctx *appContext) writeHeader() {
+	if code := ctx.statusCode(); code > 0 {
+		ctx.w.WriteHeader(code)
+	}
+}
+
 func (ctx *appContext) Redirect(url string, params ...interface{}) Result {
 	p := buildPath(url, params...)
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -159,6 +165,7 @@ func (ctx *appContext) JSON(data interface{}) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx.invokeBeforeRender(func() {
 			ctx.setContentType("application/json; charset=utf-8")
+			ctx.writeHeader()
 			json.NewEncoder(w).Encode(data)
 		})
 	})
@@ -168,6 +175,7 @@ func (ctx *appContext) String(format string, a ...interface{}) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx.invokeBeforeRender(func() {
 			ctx.setContentType("text/plain; charset=utf-8")
+			ctx.writeHeader()
 			fmt.Fprintf(w, format, a...)
 		})
 	})
@@ -181,6 +189,7 @@ func (ctx *appContext) CopyFrom(src io.Reader) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx.invokeBeforeRender(func() {
 			ctx.setContentType("application/octet-stream")
+			ctx.writeHeader()
 			io.Copy(w, src)
 		})
 	})
