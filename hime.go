@@ -149,6 +149,9 @@ type Context interface {
 	// RedirectTo redirects to named route
 	RedirectTo(name string, params ...interface{}) Result
 
+	// RedirectToGet redirects to GET method with See Other status code on the current path
+	RedirectToGet() Result
+
 	// Error wraps http.Error
 	Error(error string) Result
 

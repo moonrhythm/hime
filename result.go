@@ -78,6 +78,10 @@ func (ctx *appContext) RedirectTo(name string, params ...interface{}) Result {
 	return ctx.Redirect(p)
 }
 
+func (ctx *appContext) RedirectToGet() Result {
+	return ctx.Status(http.StatusSeeOther).Redirect(ctx.Request().RequestURI)
+}
+
 func (ctx *appContext) Error(error string) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(ctx.w, error, ctx.statusCodeError())
