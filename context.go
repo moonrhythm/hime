@@ -2,7 +2,6 @@ package hime
 
 import (
 	"context"
-	"log"
 	"net/http"
 )
 
@@ -10,7 +9,7 @@ import (
 func NewContext(w http.ResponseWriter, r *http.Request) Context {
 	app, ok := r.Context().Value(ctxKeyApp).(*app)
 	if !ok {
-		log.Panicf("hime: handler not pass from app")
+		panic(ErrAppNotFound)
 	}
 	return newContext(app, w, r)
 }

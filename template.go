@@ -2,7 +2,6 @@ package hime
 
 import (
 	"html/template"
-	"log"
 	"path/filepath"
 )
 
@@ -21,7 +20,7 @@ func (app *app) Component(filename ...string) App {
 // Template registers new template
 func (app *app) Template(name string, filename ...string) App {
 	if _, ok := app.template[name]; ok {
-		log.Panicf("hime: template %s already exist", name)
+		panic(newErrTemplateDuplicate(name))
 	}
 
 	t := template.New("")
@@ -32,6 +31,9 @@ func (app *app) Template(name string, filename ...string) App {
 		},
 		"route":  app.Route,
 		"global": app.Global,
+		"param": func(name string, value interface{}) map[string]interface{} {
+			return map[string]interface{}{name: value}
+		},
 	})
 
 	// register funcs

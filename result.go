@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -110,7 +109,7 @@ func (ctx *appContext) View(name string, data interface{}) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		t, ok := ctx.app.template[name]
 		if !ok {
-			log.Panicf("hime: template %s not found", name)
+			panic(newErrTemplateNotFound(name))
 		}
 
 		ctx.invokeBeforeRender(func() {

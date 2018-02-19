@@ -62,7 +62,7 @@ func (app *app) Routes(routes Routes) App {
 func (app *app) Route(name string, params ...interface{}) string {
 	path, ok := app.routes[name]
 	if !ok {
-		panic("hime: route not found")
+		panic(newErrRouteNotFound(name))
 	}
 	return buildPath(path, params...)
 }
