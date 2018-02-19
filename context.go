@@ -2,8 +2,18 @@ package hime
 
 import (
 	"context"
+	"log"
 	"net/http"
 )
+
+// NewContext creates new hime's context
+func NewContext(w http.ResponseWriter, r *http.Request) Context {
+	app, ok := r.Context().Value(ctxKeyApp).(*app)
+	if !ok {
+		log.Panicf("hime: handler not pass from app")
+	}
+	return newContext(app, w, r)
+}
 
 type appContext struct {
 	context.Context
