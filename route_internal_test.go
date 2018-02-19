@@ -43,6 +43,8 @@ func TestBuildPathParams(t *testing.T) {
 		{"/a", []interface{}{url.Values{"id": []string{"10"}}}, "/a?id=10"},
 		{"/a", []interface{}{"/b", url.Values{"id": []string{"10"}}}, "/a/b?id=10"},
 		{"/a", []interface{}{"/b/", url.Values{"id": []string{"10"}}}, "/a/b?id=10"},
+		{"/a", []interface{}{"/b/", map[string]string{"id": "10"}}, "/a/b?id=10"},
+		{"/a", []interface{}{"/b/", map[string]interface{}{"id": 10}}, "/a/b?id=10"},
 	}
 
 	for _, c := range cases {

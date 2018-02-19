@@ -7,19 +7,40 @@ import (
 	"strings"
 )
 
+func mergeValues(s, p url.Values) {
+	for k, v := range p {
+		for _, vv := range v {
+			s[k] = append(s[k], vv)
+		}
+	}
+}
+
+func mergeValueWithMapString(s url.Values, m map[string]string) {
+	for k, v := range m {
+		s[k] = append(s[k], v)
+	}
+}
+
+func mergeValueWithMapInterface(s url.Values, m map[string]interface{}) {
+	for k, v := range m {
+		s[k] = append(s[k], fmt.Sprint(v))
+	}
+}
+
 func buildPath(base string, params ...interface{}) string {
 	xs := make([]string, 0, len(params))
 	ps := make(url.Values)
 	for _, p := range params {
-		if v, ok := p.(url.Values); ok {
-			for key, value := range v {
-				for _, vv := range value {
-					ps[key] = append(ps[key], vv)
-				}
-			}
-			continue
+		switch v := p.(type) {
+		case url.Values:
+			mergeValues(ps, v)
+		case map[string]string:
+			mergeValueWithMapString(ps, v)
+		case map[string]interface{}:
+			mergeValueWithMapInterface(ps, v)
+		default:
+			xs = append(xs, strings.TrimPrefix(fmt.Sprint(p), "/"))
 		}
-		xs = append(xs, strings.TrimPrefix(fmt.Sprint(p), "/"))
 	}
 	if base == "" || (len(xs) > 0 && !strings.HasSuffix(base, "/")) {
 		base += "/"
