@@ -2,19 +2,33 @@ package hime
 
 import (
 	"fmt"
+	"net/url"
 	"path"
 	"strings"
 )
 
 func buildPath(base string, params ...interface{}) string {
-	xs := make([]string, len(params))
-	for i, p := range params {
-		xs[i] = fmt.Sprint(p)
+	xs := make([]string, 0, len(params))
+	ps := make(url.Values)
+	for _, p := range params {
+		if v, ok := p.(url.Values); ok {
+			for key, value := range v {
+				for _, vv := range value {
+					ps[key] = append(ps[key], vv)
+				}
+			}
+			continue
+		}
+		xs = append(xs, strings.TrimPrefix(fmt.Sprint(p), "/"))
 	}
 	if base == "" || (len(xs) > 0 && !strings.HasSuffix(base, "/")) {
 		base += "/"
 	}
-	return base + path.Join(xs...)
+	qs := ps.Encode()
+	if len(qs) > 0 {
+		qs = "?" + qs
+	}
+	return base + path.Join(xs...) + qs
 }
 
 func (app *app) Routes(routes Routes) App {
