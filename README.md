@@ -2,7 +2,6 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/acoshift/hime)](https://goreportcard.com/report/github.com/acoshift/hime)
 [![GoDoc](https://godoc.org/github.com/acoshift/hime?status.svg)](https://godoc.org/github.com/acoshift/hime)
-[![Sourcegraph](https://sourcegraph.com/github.com/acoshift/hime/-/badge.svg)](https://sourcegraph.com/github.com/acoshift/hime?badge)
 
 Hime is a Go Web Framework.
 
