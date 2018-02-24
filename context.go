@@ -14,6 +14,10 @@ func NewContext(w http.ResponseWriter, r *http.Request) Context {
 	return newContext(app, w, r)
 }
 
+func newContext(app *app, w http.ResponseWriter, r *http.Request) Context {
+	return &appContext{r.Context(), app, r, w, 0}
+}
+
 type appContext struct {
 	context.Context
 
@@ -37,6 +41,6 @@ func (ctx *appContext) Status(code int) Context {
 	return ctx
 }
 
-func newContext(app *app, w http.ResponseWriter, r *http.Request) Context {
-	return &appContext{r.Context(), app, r, w, 0}
+func (ctx *appContext) Param(name string, value interface{}) *Param {
+	return &Param{Name: name, Value: value}
 }

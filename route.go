@@ -38,6 +38,8 @@ func buildPath(base string, params ...interface{}) string {
 			mergeValueWithMapString(ps, v)
 		case map[string]interface{}:
 			mergeValueWithMapInterface(ps, v)
+		case *Param:
+			ps[v.Name] = append(ps[v.Name], fmt.Sprint(v.Value))
 		default:
 			xs = append(xs, strings.TrimPrefix(fmt.Sprint(p), "/"))
 		}

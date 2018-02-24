@@ -135,6 +135,8 @@ type Context interface {
 	MultipartReader() (*multipart.Reader, error)
 	Method() string
 
+	Param(name string, value interface{}) *Param
+
 	// Results
 
 	// Nothing does nothing
@@ -184,4 +186,10 @@ type Context interface {
 
 	// Handle wrap h with Result
 	Handle(h http.Handler) Result
+}
+
+// Param is the query param when redirect
+type Param struct {
+	Name  string
+	Value interface{}
 }
