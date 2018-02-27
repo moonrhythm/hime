@@ -193,3 +193,8 @@ type Param struct {
 	Name  string
 	Value interface{}
 }
+
+var (
+	_ = App(&app{})
+	_ = Context(&appContext{})
+)
