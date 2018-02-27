@@ -128,8 +128,24 @@ type Context interface {
 	ParseMultipartForm(maxMemory int64) error
 	Form() url.Values
 	PostForm() url.Values
+
+	// FromValue functions
 	FormValue(key string) string
+	FormValueTrimSpace(key string) string
+	FormValueTrimSpaceComma(key string) string
+	FormValueInt(key string) int
+	FormValueInt64(key string) int64
+	FormValueFloat32(key string) float32
+	FormValueFloat64(key string) float64
+
 	PostFormValue(key string) string
+	PostFormValueTrimSpace(key string) string
+	PostFormValueTrimSpaceComma(key string) string
+	PostFormValueInt(key string) int
+	PostFormValueInt64(key string) int64
+	PostFormValueFloat32(key string) float32
+	PostFormValueFloat64(key string) float64
+
 	FormFile(key string) (multipart.File, *multipart.FileHeader, error)
 	MultipartForm() *multipart.Form
 	MultipartReader() (*multipart.Reader, error)

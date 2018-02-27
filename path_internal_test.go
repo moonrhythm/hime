@@ -73,6 +73,6 @@ func TestSafeRedirectPath(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, c.Output, safeRedirectPath(c.Input))
+		assert.Equal(t, c.Output, SafeRedirectPath(c.Input))
 	}
 }

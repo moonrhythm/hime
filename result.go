@@ -8,8 +8,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
-	"path"
 	"syscall"
 
 	"github.com/acoshift/header"
@@ -52,24 +50,9 @@ func (ctx *appContext) Redirect(url string, params ...interface{}) Result {
 	})
 }
 
-func safeRedirectPath(p string) string {
-	l, err := url.ParseRequestURI(p)
-	if err != nil {
-		return "/"
-	}
-	r := l.EscapedPath()
-	if len(r) == 0 {
-		r = "/"
-	}
-	if l.ForceQuery || l.RawQuery != "" {
-		r += "?" + l.RawQuery
-	}
-	return path.Clean(r)
-}
-
 func (ctx *appContext) SafeRedirect(url string, params ...interface{}) Result {
 	p := buildPath(url, params...)
-	return ctx.Redirect(safeRedirectPath(p))
+	return ctx.Redirect(SafeRedirectPath(p))
 }
 
 func (ctx *appContext) RedirectTo(name string, params ...interface{}) Result {

@@ -3,7 +3,13 @@ package hime
 import (
 	"mime/multipart"
 	"net/url"
+	"strconv"
+	"strings"
 )
+
+func trimComma(s string) string {
+	return strings.Replace(s, ",", "", -1)
+}
 
 func (ctx *appContext) ParseForm() error {
 	return ctx.r.ParseForm()
@@ -25,8 +31,64 @@ func (ctx *appContext) FormValue(key string) string {
 	return ctx.r.FormValue(key)
 }
 
+func (ctx *appContext) FormValueTrimSpace(key string) string {
+	return strings.TrimSpace(ctx.FormValue(key))
+}
+
+func (ctx *appContext) FormValueTrimSpaceComma(key string) string {
+	return trimComma(strings.TrimSpace(ctx.FormValue(key)))
+}
+
+func (ctx *appContext) FormValueInt(key string) int {
+	x, _ := strconv.Atoi(ctx.FormValueTrimSpaceComma(key))
+	return x
+}
+
+func (ctx *appContext) FormValueInt64(key string) int64 {
+	x, _ := strconv.ParseInt(ctx.FormValueTrimSpaceComma(key), 10, 64)
+	return x
+}
+
+func (ctx *appContext) FormValueFloat32(key string) float32 {
+	x, _ := strconv.ParseFloat(ctx.FormValueTrimSpaceComma(key), 32)
+	return float32(x)
+}
+
+func (ctx *appContext) FormValueFloat64(key string) float64 {
+	x, _ := strconv.ParseFloat(ctx.FormValueTrimSpaceComma(key), 64)
+	return float64(x)
+}
+
 func (ctx *appContext) PostFormValue(key string) string {
 	return ctx.r.PostFormValue(key)
+}
+
+func (ctx *appContext) PostFormValueTrimSpace(key string) string {
+	return strings.TrimSpace(ctx.PostFormValue(key))
+}
+
+func (ctx *appContext) PostFormValueTrimSpaceComma(key string) string {
+	return trimComma(strings.TrimSpace(ctx.PostFormValue(key)))
+}
+
+func (ctx *appContext) PostFormValueInt(key string) int {
+	x, _ := strconv.Atoi(ctx.PostFormValueTrimSpaceComma(key))
+	return x
+}
+
+func (ctx *appContext) PostFormValueInt64(key string) int64 {
+	x, _ := strconv.ParseInt(ctx.PostFormValueTrimSpaceComma(key), 10, 64)
+	return x
+}
+
+func (ctx *appContext) PostFormValueFloat32(key string) float32 {
+	x, _ := strconv.ParseFloat(ctx.PostFormValueTrimSpaceComma(key), 32)
+	return float32(x)
+}
+
+func (ctx *appContext) PostFormValueFloat64(key string) float64 {
+	x, _ := strconv.ParseFloat(ctx.PostFormValueTrimSpaceComma(key), 64)
+	return float64(x)
 }
 
 func (ctx *appContext) FormFile(key string) (multipart.File, *multipart.FileHeader, error) {
