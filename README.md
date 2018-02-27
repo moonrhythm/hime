@@ -49,7 +49,7 @@ func main() {
 		ListenAndServe(":8080")
 }
 
-func routerFactory(app hime.App) http.Handler {
+func routerFactory(app *hime.App) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(app.Route("index"), hime.H(indexHandler))
 	return middleware.Chain(
@@ -59,7 +59,7 @@ func routerFactory(app hime.App) http.Handler {
 }
 
 func logRequestURI(h http.Handler) http.Handler {
-	return hime.H(func(ctx hime.Context) hime.Result {
+	return hime.H(func(ctx *hime.Context) hime.Result {
 		log.Println(ctx.Request().RequestURI)
 		return ctx.Handle(h)
 	})
@@ -79,7 +79,7 @@ func addHeaderRender(h http.Handler) http.Handler {
 	})
 }
 
-func indexHandler(ctx hime.Context) hime.Result {
+func indexHandler(ctx *hime.Context) hime.Result {
 	if ctx.Request().URL.Path != "/" {
 		return ctx.RedirectTo("index")
 	}
@@ -119,7 +119,7 @@ You can also use hime's handler with middleware
 
 ```go
 func logRequestURI(h http.Handler) http.Handler {
-	return hime.H(func(ctx hime.Context) hime.Result {
+	return hime.H(func(ctx *hime.Context) hime.Result {
 		log.Println(ctx.Request().RequestURI)
 		return ctx.Handle(h)
 	})
@@ -164,7 +164,7 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 with Result
 
 ```go
-func signInHandler(ctx hime.Context) hime.Result {
+func signInHandler(ctx *hime.Context) hime.Result {
 	username := r.FormValue("username")
 	if username == "" {
 		return ctx.Status(http.StatusBadRequest).Error("username required")
@@ -176,7 +176,7 @@ func signInHandler(ctx hime.Context) hime.Result {
 Why not return error, like this...
 
 ```go
-func signInHandler(ctx hime.Context) error {
+func signInHandler(ctx *hime.Context) error {
 	username := r.FormValue("username")
 	if username == "" {
 		return ctx.Status(http.StatusBadRequest).Error("username required")

@@ -5,20 +5,20 @@ import (
 	"path/filepath"
 )
 
-// TemplateFuncs adds template funcs
-func (app *app) TemplateFuncs(funcs ...template.FuncMap) App {
+// TemplateFuncs adds template funcs while load template
+func (app *App) TemplateFuncs(funcs ...template.FuncMap) *App {
 	app.templateFuncs = append(app.templateFuncs, funcs...)
 	return app
 }
 
-// Component adds global template component
-func (app *app) Component(filename ...string) App {
+// Component adds given templates to every templates
+func (app *App) Component(filename ...string) *App {
 	app.templateComponents = append(app.templateComponents, filename...)
 	return app
 }
 
-// Template registers new template
-func (app *app) Template(name string, filename ...string) App {
+// Template loads template into memory
+func (app *App) Template(name string, filename ...string) *App {
 	if _, ok := app.template[name]; ok {
 		panic(newErrTemplateDuplicate(name))
 	}

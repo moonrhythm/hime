@@ -10,7 +10,8 @@ import (
 	"github.com/tdewolff/minify"
 )
 
-type app struct {
+// App is the hime app
+type App struct {
 	handler            http.Handler
 	templateFuncs      []template.FuncMap
 	templateComponents []string
@@ -41,8 +42,8 @@ func init() {
 }
 
 // New creates new app
-func New() App {
-	app := &app{}
+func New() *App {
+	app := &App{}
 	app.template = make(map[string]*template.Template)
 	app.templateRoot = defTemplateRoot
 	app.templateDir = defTemplateDir

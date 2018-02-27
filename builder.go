@@ -10,32 +10,34 @@ import (
 	"github.com/tdewolff/minify/js"
 )
 
-// ShutdownTimeout sets shutdown timeout for graceful shutdown
-func (app *app) ShutdownTimeout(d time.Duration) App {
+// ShutdownTimeout sets graceful shutdown timeout
+func (app *App) ShutdownTimeout(d time.Duration) *App {
 	app.shutdownTimeout = d
 	return app
 }
 
-// TemplateRoot sets template root to select when load
-func (app *app) TemplateRoot(name string) App {
+// TemplateRoot sets root layout using t.Lookup,
+// default is "layout"
+func (app *App) TemplateRoot(name string) *App {
 	app.templateRoot = name
 	return app
 }
 
-// TemplateDir sets template dir
-func (app *app) TemplateDir(path string) App {
+// TemplateDir sets directory to load template,
+// default is "view"
+func (app *App) TemplateDir(path string) *App {
 	app.templateDir = path
 	return app
 }
 
-// Handler sets app handler
-func (app *app) Handler(factory HandlerFactory) App {
+// Handler sets the handler factory
+func (app *App) Handler(factory HandlerFactory) *App {
 	app.handler = factory(app)
 	return app
 }
 
-// Minify sets app minifier
-func (app *app) Minify() App {
+// Minify enables minify when render html, css, js
+func (app *App) Minify() *App {
 	app.minifier = minify.New()
 	app.minifier.AddFunc("text/html", html.Minify)
 	app.minifier.AddFunc("text/css", css.Minify)
@@ -43,13 +45,16 @@ func (app *app) Minify() App {
 	return app
 }
 
-func (app *app) BeforeRender(m middleware.Middleware) App {
+// BeforeRender runs given middleware for before render,
+// ex. View, JSON, String, Bytes, CopyForm, etc.
+func (app *App) BeforeRender(m middleware.Middleware) *App {
 	app.beforeRender = m
 	return app
 }
 
-// GracefulShutdown sets graceful shutdown to true
-func (app *app) GracefulShutdown() App {
+// GracefulShutdown runs server as graceful shutdown,
+// can works only when start server with app.ListenAndServe
+func (app *App) GracefulShutdown() *App {
 	app.gracefulShutdown = true
 	return app
 }
