@@ -6,41 +6,46 @@ import (
 )
 
 // NewContext creates new hime's context
-func NewContext(w http.ResponseWriter, r *http.Request) Context {
-	app, ok := r.Context().Value(ctxKeyApp).(*app)
+func NewContext(w http.ResponseWriter, r *http.Request) *Context {
+	app, ok := r.Context().Value(ctxKeyApp).(*App)
 	if !ok {
 		panic(ErrAppNotFound)
 	}
 	return newContext(app, w, r)
 }
 
-func newContext(app *app, w http.ResponseWriter, r *http.Request) Context {
-	return &appContext{r.Context(), app, r, w, 0}
+func newContext(app *App, w http.ResponseWriter, r *http.Request) *Context {
+	return &Context{r.Context(), app, r, w, 0}
 }
 
-type appContext struct {
+// Context is the hime context
+type Context struct {
 	context.Context
 
-	app *app
+	app *App
 	r   *http.Request
 	w   http.ResponseWriter
 
 	code int
 }
 
-func (ctx *appContext) Request() *http.Request {
+// Request returns http.Request from context
+func (ctx *Context) Request() *http.Request {
 	return ctx.r
 }
 
-func (ctx *appContext) ResponseWriter() http.ResponseWriter {
+// ResponseWriter returns http.ResponseWriter from context
+func (ctx *Context) ResponseWriter() http.ResponseWriter {
 	return ctx.w
 }
 
-func (ctx *appContext) Status(code int) Context {
+// Status sets response status
+func (ctx *Context) Status(code int) *Context {
 	ctx.code = code
 	return ctx
 }
 
-func (ctx *appContext) Param(name string, value interface{}) *Param {
+// Param creates new param for redirect
+func (ctx *Context) Param(name string, value interface{}) *Param {
 	return &Param{Name: name, Value: value}
 }

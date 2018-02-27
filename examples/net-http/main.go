@@ -45,7 +45,7 @@ func main() {
 	}
 }
 
-func routerFactory(app hime.App) http.Handler {
+func routerFactory(app *hime.App) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(app.Route("index"), hime.H(indexHandler))
 	mux.Handle(app.Route("about"), hime.H(aboutHandler))
@@ -58,7 +58,7 @@ func routerFactory(app hime.App) http.Handler {
 }
 
 func logRequestURI(h http.Handler) http.Handler {
-	return hime.Wrap(func(ctx hime.Context) hime.Result {
+	return hime.Wrap(func(ctx *hime.Context) hime.Result {
 		log.Println(ctx.Request().RequestURI)
 		return ctx.Handle(h)
 	})
@@ -78,7 +78,7 @@ func addHeaderRender(h http.Handler) http.Handler {
 	})
 }
 
-func indexHandler(ctx hime.Context) hime.Result {
+func indexHandler(ctx *hime.Context) hime.Result {
 	if ctx.Request().URL.Path != "/" {
 		return ctx.RedirectTo("index")
 	}
@@ -87,17 +87,17 @@ func indexHandler(ctx hime.Context) hime.Result {
 	})
 }
 
-func aboutHandler(ctx hime.Context) hime.Result {
+func aboutHandler(ctx *hime.Context) hime.Result {
 	return ctx.View("about", nil)
 }
 
-func apiJSONHandler(ctx hime.Context) hime.Result {
+func apiJSONHandler(ctx *hime.Context) hime.Result {
 	return ctx.JSON(map[string]interface{}{
 		"success": "ok",
 	})
 }
 
-func apiJSONErrorHandler(ctx hime.Context) hime.Result {
+func apiJSONErrorHandler(ctx *hime.Context) hime.Result {
 	return ctx.Status(http.StatusBadRequest).JSON(map[string]interface{}{
 		"error": "bad request",
 	})
