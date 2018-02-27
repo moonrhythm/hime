@@ -106,3 +106,7 @@ func (ctx *appContext) MultipartReader() (*multipart.Reader, error) {
 func (ctx *appContext) Method() string {
 	return ctx.r.Method
 }
+
+func (ctx *appContext) Query() url.Values {
+	return ctx.r.URL.Query()
+}

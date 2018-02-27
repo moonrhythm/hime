@@ -151,6 +151,9 @@ type Context interface {
 	MultipartReader() (*multipart.Reader, error)
 	Method() string
 
+	// Query returns ctx.Request().URL.Query()
+	Query() url.Values
+
 	Param(name string, value interface{}) *Param
 
 	// Results
