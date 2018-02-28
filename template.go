@@ -31,8 +31,8 @@ func (app *app) Template(name string, filename ...string) App {
 		},
 		"route":  app.Route,
 		"global": app.Global,
-		"param": func(name string, value interface{}) map[string]interface{} {
-			return map[string]interface{}{name: value}
+		"param": func(name string, value interface{}) *Param {
+			return &Param{Name: name, Value: value}
 		},
 	})
 
