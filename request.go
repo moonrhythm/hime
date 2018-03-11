@@ -2,6 +2,7 @@ package hime
 
 import (
 	"mime/multipart"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -93,6 +94,14 @@ func (ctx *appContext) PostFormValueFloat64(key string) float64 {
 
 func (ctx *appContext) FormFile(key string) (multipart.File, *multipart.FileHeader, error) {
 	return ctx.r.FormFile(key)
+}
+
+func (ctx *appContext) FormFileNotEmpty(key string) (multipart.File, *multipart.FileHeader, error) {
+	file, header, err := ctx.r.FormFile(key)
+	if header.Size == 0 {
+		return nil, nil, http.ErrMissingFile
+	}
+	return file, header, err
 }
 
 func (ctx *appContext) MultipartForm() *multipart.Form {

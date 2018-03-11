@@ -147,6 +147,10 @@ type Context interface {
 	PostFormValueFloat64(key string) float64
 
 	FormFile(key string) (multipart.File, *multipart.FileHeader, error)
+
+	// FormFileNotEmpty calls r.FormFile but return http.ErrMissingFile if file empty
+	FormFileNotEmpty(key string) (multipart.File, *multipart.FileHeader, error)
+
 	MultipartForm() *multipart.Form
 	MultipartReader() (*multipart.Reader, error)
 	Method() string
