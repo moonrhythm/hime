@@ -53,10 +53,7 @@ type App interface {
 
 	// GracefulShutdown runs server as graceful shutdown,
 	// can works only when start server with app.ListenAndServe
-	GracefulShutdown() App
-
-	// ShutdownTimeout sets graceful shutdown timeout
-	ShutdownTimeout(d time.Duration) App
+	GracefulShutdown() GracefulShutdownApp
 
 	// ListenAndServe starts web server
 	ListenAndServe(addr string) error
@@ -66,6 +63,18 @@ type App interface {
 
 	// Global gets value from global storage
 	Global(key interface{}) interface{}
+}
+
+// GracefulShutdownApp is the app in graceful shutdown mode
+type GracefulShutdownApp interface {
+	// Timeout sets timeout
+	Timeout(d time.Duration) GracefulShutdownApp
+
+	// Wait sets wait time before shutdown
+	Wait(d time.Duration) GracefulShutdownApp
+
+	// ListenAndServe starts web server
+	ListenAndServe(addr string) error
 }
 
 // Routes is the map for route name => path

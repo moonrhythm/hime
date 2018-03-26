@@ -38,7 +38,7 @@ func main() {
 		BeforeRender(addHeaderRender).
 		Handler(routerFactory).
 		GracefulShutdown().
-		ShutdownTimeout(5 * time.Second).
+		Timeout(5 * time.Second).
 		ListenAndServe(":8080")
 	if err != nil {
 		log.Fatal(err)
