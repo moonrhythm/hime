@@ -28,7 +28,6 @@ const (
 	defTemplateRoot    = "layout"
 	defTemplateDir     = "view"
 	defShutdownTimeout = 30 * time.Second
-	defShutdownWait    = 5 * time.Second
 )
 
 var (

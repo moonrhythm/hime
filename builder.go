@@ -60,7 +60,6 @@ func (app *app) GracefulShutdown() GracefulShutdownApp {
 	return &gracefulShutdownApp{
 		app:     app,
 		timeout: defShutdownTimeout,
-		wait:    defShutdownWait,
 	}
 }
 
