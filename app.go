@@ -1,6 +1,7 @@
 package hime
 
 import (
+	"context"
 	"html/template"
 	"mime"
 	"net/http"
@@ -8,6 +9,9 @@ import (
 
 	"github.com/acoshift/middleware"
 	"github.com/tdewolff/minify"
+	"github.com/tdewolff/minify/css"
+	"github.com/tdewolff/minify/html"
+	"github.com/tdewolff/minify/js"
 )
 
 type app struct {
@@ -47,4 +51,61 @@ func New() App {
 	app.routes = make(Routes)
 	app.globals = make(Globals)
 	return app
+}
+
+// TemplateRoot sets template root to select when load
+func (app *app) TemplateRoot(name string) App {
+	app.templateRoot = name
+	return app
+}
+
+// TemplateDir sets template dir
+func (app *app) TemplateDir(path string) App {
+	app.templateDir = path
+	return app
+}
+
+// Handler sets app handler
+func (app *app) Handler(factory HandlerFactory) App {
+	app.handler = factory(app)
+	return app
+}
+
+// Minify sets app minifier
+func (app *app) Minify() App {
+	app.minifier = minify.New()
+	app.minifier.AddFunc("text/html", html.Minify)
+	app.minifier.AddFunc("text/css", css.Minify)
+	app.minifier.AddFunc("text/javascript", js.Minify)
+	return app
+}
+
+func (app *app) BeforeRender(m middleware.Middleware) App {
+	app.beforeRender = m
+	return app
+}
+
+func (app *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ctx = context.WithValue(ctx, ctxKeyApp, app)
+	r = r.WithContext(ctx)
+	app.handler.ServeHTTP(w, r)
+}
+
+// ListenAndServe is the shotcut for http.ListenAndServe
+func (app *app) ListenAndServe(addr string) error {
+	srv := http.Server{
+		Addr:    addr,
+		Handler: app,
+	}
+
+	return srv.ListenAndServe()
+}
+
+// GracefulShutdown change app to graceful mode
+func (app *app) GracefulShutdown() GracefulShutdownApp {
+	return &gracefulShutdownApp{
+		app:     app,
+		timeout: defShutdownTimeout,
+	}
 }
