@@ -20,8 +20,6 @@ type app struct {
 	minifier           *minify.M
 	routes             Routes
 	globals            Globals
-	shutdownTimeout    time.Duration
-	gracefulShutdown   bool
 	beforeRender       middleware.Middleware
 }
 
@@ -30,6 +28,7 @@ const (
 	defTemplateRoot    = "layout"
 	defTemplateDir     = "view"
 	defShutdownTimeout = 30 * time.Second
+	defShutdownWait    = 5 * time.Second
 )
 
 var (
@@ -48,6 +47,5 @@ func New() App {
 	app.templateDir = defTemplateDir
 	app.routes = make(Routes)
 	app.globals = make(Globals)
-	app.shutdownTimeout = defShutdownTimeout
 	return app
 }
