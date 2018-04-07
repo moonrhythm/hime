@@ -13,9 +13,9 @@ import (
 
 type gracefulShutdownApp struct {
 	*app
-	timeout   time.Duration
-	wait      time.Duration
-	notiChans []chan<- struct{}
+	timeout time.Duration
+	wait    time.Duration
+	notiFns []func()
 }
 
 // ShutdownTimeout sets shutdown timeout for graceful shutdown
@@ -29,8 +29,8 @@ func (app *gracefulShutdownApp) Wait(d time.Duration) GracefulShutdownApp {
 	return app
 }
 
-func (app *gracefulShutdownApp) Notify(ch chan<- struct{}) GracefulShutdownApp {
-	app.notiChans = append(app.notiChans, ch)
+func (app *gracefulShutdownApp) Notify(fn func()) GracefulShutdownApp {
+	app.notiFns = append(app.notiFns, fn)
 	return app
 }
 
@@ -56,8 +56,8 @@ func (app *gracefulShutdownApp) ListenAndServe(addr string) (err error) {
 	case <-serverCtx.Done():
 		return
 	case <-stop:
-		for _, ch := range app.notiChans {
-			ch <- struct{}{}
+		for _, fn := range app.notiFns {
+			fn()
 		}
 		if app.wait > 0 {
 			time.Sleep(app.wait)
