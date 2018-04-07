@@ -38,6 +38,10 @@ func main() {
 		BeforeRender(addHeaderRender).
 		Handler(routerFactory).
 		GracefulShutdown().
+		Notify(func() {
+			log.Println("Received terminate signal")
+		}).
+		Wait(5 * time.Second).
 		Timeout(5 * time.Second).
 		ListenAndServe(":8080")
 	if err != nil {
