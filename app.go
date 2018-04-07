@@ -15,6 +15,7 @@ import (
 )
 
 type app struct {
+	srv                *http.Server
 	handler            http.Handler
 	templateFuncs      []template.FuncMap
 	templateComponents []string
@@ -92,14 +93,21 @@ func (app *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.handler.ServeHTTP(w, r)
 }
 
+func (app *app) Server(server *http.Server) App {
+	app.srv = server
+	return app
+}
+
 // ListenAndServe is the shotcut for http.ListenAndServe
 func (app *app) ListenAndServe(addr string) error {
-	srv := http.Server{
-		Addr:    addr,
-		Handler: app,
+	if app.srv == nil {
+		app.srv = &http.Server{
+			Addr:    addr,
+			Handler: app,
+		}
 	}
 
-	return srv.ListenAndServe()
+	return app.srv.ListenAndServe()
 }
 
 // GracefulShutdown change app to graceful mode

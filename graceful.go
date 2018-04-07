@@ -38,15 +38,17 @@ func (app *gracefulShutdownApp) Notify(fn func()) GracefulShutdownApp {
 
 // ListenAndServe is the shotcut for http.ListenAndServe
 func (app *gracefulShutdownApp) ListenAndServe(addr string) (err error) {
-	srv := http.Server{
-		Addr:    addr,
-		Handler: app,
+	if app.srv == nil {
+		app.srv = &http.Server{
+			Addr:    addr,
+			Handler: app,
+		}
 	}
 
 	serverCtx, cancelServer := context.WithCancel(context.Background())
 	defer cancelServer()
 	go func() {
-		if err = srv.ListenAndServe(); err != http.ErrServerClosed {
+		if err = app.srv.ListenAndServe(); err != http.ErrServerClosed {
 			cancelServer()
 		}
 	}()
@@ -66,7 +68,7 @@ func (app *gracefulShutdownApp) ListenAndServe(addr string) (err error) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), app.timeout)
 		defer cancel()
-		err = srv.Shutdown(ctx)
+		err = app.srv.Shutdown(ctx)
 	}
 	return
 }

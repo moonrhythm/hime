@@ -51,6 +51,9 @@ type App interface {
 	// Globals registers global constants
 	Globals(Globals) App
 
+	// Server overrides server when calling ListenAndServe
+	Server(server *http.Server) App
+
 	// GracefulShutdown runs server as graceful shutdown,
 	// can works only when start server with app.ListenAndServe
 	GracefulShutdown() GracefulShutdownApp
