@@ -73,6 +73,9 @@ type GracefulShutdownApp interface {
 	// Wait sets wait time before shutdown
 	Wait(d time.Duration) GracefulShutdownApp
 
+	// Notify emits signal when receive shutdown signal from os
+	Notify(ch chan<- struct{}) GracefulShutdownApp
+
 	// ListenAndServe starts web server
 	ListenAndServe(addr string) error
 }
