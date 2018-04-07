@@ -30,7 +30,9 @@ func (app *gracefulShutdownApp) Wait(d time.Duration) GracefulShutdownApp {
 }
 
 func (app *gracefulShutdownApp) Notify(fn func()) GracefulShutdownApp {
-	app.notiFns = append(app.notiFns, fn)
+	if fn != nil {
+		app.notiFns = append(app.notiFns, fn)
+	}
 	return app
 }
 
