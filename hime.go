@@ -73,6 +73,9 @@ type GracefulShutdownApp interface {
 	// Wait sets wait time before shutdown
 	Wait(d time.Duration) GracefulShutdownApp
 
+	// Notify calls fn when receive terminate signal from os
+	Notify(fn func()) GracefulShutdownApp
+
 	// ListenAndServe starts web server
 	ListenAndServe(addr string) error
 }

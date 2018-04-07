@@ -15,6 +15,7 @@ type gracefulShutdownApp struct {
 	*app
 	timeout time.Duration
 	wait    time.Duration
+	notiFns []func()
 }
 
 // ShutdownTimeout sets shutdown timeout for graceful shutdown
@@ -25,6 +26,13 @@ func (app *gracefulShutdownApp) Timeout(d time.Duration) GracefulShutdownApp {
 
 func (app *gracefulShutdownApp) Wait(d time.Duration) GracefulShutdownApp {
 	app.wait = d
+	return app
+}
+
+func (app *gracefulShutdownApp) Notify(fn func()) GracefulShutdownApp {
+	if fn != nil {
+		app.notiFns = append(app.notiFns, fn)
+	}
 	return app
 }
 
@@ -50,6 +58,9 @@ func (app *gracefulShutdownApp) ListenAndServe(addr string) (err error) {
 	case <-serverCtx.Done():
 		return
 	case <-stop:
+		for _, fn := range app.notiFns {
+			fn()
+		}
 		if app.wait > 0 {
 			time.Sleep(app.wait)
 		}
