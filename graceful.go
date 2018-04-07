@@ -13,9 +13,10 @@ import (
 
 type gracefulShutdownApp struct {
 	*app
-	timeout time.Duration
-	wait    time.Duration
-	notiFns []func()
+	timeout   time.Duration
+	wait      time.Duration
+	notiFns   []func()
+	beforeFns []func()
 }
 
 // ShutdownTimeout sets shutdown timeout for graceful shutdown
@@ -36,6 +37,13 @@ func (app *gracefulShutdownApp) Notify(fn func()) GracefulShutdownApp {
 	return app
 }
 
+func (app *gracefulShutdownApp) Before(fn func()) GracefulShutdownApp {
+	if fn != nil {
+		app.beforeFns = append(app.beforeFns, fn)
+	}
+	return app
+}
+
 // ListenAndServe is the shotcut for http.ListenAndServe
 func (app *gracefulShutdownApp) ListenAndServe(addr string) (err error) {
 	if app.srv == nil {
@@ -52,6 +60,10 @@ func (app *gracefulShutdownApp) ListenAndServe(addr string) (err error) {
 			cancelServer()
 		}
 	}()
+
+	for _, fn := range app.beforeFns {
+		fn()
+	}
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM)

@@ -79,6 +79,9 @@ type GracefulShutdownApp interface {
 	// Notify calls fn when receive terminate signal from os
 	Notify(fn func()) GracefulShutdownApp
 
+	// Before runs fn before start waiting to SIGTERM
+	Before(fn func()) GracefulShutdownApp
+
 	// ListenAndServe starts web server
 	ListenAndServe(addr string) error
 }
