@@ -61,7 +61,11 @@ func (ctx *appContext) RedirectTo(name string, params ...interface{}) Result {
 }
 
 func (ctx *appContext) RedirectToGet() Result {
-	return ctx.Status(http.StatusSeeOther).Redirect(ctx.Request().RequestURI)
+	to := ctx.r.Referer()
+	if to == "" {
+		to = ctx.r.RequestURI
+	}
+	return ctx.Status(http.StatusSeeOther).Redirect(to)
 }
 
 func (ctx *appContext) Error(error string) Result {
