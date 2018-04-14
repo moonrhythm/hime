@@ -64,8 +64,6 @@ func (ctx *appContext) RedirectToGet() Result {
 	to := ctx.r.Referer()
 	if to == "" {
 		to = ctx.r.RequestURI
-	} else {
-		to = SafeRedirectPath(to)
 	}
 	return ctx.Status(http.StatusSeeOther).Redirect(to)
 }
