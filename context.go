@@ -28,6 +28,10 @@ type appContext struct {
 	code int
 }
 
+func (ctx *appContext) WithContext(nctx context.Context) Context {
+	return newContext(ctx.app, ctx.w, ctx.r.WithContext(nctx))
+}
+
 func (ctx *appContext) Request() *http.Request {
 	return ctx.r
 }

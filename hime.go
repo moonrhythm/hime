@@ -122,6 +122,8 @@ func (f ResultFunc) Response(w http.ResponseWriter, r *http.Request) {
 type Context interface {
 	context.Context
 
+	WithContext(ctx context.Context) Context
+
 	// App data
 
 	// Route gets route path from given name
