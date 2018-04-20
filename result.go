@@ -64,6 +64,28 @@ func (ctx *appContext) RedirectToGet() Result {
 	return ctx.Status(http.StatusSeeOther).Redirect(ctx.Request().RequestURI)
 }
 
+func (ctx *appContext) RedirectBack(fallback string) Result {
+	u := ctx.r.Referer()
+	if u == "" {
+		u = fallback
+	}
+	if u == "" {
+		u = ctx.Request().RequestURI
+	}
+	return ctx.Status(http.StatusSeeOther).Redirect(u)
+}
+
+func (ctx *appContext) SafeRedirectBack(fallback string) Result {
+	u := ctx.r.Referer()
+	if u == "" {
+		u = fallback
+	}
+	if u == "" {
+		u = ctx.Request().RequestURI
+	}
+	return ctx.Status(http.StatusSeeOther).SafeRedirect(u)
+}
+
 func (ctx *appContext) Error(error string) Result {
 	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(ctx.w, error, ctx.statusCodeError())

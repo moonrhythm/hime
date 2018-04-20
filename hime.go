@@ -197,6 +197,12 @@ type Context interface {
 	// RedirectToGet redirects to GET method with See Other status code on the current path
 	RedirectToGet() Result
 
+	// RedirectBack redirects back to previous URL
+	RedirectBack(fallback string) Result
+
+	// SafeRedirectBack redirects back to previous URL using SafeRedirect
+	SafeRedirectBack(fallback string) Result
+
 	// Error wraps http.Error
 	Error(error string) Result
 
