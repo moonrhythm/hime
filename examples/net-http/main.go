@@ -64,7 +64,7 @@ func routerFactory(app hime.App) http.Handler {
 func logRequestURI(h http.Handler) http.Handler {
 	return hime.Wrap(func(ctx hime.Context) hime.Result {
 		log.Println(ctx.Request().RequestURI)
-		return ctx.Handle(h)
+		return h
 	})
 }
 

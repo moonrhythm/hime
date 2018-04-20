@@ -222,9 +222,6 @@ type Context interface {
 
 	// File renders file
 	File(name string) Result
-
-	// Handle wrap h with Result
-	Handle(h http.Handler) Result
 }
 
 // Param is the query param when redirect

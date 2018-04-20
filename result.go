@@ -212,7 +212,3 @@ func (ctx *appContext) File(name string) Result {
 		http.ServeFile(w, r, name)
 	})
 }
-
-func (ctx *appContext) Handle(h http.Handler) Result {
-	return h
-}
