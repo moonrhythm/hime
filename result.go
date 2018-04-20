@@ -45,7 +45,7 @@ func (ctx *appContext) writeHeader() {
 
 func (ctx *appContext) Redirect(url string, params ...interface{}) Result {
 	p := buildPath(url, params...)
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(ctx.w, ctx.r, p, ctx.statusCodeRedirect())
 	})
 }
@@ -87,31 +87,31 @@ func (ctx *appContext) SafeRedirectBack(fallback string) Result {
 }
 
 func (ctx *appContext) Error(error string) Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(ctx.w, error, ctx.statusCodeError())
 	})
 }
 
 func (ctx *appContext) Nothing() Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// do nothing
 	})
 }
 
 func (ctx *appContext) NotFound() Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	})
 }
 
 func (ctx *appContext) NoContent() Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 }
 
 func (ctx *appContext) View(name string, data interface{}) Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t, ok := ctx.app.template[name]
 		if !ok {
 			panic(newErrTemplateNotFound(name))
@@ -170,7 +170,7 @@ func (ctx *appContext) renderView(t *template.Template, code int, data interface
 }
 
 func (ctx *appContext) JSON(data interface{}) Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx.invokeBeforeRender(func() {
 			ctx.setContentType("application/json; charset=utf-8")
 			ctx.writeHeader()
@@ -180,7 +180,7 @@ func (ctx *appContext) JSON(data interface{}) Result {
 }
 
 func (ctx *appContext) String(format string, a ...interface{}) Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx.invokeBeforeRender(func() {
 			ctx.setContentType("text/plain; charset=utf-8")
 			ctx.writeHeader()
@@ -194,7 +194,7 @@ func (ctx *appContext) StatusText() Result {
 }
 
 func (ctx *appContext) CopyFrom(src io.Reader) Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx.invokeBeforeRender(func() {
 			ctx.setContentType("application/octet-stream")
 			ctx.writeHeader()
@@ -208,13 +208,11 @@ func (ctx *appContext) Bytes(b []byte) Result {
 }
 
 func (ctx *appContext) File(name string) Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, name)
 	})
 }
 
 func (ctx *appContext) Handle(h http.Handler) Result {
-	return ResultFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(ctx.w, ctx.r)
-	})
+	return h
 }

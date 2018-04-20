@@ -8,7 +8,7 @@ import (
 func Wrap(h Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := NewContext(w, r)
-		h(ctx).Response(w, r)
+		h(ctx).ServeHTTP(w, r)
 	})
 }
 

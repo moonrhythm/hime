@@ -106,17 +106,7 @@ func Factory(h http.Handler) HandlerFactory {
 type Handler func(Context) Result
 
 // Result is the handler result
-type Result interface {
-	Response(w http.ResponseWriter, r *http.Request)
-}
-
-// ResultFunc is the result function
-type ResultFunc func(w http.ResponseWriter, r *http.Request)
-
-// Response implements Result interface
-func (f ResultFunc) Response(w http.ResponseWriter, r *http.Request) {
-	f(w, r)
-}
+type Result http.Handler
 
 // Context is the hime context
 type Context interface {
