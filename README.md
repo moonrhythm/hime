@@ -61,7 +61,7 @@ func routerFactory(app hime.App) http.Handler {
 func logRequestURI(h http.Handler) http.Handler {
 	return hime.H(func(ctx hime.Context) hime.Result {
 		log.Println(ctx.Request().RequestURI)
-		return ctx.Handle(h)
+		return h
 	})
 }
 
@@ -121,7 +121,7 @@ You can also use hime's handler with middleware
 func logRequestURI(h http.Handler) http.Handler {
 	return hime.H(func(ctx hime.Context) hime.Result {
 		log.Println(ctx.Request().RequestURI)
-		return ctx.Handle(h)
+		return h // hime.Result is http.Handler alias
 	})
 }
 ```
