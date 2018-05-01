@@ -7,6 +7,10 @@ import (
 
 // NewContext creates new hime's context
 func NewContext(w http.ResponseWriter, r *http.Request) Context {
+	return newInternalContext(w, r)
+}
+
+func newInternalContext(w http.ResponseWriter, r *http.Request) *appContext {
 	app, ok := r.Context().Value(ctxKeyApp).(*app)
 	if !ok {
 		panic(ErrAppNotFound)
@@ -14,7 +18,7 @@ func NewContext(w http.ResponseWriter, r *http.Request) Context {
 	return newContext(app, w, r)
 }
 
-func newContext(app *app, w http.ResponseWriter, r *http.Request) Context {
+func newContext(app *app, w http.ResponseWriter, r *http.Request) *appContext {
 	return &appContext{r.Context(), app, r, w, 0}
 }
 
@@ -28,8 +32,20 @@ type appContext struct {
 	code int
 }
 
-func (ctx *appContext) WithContext(nctx context.Context) Context {
-	return newContext(ctx.app, ctx.w, ctx.r.WithContext(nctx))
+func (ctx *appContext) WithContext(nctx context.Context) {
+	ctx.r = ctx.r.WithContext(nctx)
+}
+
+func (ctx *appContext) WithRequest(r *http.Request) {
+	ctx.r = r
+}
+
+func (ctx *appContext) WithResponseWriter(w http.ResponseWriter) {
+	ctx.w = w
+}
+
+func (ctx *appContext) WithValue(key interface{}, val interface{}) {
+	ctx.WithContext(context.WithValue(ctx.r.Context(), key, val))
 }
 
 func (ctx *appContext) Request() *http.Request {

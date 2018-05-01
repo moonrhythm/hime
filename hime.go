@@ -112,7 +112,10 @@ type Result http.Handler
 type Context interface {
 	context.Context
 
-	WithContext(ctx context.Context) Context
+	WithContext(ctx context.Context)
+	WithRequest(r *http.Request)
+	WithResponseWriter(w http.ResponseWriter)
+	WithValue(key interface{}, val interface{})
 
 	// App data
 
