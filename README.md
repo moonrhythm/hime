@@ -126,6 +126,23 @@ func logRequestURI(h http.Handler) http.Handler {
 }
 ```
 
+Inject data to context
+
+```go
+func injectData(h http.Handler) http.Handler {
+	return hime.H(func(ctx hime.Context) hime.Result {
+		ctx.WithValue(ctxKeyData{}, "injected data!")
+		return h
+	})
+}
+```
+
+Retrieve data from context like context.Context
+
+```go
+ctx.Value(ctxKeyData{}).(string)
+```
+
 ### Use hime.App as Handler
 
 If you don't want to use hime's built-in graceful shutdown,
