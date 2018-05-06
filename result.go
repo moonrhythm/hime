@@ -75,6 +75,10 @@ func (ctx *appContext) RedirectBack(fallback string) Result {
 	return ctx.Status(http.StatusSeeOther).Redirect(u)
 }
 
+func (ctx *appContext) RedirectBackFallbackToGet() Result {
+	return ctx.Status(http.StatusSeeOther).RedirectBack(ctx.Request().RequestURI)
+}
+
 func (ctx *appContext) SafeRedirectBack(fallback string) Result {
 	u := ctx.r.Referer()
 	if u == "" {
