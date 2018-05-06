@@ -193,8 +193,9 @@ type Context interface {
 	// RedirectBack redirects back to previous URL
 	RedirectBack(fallback string) Result
 
-	// RedirectBackFallbackToGet redirects back to previous URL or fallback same URL with GET method
-	RedirectBackFallbackToGet() Result
+	// RedirectBackToGet redirects back to GET method with See Other status code to previous URL
+	// or fallback to same URL like RedirectToGet
+	RedirectBackToGet() Result
 
 	// SafeRedirectBack redirects back to previous URL using SafeRedirect
 	SafeRedirectBack(fallback string) Result

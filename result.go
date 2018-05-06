@@ -75,7 +75,7 @@ func (ctx *appContext) RedirectBack(fallback string) Result {
 	return ctx.Redirect(u)
 }
 
-func (ctx *appContext) RedirectBackFallbackToGet() Result {
+func (ctx *appContext) RedirectBackToGet() Result {
 	return ctx.Status(http.StatusSeeOther).RedirectBack("")
 }
 
