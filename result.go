@@ -72,11 +72,11 @@ func (ctx *appContext) RedirectBack(fallback string) Result {
 	if u == "" {
 		u = ctx.Request().RequestURI
 	}
-	return ctx.Status(http.StatusSeeOther).Redirect(u)
+	return ctx.Redirect(u)
 }
 
 func (ctx *appContext) RedirectBackFallbackToGet() Result {
-	return ctx.Status(http.StatusSeeOther).RedirectBack(ctx.Request().RequestURI)
+	return ctx.Status(http.StatusSeeOther).RedirectBack("")
 }
 
 func (ctx *appContext) SafeRedirectBack(fallback string) Result {
@@ -87,7 +87,7 @@ func (ctx *appContext) SafeRedirectBack(fallback string) Result {
 	if u == "" {
 		u = ctx.Request().RequestURI
 	}
-	return ctx.Status(http.StatusSeeOther).SafeRedirect(u)
+	return ctx.SafeRedirect(u)
 }
 
 func (ctx *appContext) Error(error string) Result {
