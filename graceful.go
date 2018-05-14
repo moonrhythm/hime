@@ -9,43 +9,45 @@ import (
 	"time"
 )
 
-// GracefulShutdownApp
-
-type gracefulShutdownApp struct {
-	*app
+// GracefulShutdownApp is the app in graceful shutdown mode
+type GracefulShutdownApp struct {
+	*App
 	timeout   time.Duration
 	wait      time.Duration
 	notiFns   []func()
 	beforeFns []func()
 }
 
-// ShutdownTimeout sets shutdown timeout for graceful shutdown
-func (app *gracefulShutdownApp) Timeout(d time.Duration) GracefulShutdownApp {
+// Timeout sets shutdown timeout for graceful shutdown
+func (app *GracefulShutdownApp) Timeout(d time.Duration) *GracefulShutdownApp {
 	app.timeout = d
 	return app
 }
 
-func (app *gracefulShutdownApp) Wait(d time.Duration) GracefulShutdownApp {
+// Wait sets wait time before shutdown
+func (app *GracefulShutdownApp) Wait(d time.Duration) *GracefulShutdownApp {
 	app.wait = d
 	return app
 }
 
-func (app *gracefulShutdownApp) Notify(fn func()) GracefulShutdownApp {
+// Notify calls fn when receive terminate signal from os
+func (app *GracefulShutdownApp) Notify(fn func()) *GracefulShutdownApp {
 	if fn != nil {
 		app.notiFns = append(app.notiFns, fn)
 	}
 	return app
 }
 
-func (app *gracefulShutdownApp) Before(fn func()) GracefulShutdownApp {
+// Before runs fn before start waiting to SIGTERM
+func (app *GracefulShutdownApp) Before(fn func()) *GracefulShutdownApp {
 	if fn != nil {
 		app.beforeFns = append(app.beforeFns, fn)
 	}
 	return app
 }
 
-// ListenAndServe is the shotcut for http.ListenAndServe
-func (app *gracefulShutdownApp) ListenAndServe(addr string) (err error) {
+// ListenAndServe starts web server in graceful shutdown mode
+func (app *GracefulShutdownApp) ListenAndServe(addr string) (err error) {
 	if app.srv == nil {
 		app.srv = &http.Server{
 			Addr:    addr,

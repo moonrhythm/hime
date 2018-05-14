@@ -1,13 +1,15 @@
 package hime
 
-func (app *app) Routes(routes Routes) App {
+// Routes registers route name and path
+func (app *App) Routes(routes Routes) *App {
 	for name, path := range routes {
 		app.routes[name] = path
 	}
 	return app
 }
 
-func (app *app) Route(name string, params ...interface{}) string {
+// Route gets route path from given name
+func (app *App) Route(name string, params ...interface{}) string {
 	path, ok := app.routes[name]
 	if !ok {
 		panic(newErrRouteNotFound(name))
