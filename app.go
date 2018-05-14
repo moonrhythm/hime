@@ -19,9 +19,6 @@ import (
 
 // App is the hime app
 type App struct {
-	// Addr listens address
-	Addr string
-
 	// TLSConfig overrides http.Server TLSConfig
 	TLSConfig *tls.Config
 
@@ -104,8 +101,7 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.handler.ServeHTTP(w, r)
 }
 
-func (app *App) configServer() {
-	app.srv.Addr = app.Addr
+func (app *App) configServer(addr string) {
 	app.srv.TLSConfig = app.TLSConfig
 	app.srv.ReadTimeout = app.ReadTimeout
 	app.srv.ReadHeaderTimeout = app.ReadHeaderTimeout
@@ -116,26 +112,19 @@ func (app *App) configServer() {
 	app.srv.ConnState = app.ConnState
 	app.srv.ErrorLog = app.ErrorLog
 	app.srv.Handler = app
+	app.srv.Addr = addr
 }
 
 // ListenAndServe starts web server
 func (app *App) ListenAndServe(addr string) error {
-	app.configServer()
-
-	if addr != "" {
-		app.srv.Addr = addr
-	}
+	app.configServer(addr)
 
 	return app.srv.ListenAndServe()
 }
 
 // ListenAndServeTLS starts web server in tls mode
 func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
-	app.configServer()
-
-	if addr != "" {
-		app.srv.Addr = addr
-	}
+	app.configServer(addr)
 
 	return app.srv.ListenAndServeTLS(certFile, keyFile)
 }
