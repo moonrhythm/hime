@@ -42,8 +42,8 @@ type App interface {
 	// Minify enables minify when render html, css, js
 	Minify() App
 
-	// Handler sets the handler factory
-	Handler(factory HandlerFactory) App
+	// Handler sets the handler
+	Handler(h http.Handler) App
 
 	// Routes registers route name and path
 	Routes(routes Routes) App
@@ -91,16 +91,6 @@ type Routes map[string]string
 
 // Globals is the global const map
 type Globals map[interface{}]interface{}
-
-// HandlerFactory is the function for create router
-type HandlerFactory func(App) http.Handler
-
-// Factory wraps http.Handler with HandlerFactory
-func Factory(h http.Handler) HandlerFactory {
-	return func(_ App) http.Handler {
-		return h
-	}
-}
 
 // Handler is the hime handler
 type Handler func(Context) Result

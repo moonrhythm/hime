@@ -10,7 +10,7 @@ import (
 
 func main() {
 	err := hime.New().
-		Handler(routerFactory).
+		Handler(router()).
 		ListenAndServe(":8080")
 	if err != nil {
 		log.Fatal(err)
@@ -19,7 +19,7 @@ func main() {
 
 type ctxKeyData struct{}
 
-func routerFactory(app hime.App) http.Handler {
+func router() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/", hime.H(func(ctx hime.Context) hime.Result {
 		return ctx.String(ctx.Value(ctxKeyData{}).(string))

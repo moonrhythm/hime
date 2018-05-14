@@ -37,19 +37,20 @@ Other framework don't allow this. They have built-in router, framework-specific 
 
 ```go
 func main() {
-	hime.New().
+	app := hime.New()
+	app.
 		Template("index", "index.tmpl", "_layout.tmpl").
 		Minify().
 		Routes(hime.Routes{
 			"index": "/",
 		}).
 		BeforeRender(addHeaderRender).
-		Handler(routerFactory).
+		Handler(router(app)).
 		GracefulShutdown().
 		ListenAndServe(":8080")
 }
 
-func routerFactory(app hime.App) http.Handler {
+func router(app hime.App) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(app.Route("index"), hime.H(indexHandler))
 	return middleware.Chain(
@@ -150,14 +151,15 @@ you can use hime.App as normal handler.
 
 ```go
 func main() {
-	app := hime.New().
+	app := hime.New()
+	app.
 		Template("index", "index.tmpl", "_layout.tmpl").
 		Minify().
 		Routes(hime.Routes{
 			"index": "/",
 		}).
 		BeforeRender(addHeaderRender).
-		Handler(routerFactory)
+		Handler(router(app))
 
 	http.ListenAndServe(":8080", app)
 }

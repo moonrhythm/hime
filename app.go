@@ -67,8 +67,8 @@ func (app *app) TemplateDir(path string) App {
 }
 
 // Handler sets app handler
-func (app *app) Handler(factory HandlerFactory) App {
-	app.handler = factory(app)
+func (app *app) Handler(h http.Handler) App {
+	app.handler = h
 	return app
 }
 

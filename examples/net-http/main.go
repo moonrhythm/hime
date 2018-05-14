@@ -18,7 +18,9 @@ var tmplFunc = template.FuncMap{
 }
 
 func main() {
-	err := hime.New().
+	app := hime.New()
+
+	err := app.
 		TemplateDir("view").
 		TemplateRoot("layout").
 		TemplateFuncs(tmplFunc).
@@ -36,7 +38,7 @@ func main() {
 			"github": "https://github.com/acoshift/hime",
 		}).
 		BeforeRender(addHeaderRender).
-		Handler(routerFactory).
+		Handler(router(app)).
 		GracefulShutdown().
 		Notify(func() {
 			log.Println("Received terminate signal")
@@ -49,7 +51,7 @@ func main() {
 	}
 }
 
-func routerFactory(app hime.App) http.Handler {
+func router(app hime.App) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(app.Route("index"), hime.H(indexHandler))
 	mux.Handle(app.Route("about"), hime.H(aboutHandler))
