@@ -31,8 +31,6 @@ type App struct {
 
 // consts
 const (
-	defTemplateRoot    = "layout"
-	defTemplateDir     = "view"
 	defShutdownTimeout = 30 * time.Second
 )
 
@@ -46,11 +44,7 @@ func init() {
 
 // New creates new app
 func New() *App {
-	app := &App{}
-	app.template = make(map[string]*template.Template)
-	app.templateRoot = defTemplateRoot
-	app.templateDir = defTemplateDir
-	return app
+	return &App{}
 }
 
 // Handler sets the handler
