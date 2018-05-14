@@ -50,7 +50,7 @@ func main() {
 		ListenAndServe(":8080")
 }
 
-func router(app hime.App) http.Handler {
+func router(app *hime.App) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(app.Route("index"), hime.H(indexHandler))
 	return middleware.Chain(

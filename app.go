@@ -14,7 +14,8 @@ import (
 	"github.com/tdewolff/minify/js"
 )
 
-type app struct {
+// App is the hime app
+type App struct {
 	srv                *http.Server
 	handler            http.Handler
 	templateFuncs      []template.FuncMap
@@ -44,8 +45,8 @@ func init() {
 }
 
 // New creates new app
-func New() App {
-	app := &app{}
+func New() *App {
+	app := &App{}
 	app.template = make(map[string]*template.Template)
 	app.templateRoot = defTemplateRoot
 	app.templateDir = defTemplateDir
@@ -54,26 +55,14 @@ func New() App {
 	return app
 }
 
-// TemplateRoot sets template root to select when load
-func (app *app) TemplateRoot(name string) App {
-	app.templateRoot = name
-	return app
-}
-
-// TemplateDir sets template dir
-func (app *app) TemplateDir(path string) App {
-	app.templateDir = path
-	return app
-}
-
-// Handler sets app handler
-func (app *app) Handler(h http.Handler) App {
+// Handler sets the handler
+func (app *App) Handler(h http.Handler) *App {
 	app.handler = h
 	return app
 }
 
-// Minify sets app minifier
-func (app *app) Minify() App {
+// Minify enables minify when render html, css, js
+func (app *App) Minify() *App {
 	app.minifier = minify.New()
 	app.minifier.AddFunc("text/html", html.Minify)
 	app.minifier.AddFunc("text/css", css.Minify)
@@ -81,25 +70,28 @@ func (app *app) Minify() App {
 	return app
 }
 
-func (app *app) BeforeRender(m middleware.Middleware) App {
+// BeforeRender runs given middleware for before render,
+// ex. View, JSON, String, Bytes, CopyForm, etc
+func (app *App) BeforeRender(m middleware.Middleware) *App {
 	app.beforeRender = m
 	return app
 }
 
-func (app *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, ctxKeyApp, app)
 	r = r.WithContext(ctx)
 	app.handler.ServeHTTP(w, r)
 }
 
-func (app *app) Server(server *http.Server) App {
+// Server overrides server when calling ListenAndServe
+func (app *App) Server(server *http.Server) *App {
 	app.srv = server
 	return app
 }
 
-// ListenAndServe is the shotcut for http.ListenAndServe
-func (app *app) ListenAndServe(addr string) error {
+// ListenAndServe starts web server
+func (app *App) ListenAndServe(addr string) error {
 	if app.srv == nil {
 		app.srv = &http.Server{
 			Addr:    addr,
@@ -110,10 +102,11 @@ func (app *app) ListenAndServe(addr string) error {
 	return app.srv.ListenAndServe()
 }
 
-// GracefulShutdown change app to graceful mode
-func (app *app) GracefulShutdown() GracefulShutdownApp {
-	return &gracefulShutdownApp{
-		app:     app,
+// GracefulShutdown runs server as graceful shutdown,
+// can works only when start server with app.ListenAndServe
+func (app *App) GracefulShutdown() *GracefulShutdownApp {
+	return &GracefulShutdownApp{
+		App:     app,
 		timeout: defShutdownTimeout,
 	}
 }

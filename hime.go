@@ -2,89 +2,11 @@ package hime
 
 import (
 	"context"
-	"html/template"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"time"
-
-	"github.com/acoshift/middleware"
 )
-
-// App is the hime app
-type App interface {
-	http.Handler
-
-	// Builder
-
-	// TemplateDir sets directory to load template,
-	// default is "view"
-	TemplateDir(path string) App
-
-	// TemplateRoot sets root layout using t.Lookup,
-	// default is "layout"
-	TemplateRoot(name string) App
-
-	// TemplateFuncs adds template funcs while load template
-	TemplateFuncs(funcs ...template.FuncMap) App
-
-	// Component adds given templates to every templates
-	Component(filename ...string) App
-
-	// Template loads template into memory
-	Template(name string, filename ...string) App
-
-	// BeforeRender runs given middleware for before render,
-	// ex. View, JSON, String, Bytes, CopyForm, etc.
-	BeforeRender(m middleware.Middleware) App
-
-	// Minify enables minify when render html, css, js
-	Minify() App
-
-	// Handler sets the handler
-	Handler(h http.Handler) App
-
-	// Routes registers route name and path
-	Routes(routes Routes) App
-
-	// Globals registers global constants
-	Globals(Globals) App
-
-	// Server overrides server when calling ListenAndServe
-	Server(server *http.Server) App
-
-	// GracefulShutdown runs server as graceful shutdown,
-	// can works only when start server with app.ListenAndServe
-	GracefulShutdown() GracefulShutdownApp
-
-	// ListenAndServe starts web server
-	ListenAndServe(addr string) error
-
-	// Route gets route path from given name
-	Route(name string, params ...interface{}) string
-
-	// Global gets value from global storage
-	Global(key interface{}) interface{}
-}
-
-// GracefulShutdownApp is the app in graceful shutdown mode
-type GracefulShutdownApp interface {
-	// Timeout sets timeout
-	Timeout(d time.Duration) GracefulShutdownApp
-
-	// Wait sets wait time before shutdown
-	Wait(d time.Duration) GracefulShutdownApp
-
-	// Notify calls fn when receive terminate signal from os
-	Notify(fn func()) GracefulShutdownApp
-
-	// Before runs fn before start waiting to SIGTERM
-	Before(fn func()) GracefulShutdownApp
-
-	// ListenAndServe starts web server
-	ListenAndServe(addr string) error
-}
 
 // Routes is the map for route name => path
 type Routes map[string]string
@@ -227,7 +149,4 @@ type Param struct {
 	Value interface{}
 }
 
-var (
-	_ = App(&app{})
-	_ = Context(&appContext{})
-)
+var _ = Context(&appContext{})

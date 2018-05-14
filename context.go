@@ -11,21 +11,21 @@ func NewContext(w http.ResponseWriter, r *http.Request) Context {
 }
 
 func newInternalContext(w http.ResponseWriter, r *http.Request) *appContext {
-	app, ok := r.Context().Value(ctxKeyApp).(*app)
+	app, ok := r.Context().Value(ctxKeyApp).(*App)
 	if !ok {
 		panic(ErrAppNotFound)
 	}
 	return newContext(app, w, r)
 }
 
-func newContext(app *app, w http.ResponseWriter, r *http.Request) *appContext {
+func newContext(app *App, w http.ResponseWriter, r *http.Request) *appContext {
 	return &appContext{r.Context(), app, r, w, 0}
 }
 
 type appContext struct {
 	context.Context
 
-	app *app
+	app *App
 	r   *http.Request
 	w   http.ResponseWriter
 
