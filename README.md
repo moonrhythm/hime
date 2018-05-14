@@ -1,5 +1,7 @@
 # Hime
 
+[![Build Status](https://travis-ci.org/acoshift/hime.svg?branch=master)](https://travis-ci.org/acoshift/hime)
+[![Coverage Status](https://coveralls.io/repos/github/acoshift/hime/badge.svg?branch=master)](https://coveralls.io/github/acoshift/hime?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/acoshift/hime)](https://goreportcard.com/report/github.com/acoshift/hime)
 [![GoDoc](https://godoc.org/github.com/acoshift/hime?status.svg)](https://godoc.org/github.com/acoshift/hime)
 
