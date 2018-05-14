@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"mime"
 	"net/http"
-	"time"
 
 	"github.com/acoshift/middleware"
 	"github.com/tdewolff/minify"
@@ -28,11 +27,6 @@ type App struct {
 	globals            Globals
 	beforeRender       middleware.Middleware
 }
-
-// consts
-const (
-	defShutdownTimeout = 30 * time.Second
-)
 
 var (
 	ctxKeyApp = struct{}{}
@@ -98,7 +92,6 @@ func (app *App) ListenAndServe(addr string) error {
 // can works only when start server with app.ListenAndServe
 func (app *App) GracefulShutdown() *GracefulShutdownApp {
 	return &GracefulShutdownApp{
-		App:     app,
-		timeout: defShutdownTimeout,
+		App: app,
 	}
 }

@@ -26,7 +26,7 @@ Other framework don't allow this. They have built-in router, framework-specific 
 - Compatible with net/http middlewares without code change
 - Use standard html/template for view
 - Built-in core functions for build web server
-- Reduce developer bug
+- Reduce developer bugs
 
 ## What is this framework DO NOT focus
 

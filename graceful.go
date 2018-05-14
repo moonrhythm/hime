@@ -18,7 +18,10 @@ type GracefulShutdownApp struct {
 	beforeFns []func()
 }
 
-// Timeout sets shutdown timeout for graceful shutdown
+// Timeout sets shutdown timeout for graceful shutdown,
+// set to 0 to disable timeout
+//
+// default is 0
 func (app *GracefulShutdownApp) Timeout(d time.Duration) *GracefulShutdownApp {
 	app.timeout = d
 	return app
@@ -80,9 +83,14 @@ func (app *GracefulShutdownApp) ListenAndServe(addr string) (err error) {
 		if app.wait > 0 {
 			time.Sleep(app.wait)
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), app.timeout)
-		defer cancel()
-		err = app.srv.Shutdown(ctx)
+
+		if app.timeout > 0 {
+			ctx, cancel := context.WithTimeout(context.Background(), app.timeout)
+			defer cancel()
+			err = app.srv.Shutdown(ctx)
+		} else {
+			err = app.srv.Shutdown(context.Background())
+		}
 	}
 	return
 }
