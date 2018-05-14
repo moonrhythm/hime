@@ -49,19 +49,11 @@ func (gs *GracefulShutdown) Before(fn func()) *GracefulShutdown {
 	return gs
 }
 
-// ListenAndServe starts web server in graceful shutdown mode
-func (gs *GracefulShutdown) ListenAndServe(addr string) (err error) {
-	if gs.App.srv == nil {
-		gs.App.srv = &http.Server{
-			Addr:    addr,
-			Handler: gs.App,
-		}
-	}
-
+func (gs *GracefulShutdown) start(listenAndServe func() error) (err error) {
 	serverCtx, cancelServer := context.WithCancel(context.Background())
 	defer cancelServer()
 	go func() {
-		if err = gs.App.srv.ListenAndServe(); err != http.ErrServerClosed {
+		if err = listenAndServe(); err != http.ErrServerClosed {
 			cancelServer()
 		}
 	}()
@@ -93,4 +85,14 @@ func (gs *GracefulShutdown) ListenAndServe(addr string) (err error) {
 		}
 	}
 	return
+}
+
+// ListenAndServe starts web server in graceful shutdown mode
+func (gs *GracefulShutdown) ListenAndServe(addr string) error {
+	return gs.start(func() error { return gs.App.ListenAndServe(addr) })
+}
+
+// ListenAndServeTLS starts web server in graceful shutdown and tls mode
+func (gs *GracefulShutdown) ListenAndServeTLS(addr, certFile, keyFile string) error {
+	return gs.start(func() error { return gs.App.ListenAndServeTLS(addr, certFile, keyFile) })
 }

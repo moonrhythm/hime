@@ -2,9 +2,13 @@ package hime
 
 import (
 	"context"
+	"crypto/tls"
 	"html/template"
+	"log"
 	"mime"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/acoshift/middleware"
 	"github.com/tdewolff/minify"
@@ -15,7 +19,37 @@ import (
 
 // App is the hime app
 type App struct {
-	srv                *http.Server
+	// Addr listens address
+	Addr string
+
+	// TLSConfig overrides http.Server TLSConfig
+	TLSConfig *tls.Config
+
+	// ReadTimeout overrides http.Server ReadTimeout
+	ReadTimeout time.Duration
+
+	// ReadHeaderTimeout overrides http.Server ReadHeaderTimeout
+	ReadHeaderTimeout time.Duration
+
+	// WriteTimeout overrides http.Server WriteTimeout
+	WriteTimeout time.Duration
+
+	// IdleTimeout overrides http.Server IdleTimeout
+	IdleTimeout time.Duration
+
+	// MaxHeaderBytes overrides http.Server MaxHeaderBytes
+	MaxHeaderBytes int
+
+	// TLSNextProto overrides http.Server TLSNextProto
+	TLSNextProto map[string]func(*http.Server, *tls.Conn, http.Handler)
+
+	// ConnState overrides http.Server ConnState
+	ConnState func(net.Conn, http.ConnState)
+
+	// ErrorLog overrides http.Server ErrorLog
+	ErrorLog *log.Logger
+
+	srv                http.Server
 	handler            http.Handler
 	templateFuncs      []template.FuncMap
 	templateComponents []string
@@ -70,22 +104,40 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.handler.ServeHTTP(w, r)
 }
 
-// Server overrides server when calling ListenAndServe
-func (app *App) Server(server *http.Server) *App {
-	app.srv = server
-	return app
+func (app *App) configServer() {
+	app.srv.Addr = app.Addr
+	app.srv.TLSConfig = app.TLSConfig
+	app.srv.ReadTimeout = app.ReadTimeout
+	app.srv.ReadHeaderTimeout = app.ReadHeaderTimeout
+	app.srv.WriteTimeout = app.WriteTimeout
+	app.srv.IdleTimeout = app.IdleTimeout
+	app.srv.MaxHeaderBytes = app.MaxHeaderBytes
+	app.srv.TLSNextProto = app.TLSNextProto
+	app.srv.ConnState = app.ConnState
+	app.srv.ErrorLog = app.ErrorLog
+	app.srv.Handler = app
 }
 
 // ListenAndServe starts web server
 func (app *App) ListenAndServe(addr string) error {
-	if app.srv == nil {
-		app.srv = &http.Server{
-			Addr:    addr,
-			Handler: app,
-		}
+	app.configServer()
+
+	if addr != "" {
+		app.srv.Addr = addr
 	}
 
 	return app.srv.ListenAndServe()
+}
+
+// ListenAndServeTLS starts web server in tls mode
+func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
+	app.configServer()
+
+	if addr != "" {
+		app.srv.Addr = addr
+	}
+
+	return app.srv.ListenAndServeTLS(certFile, keyFile)
 }
 
 // GracefulShutdown returns graceful shutdown server
