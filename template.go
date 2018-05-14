@@ -5,20 +5,41 @@ import (
 	"path/filepath"
 )
 
-// TemplateFuncs adds template funcs
-func (app *app) TemplateFuncs(funcs ...template.FuncMap) App {
+// TemplateRoot calls t.Lookup(name) after load template,
+// empty string won't trigger t.Lookup
+//
+// default is ""
+func (app *App) TemplateRoot(name string) *App {
+	app.templateRoot = name
+	return app
+}
+
+// TemplateDir sets root directory when load template
+//
+// default is ""
+func (app *App) TemplateDir(path string) *App {
+	app.templateDir = path
+	return app
+}
+
+// TemplateFuncs adds template funcs while load template
+func (app *App) TemplateFuncs(funcs ...template.FuncMap) *App {
 	app.templateFuncs = append(app.templateFuncs, funcs...)
 	return app
 }
 
-// Component adds global template component
-func (app *app) Component(filename ...string) App {
+// Component adds given templates to every templates
+func (app *App) Component(filename ...string) *App {
 	app.templateComponents = append(app.templateComponents, filename...)
 	return app
 }
 
-// Template registers new template
-func (app *app) Template(name string, filename ...string) App {
+// Template loads template into memory
+func (app *App) Template(name string, filename ...string) *App {
+	if app.template == nil {
+		app.template = make(map[string]*template.Template)
+	}
+
 	if _, ok := app.template[name]; ok {
 		panic(newErrTemplateDuplicate(name))
 	}
@@ -45,8 +66,12 @@ func (app *app) Template(name string, filename ...string) App {
 	fn := make([]string, len(filename))
 	copy(fn, filename)
 	fn = append(fn, app.templateComponents...)
+
 	t = template.Must(t.ParseFiles(joinTemplateDir(app.templateDir, fn...)...))
-	t = t.Lookup(app.templateRoot)
+
+	if app.templateRoot != "" {
+		t = t.Lookup(app.templateRoot)
+	}
 
 	app.template[name] = t
 

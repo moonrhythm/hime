@@ -1,5 +1,7 @@
 # Hime
 
+[![Build Status](https://travis-ci.org/acoshift/hime.svg?branch=master)](https://travis-ci.org/acoshift/hime)
+[![Coverage Status](https://coveralls.io/repos/github/acoshift/hime/badge.svg?branch=master)](https://coveralls.io/github/acoshift/hime?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/acoshift/hime)](https://goreportcard.com/report/github.com/acoshift/hime)
 [![GoDoc](https://godoc.org/github.com/acoshift/hime?status.svg)](https://godoc.org/github.com/acoshift/hime)
 
@@ -26,7 +28,7 @@ Other framework don't allow this. They have built-in router, framework-specific 
 - Compatible with net/http middlewares without code change
 - Use standard html/template for view
 - Built-in core functions for build web server
-- Reduce developer bug
+- Reduce developer bugs
 
 ## What is this framework DO NOT focus
 
@@ -50,7 +52,7 @@ func main() {
 		ListenAndServe(":8080")
 }
 
-func router(app hime.App) http.Handler {
+func router(app *hime.App) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(app.Route("index"), hime.H(indexHandler))
 	return middleware.Chain(

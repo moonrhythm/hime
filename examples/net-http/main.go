@@ -51,7 +51,7 @@ func main() {
 	}
 }
 
-func router(app hime.App) http.Handler {
+func router(app *hime.App) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(app.Route("index"), hime.H(indexHandler))
 	mux.Handle(app.Route("about"), hime.H(aboutHandler))

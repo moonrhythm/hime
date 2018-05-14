@@ -2,8 +2,11 @@ package hime
 
 import (
 	"context"
+	"crypto/tls"
 	"html/template"
+	"log"
 	"mime"
+	"net"
 	"net/http"
 	"time"
 
@@ -14,8 +17,36 @@ import (
 	"github.com/tdewolff/minify/js"
 )
 
-type app struct {
-	srv                *http.Server
+// App is the hime app
+type App struct {
+	// TLSConfig overrides http.Server TLSConfig
+	TLSConfig *tls.Config
+
+	// ReadTimeout overrides http.Server ReadTimeout
+	ReadTimeout time.Duration
+
+	// ReadHeaderTimeout overrides http.Server ReadHeaderTimeout
+	ReadHeaderTimeout time.Duration
+
+	// WriteTimeout overrides http.Server WriteTimeout
+	WriteTimeout time.Duration
+
+	// IdleTimeout overrides http.Server IdleTimeout
+	IdleTimeout time.Duration
+
+	// MaxHeaderBytes overrides http.Server MaxHeaderBytes
+	MaxHeaderBytes int
+
+	// TLSNextProto overrides http.Server TLSNextProto
+	TLSNextProto map[string]func(*http.Server, *tls.Conn, http.Handler)
+
+	// ConnState overrides http.Server ConnState
+	ConnState func(net.Conn, http.ConnState)
+
+	// ErrorLog overrides http.Server ErrorLog
+	ErrorLog *log.Logger
+
+	srv                http.Server
 	handler            http.Handler
 	templateFuncs      []template.FuncMap
 	templateComponents []string
@@ -28,13 +59,6 @@ type app struct {
 	beforeRender       middleware.Middleware
 }
 
-// consts
-const (
-	defTemplateRoot    = "layout"
-	defTemplateDir     = "view"
-	defShutdownTimeout = 30 * time.Second
-)
-
 var (
 	ctxKeyApp = struct{}{}
 )
@@ -44,36 +68,18 @@ func init() {
 }
 
 // New creates new app
-func New() App {
-	app := &app{}
-	app.template = make(map[string]*template.Template)
-	app.templateRoot = defTemplateRoot
-	app.templateDir = defTemplateDir
-	app.routes = make(Routes)
-	app.globals = make(Globals)
-	return app
+func New() *App {
+	return &App{}
 }
 
-// TemplateRoot sets template root to select when load
-func (app *app) TemplateRoot(name string) App {
-	app.templateRoot = name
-	return app
-}
-
-// TemplateDir sets template dir
-func (app *app) TemplateDir(path string) App {
-	app.templateDir = path
-	return app
-}
-
-// Handler sets app handler
-func (app *app) Handler(h http.Handler) App {
+// Handler sets the handler
+func (app *App) Handler(h http.Handler) *App {
 	app.handler = h
 	return app
 }
 
-// Minify sets app minifier
-func (app *app) Minify() App {
+// Minify enables minify when render html, css, js
+func (app *App) Minify() *App {
 	app.minifier = minify.New()
 	app.minifier.AddFunc("text/html", html.Minify)
 	app.minifier.AddFunc("text/css", css.Minify)
@@ -81,39 +87,51 @@ func (app *app) Minify() App {
 	return app
 }
 
-func (app *app) BeforeRender(m middleware.Middleware) App {
+// BeforeRender runs given middleware for before render,
+// ex. View, JSON, String, Bytes, CopyForm, etc
+func (app *App) BeforeRender(m middleware.Middleware) *App {
 	app.beforeRender = m
 	return app
 }
 
-func (app *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, ctxKeyApp, app)
 	r = r.WithContext(ctx)
 	app.handler.ServeHTTP(w, r)
 }
 
-func (app *app) Server(server *http.Server) App {
-	app.srv = server
-	return app
+func (app *App) configServer(addr string) {
+	app.srv.TLSConfig = app.TLSConfig
+	app.srv.ReadTimeout = app.ReadTimeout
+	app.srv.ReadHeaderTimeout = app.ReadHeaderTimeout
+	app.srv.WriteTimeout = app.WriteTimeout
+	app.srv.IdleTimeout = app.IdleTimeout
+	app.srv.MaxHeaderBytes = app.MaxHeaderBytes
+	app.srv.TLSNextProto = app.TLSNextProto
+	app.srv.ConnState = app.ConnState
+	app.srv.ErrorLog = app.ErrorLog
+	app.srv.Handler = app
+	app.srv.Addr = addr
 }
 
-// ListenAndServe is the shotcut for http.ListenAndServe
-func (app *app) ListenAndServe(addr string) error {
-	if app.srv == nil {
-		app.srv = &http.Server{
-			Addr:    addr,
-			Handler: app,
-		}
-	}
+// ListenAndServe starts web server
+func (app *App) ListenAndServe(addr string) error {
+	app.configServer(addr)
 
 	return app.srv.ListenAndServe()
 }
 
-// GracefulShutdown change app to graceful mode
-func (app *app) GracefulShutdown() GracefulShutdownApp {
-	return &gracefulShutdownApp{
-		app:     app,
-		timeout: defShutdownTimeout,
+// ListenAndServeTLS starts web server in tls mode
+func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
+	app.configServer(addr)
+
+	return app.srv.ListenAndServeTLS(certFile, keyFile)
+}
+
+// GracefulShutdown returns graceful shutdown server
+func (app *App) GracefulShutdown() *GracefulShutdown {
+	return &GracefulShutdown{
+		App: app,
 	}
 }
