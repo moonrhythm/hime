@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-// GracefulShutdownApp is the app in graceful shutdown mode
-type GracefulShutdownApp struct {
-	*App
+// GracefulShutdown is the app in graceful shutdown mode
+type GracefulShutdown struct {
+	App       *App
 	timeout   time.Duration
 	wait      time.Duration
 	notiFns   []func()
@@ -22,51 +22,51 @@ type GracefulShutdownApp struct {
 // set to 0 to disable timeout
 //
 // default is 0
-func (app *GracefulShutdownApp) Timeout(d time.Duration) *GracefulShutdownApp {
-	app.timeout = d
-	return app
+func (gs *GracefulShutdown) Timeout(d time.Duration) *GracefulShutdown {
+	gs.timeout = d
+	return gs
 }
 
 // Wait sets wait time before shutdown
-func (app *GracefulShutdownApp) Wait(d time.Duration) *GracefulShutdownApp {
-	app.wait = d
-	return app
+func (gs *GracefulShutdown) Wait(d time.Duration) *GracefulShutdown {
+	gs.wait = d
+	return gs
 }
 
 // Notify calls fn when receive terminate signal from os
-func (app *GracefulShutdownApp) Notify(fn func()) *GracefulShutdownApp {
+func (gs *GracefulShutdown) Notify(fn func()) *GracefulShutdown {
 	if fn != nil {
-		app.notiFns = append(app.notiFns, fn)
+		gs.notiFns = append(gs.notiFns, fn)
 	}
-	return app
+	return gs
 }
 
 // Before runs fn before start waiting to SIGTERM
-func (app *GracefulShutdownApp) Before(fn func()) *GracefulShutdownApp {
+func (gs *GracefulShutdown) Before(fn func()) *GracefulShutdown {
 	if fn != nil {
-		app.beforeFns = append(app.beforeFns, fn)
+		gs.beforeFns = append(gs.beforeFns, fn)
 	}
-	return app
+	return gs
 }
 
 // ListenAndServe starts web server in graceful shutdown mode
-func (app *GracefulShutdownApp) ListenAndServe(addr string) (err error) {
-	if app.srv == nil {
-		app.srv = &http.Server{
+func (gs *GracefulShutdown) ListenAndServe(addr string) (err error) {
+	if gs.App.srv == nil {
+		gs.App.srv = &http.Server{
 			Addr:    addr,
-			Handler: app,
+			Handler: gs.App,
 		}
 	}
 
 	serverCtx, cancelServer := context.WithCancel(context.Background())
 	defer cancelServer()
 	go func() {
-		if err = app.srv.ListenAndServe(); err != http.ErrServerClosed {
+		if err = gs.App.srv.ListenAndServe(); err != http.ErrServerClosed {
 			cancelServer()
 		}
 	}()
 
-	for _, fn := range app.beforeFns {
+	for _, fn := range gs.beforeFns {
 		fn()
 	}
 
@@ -77,19 +77,19 @@ func (app *GracefulShutdownApp) ListenAndServe(addr string) (err error) {
 	case <-serverCtx.Done():
 		return
 	case <-stop:
-		for _, fn := range app.notiFns {
+		for _, fn := range gs.notiFns {
 			fn()
 		}
-		if app.wait > 0 {
-			time.Sleep(app.wait)
+		if gs.wait > 0 {
+			time.Sleep(gs.wait)
 		}
 
-		if app.timeout > 0 {
-			ctx, cancel := context.WithTimeout(context.Background(), app.timeout)
+		if gs.timeout > 0 {
+			ctx, cancel := context.WithTimeout(context.Background(), gs.timeout)
 			defer cancel()
-			err = app.srv.Shutdown(ctx)
+			err = gs.App.srv.Shutdown(ctx)
 		} else {
-			err = app.srv.Shutdown(context.Background())
+			err = gs.App.srv.Shutdown(context.Background())
 		}
 	}
 	return

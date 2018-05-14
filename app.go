@@ -88,10 +88,9 @@ func (app *App) ListenAndServe(addr string) error {
 	return app.srv.ListenAndServe()
 }
 
-// GracefulShutdown runs server as graceful shutdown,
-// can works only when start server with app.ListenAndServe
-func (app *App) GracefulShutdown() *GracefulShutdownApp {
-	return &GracefulShutdownApp{
+// GracefulShutdown returns graceful shutdown server
+func (app *App) GracefulShutdown() *GracefulShutdown {
+	return &GracefulShutdown{
 		App: app,
 	}
 }
