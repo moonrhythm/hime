@@ -50,8 +50,6 @@ func New() *App {
 	app.template = make(map[string]*template.Template)
 	app.templateRoot = defTemplateRoot
 	app.templateDir = defTemplateDir
-	app.routes = make(Routes)
-	app.globals = make(Globals)
 	return app
 }
 
