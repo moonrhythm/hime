@@ -6,16 +6,10 @@ routes:
 template:
   dir: testdata/config1
   root: layout
-  minify: true
   components:
   - comp/footer.tmpl
   list:
     main.tmpl: [main.tmpl, _layout.tmpl]
-server:
-  readTimeout: 10s
-  readHeaderTimeout: 5s
-  writeTimeout: 5s
-  idleTimeout: 30s
 graceful:
-  timeout: 1m
+  timeout: abc
   wait: 5s
