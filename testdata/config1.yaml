@@ -1,0 +1,12 @@
+globals:
+  data1: test
+routes:
+  index: /
+  about: /about
+template:
+  dir: testdata/config1
+  root: layout
+  components:
+  - comp/footer.tmpl
+  list:
+    main.tmpl: [main.tmpl, _layout.tmpl]
