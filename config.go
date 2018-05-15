@@ -85,7 +85,7 @@ func (app *App) Load(config Config) *App {
 		}
 		tp.Component(cfg.Components...)
 		for name, filenames := range cfg.List {
-			tp.Template(name, filenames...)
+			tp.Parse(name, filenames...)
 		}
 		if cfg.Minify {
 			tp.Minify()

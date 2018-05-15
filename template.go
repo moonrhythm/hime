@@ -110,8 +110,8 @@ func (tp *Template) Component(filename ...string) *Template {
 	return tp
 }
 
-// Template loads template into memory
-func (tp *Template) Template(name string, filename ...string) *Template {
+// Parse loads template into memory
+func (tp *Template) Parse(name string, filenames ...string) *Template {
 	if _, ok := tp.list[name]; ok {
 		panic(newErrTemplateDuplicate(name))
 	}
@@ -129,8 +129,8 @@ func (tp *Template) Template(name string, filename ...string) *Template {
 	}
 
 	// load templates and components
-	fn := make([]string, len(filename))
-	copy(fn, filename)
+	fn := make([]string, len(filenames))
+	copy(fn, filenames)
 	fn = append(fn, tp.components...)
 
 	t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, fn...)...))

@@ -42,7 +42,7 @@ func main() {
     app := hime.New()
 
     app.Template().
-        Template("index", "index.tmpl", "_layout.tmpl").
+        Parse("index", "index.tmpl", "_layout.tmpl").
         Minify()
 
     app.
@@ -159,7 +159,7 @@ func main() {
     app := hime.New()
 
     app.Template().
-        Template("index", "index.tmpl", "_layout.tmpl").
+        Parse("index", "index.tmpl", "_layout.tmpl").
         Minify()
 
     app.
