@@ -9,15 +9,16 @@ import (
 
 // Config is app's config
 type Config struct {
-	Globals  map[interface{}]interface{} `yaml:"globals" json:"globals"`
-	Routes   map[string]string           `yaml:"routes" json:"routes"`
-	Template struct {
+	Globals   map[interface{}]interface{} `yaml:"globals" json:"globals"`
+	Routes    map[string]string           `yaml:"routes" json:"routes"`
+	Templates []struct {
 		Dir        string              `yaml:"dir" json:"dir"`
 		Root       string              `yaml:"root" json:"root"`
 		Minify     bool                `yaml:"minify" json:"minify"`
 		Components []string            `yaml:"components" json:"components"`
 		List       map[string][]string `yaml:"list" json:"list"`
-	} `yaml:"template" json:"template"`
+		Delims     []string            `yaml:"delims" json:"delims"`
+	} `yaml:"templates" json:"templates"`
 	Server struct {
 		ReadTimeout       string `yaml:"readTimeout" json:"readTimeout"`
 		ReadHeaderTimeout string `yaml:"readHeaderTimeout" json:"readHeaderTimeout"`
@@ -50,9 +51,10 @@ func parseDuration(s string, t *time.Duration) {
 // routes:
 //   index: /
 //   about: /about
-// template:
-//   dir: view
+// templates:
+// - dir: view
 //   root: layout
+//   delims: ["{{", "}}"]
 //   minify: true
 //   components:
 //   - comp/comp1.tmpl
@@ -73,16 +75,21 @@ func parseDuration(s string, t *time.Duration) {
 func (app *App) Load(config Config) *App {
 	app.Globals(config.Globals)
 	app.Routes(config.Routes)
-	app.templateDir = config.Template.Dir
-	app.templateRoot = config.Template.Root
-	app.Component(config.Template.Components...)
 
-	for name, filenames := range config.Template.List {
-		app.Template(name, filenames...)
-	}
-
-	if config.Template.Minify {
-		app.Minify()
+	for _, cfg := range config.Templates {
+		tp := app.Template()
+		tp.Dir(cfg.Dir)
+		tp.Root(cfg.Root)
+		if len(cfg.Delims) == 2 {
+			tp.Delims(cfg.Delims[0], cfg.Delims[1])
+		}
+		tp.Component(cfg.Components...)
+		for name, filenames := range cfg.List {
+			tp.Parse(name, filenames...)
+		}
+		if cfg.Minify {
+			tp.Minify()
+		}
 	}
 
 	// load server config
@@ -94,6 +101,7 @@ func (app *App) Load(config Config) *App {
 	// load graceful config
 	parseDuration(config.Graceful.Timeout, &app.graceful.timeout)
 	parseDuration(config.Graceful.Wait, &app.graceful.wait)
+
 	return app
 }
 

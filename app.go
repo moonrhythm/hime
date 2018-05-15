@@ -3,7 +3,6 @@ package hime
 import (
 	"context"
 	"crypto/tls"
-	"html/template"
 	"log"
 	"mime"
 	"net"
@@ -11,10 +10,6 @@ import (
 	"time"
 
 	"github.com/acoshift/middleware"
-	"github.com/tdewolff/minify"
-	"github.com/tdewolff/minify/css"
-	"github.com/tdewolff/minify/html"
-	"github.com/tdewolff/minify/js"
 )
 
 // App is the hime app
@@ -46,17 +41,13 @@ type App struct {
 	// ErrorLog overrides http.Server ErrorLog
 	ErrorLog *log.Logger
 
-	srv                http.Server
-	handler            http.Handler
-	templateFuncs      []template.FuncMap
-	templateComponents []string
-	templateRoot       string
-	templateDir        string
-	template           map[string]*template.Template
-	minifier           *minify.M
-	routes             Routes
-	globals            Globals
-	beforeRender       middleware.Middleware
+	srv          http.Server
+	handler      http.Handler
+	routes       Routes
+	globals      Globals
+	beforeRender middleware.Middleware
+
+	template map[string]*tmpl
 
 	graceful struct {
 		timeout time.Duration
@@ -80,15 +71,6 @@ func New() *App {
 // Handler sets the handler
 func (app *App) Handler(h http.Handler) *App {
 	app.handler = h
-	return app
-}
-
-// Minify enables minify when render html, css, js
-func (app *App) Minify() *App {
-	app.minifier = minify.New()
-	app.minifier.AddFunc("text/html", html.Minify)
-	app.minifier.AddFunc("text/css", css.Minify)
-	app.minifier.AddFunc("text/javascript", js.Minify)
 	return app
 }
 

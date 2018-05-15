@@ -3,8 +3,8 @@ globals:
 routes:
   index: /
   about: /about
-template:
-  dir: testdata/config1
+templates:
+- dir: testdata/config1
   root: layout
   components:
   - comp/footer.tmpl
