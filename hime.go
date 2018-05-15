@@ -149,4 +149,7 @@ type Param struct {
 	Value interface{}
 }
 
-var _ = Context(&appContext{})
+var (
+	_ = Context(&appContext{})
+	_ = context.Context(&appContext{})
+)

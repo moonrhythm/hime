@@ -10,6 +10,8 @@ import (
 )
 
 func TestGlobal(t *testing.T) {
+	t.Parallel()
+
 	app := hime.New()
 
 	assert.Nil(t, app.Global("key1"))

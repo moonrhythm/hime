@@ -3,6 +3,7 @@ package hime
 import (
 	"context"
 	"crypto/tls"
+	"html/template"
 	"log"
 	"mime"
 	"net"
@@ -47,7 +48,8 @@ type App struct {
 	globals      Globals
 	beforeRender middleware.Middleware
 
-	template map[string]*tmpl
+	template     map[string]*tmpl
+	templateFunc []template.FuncMap
 
 	graceful struct {
 		timeout time.Duration
