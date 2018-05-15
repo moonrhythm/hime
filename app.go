@@ -57,6 +57,11 @@ type App struct {
 	routes             Routes
 	globals            Globals
 	beforeRender       middleware.Middleware
+
+	graceful struct {
+		timeout time.Duration
+		wait    time.Duration
+	}
 }
 
 var (
@@ -132,6 +137,8 @@ func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
 // GracefulShutdown returns graceful shutdown server
 func (app *App) GracefulShutdown() *GracefulShutdown {
 	return &GracefulShutdown{
-		App: app,
+		App:     app,
+		timeout: app.graceful.timeout,
+		wait:    app.graceful.wait,
 	}
 }

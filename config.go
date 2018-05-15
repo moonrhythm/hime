@@ -2,19 +2,42 @@ package hime
 
 import (
 	"os"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
 // Config is app's config
 type Config struct {
-	Globals  map[interface{}]interface{}
-	Routes   map[string]string
+	Globals  map[interface{}]interface{} `yaml:"globals" json:"globals"`
+	Routes   map[string]string           `yaml:"routes" json:"routes"`
 	Template struct {
-		Dir        string
-		Root       string
-		Components []string
-		List       map[string][]string
+		Dir        string              `yaml:"dir" json:"dir"`
+		Root       string              `yaml:"root" json:"root"`
+		Minify     bool                `yaml:"minify" json:"minify"`
+		Components []string            `yaml:"components" json:"components"`
+		List       map[string][]string `yaml:"list" json:"list"`
+	} `yaml:"template" json:"template"`
+	Server struct {
+		ReadTimeout       string `yaml:"readTimeout" json:"readTimeout"`
+		ReadHeaderTimeout string `yaml:"readHeaderTimeout" json:"readHeaderTimeout"`
+		WriteTimeout      string `yaml:"writeTimeout" json:"writeTimeout"`
+		IdleTimeout       string `yaml:"idleTimeout" json:"idleTimeout"`
+	} `yaml:"server" json:"server"`
+	Graceful struct {
+		Timeout string `yaml:"timeout" json:"timeout"`
+		Wait    string `yaml:"wait" json:"wait"`
+	} `yaml:"graceful" json:"graceful"`
+}
+
+func parseDuration(s string, t *time.Duration) {
+	if s == "" {
+		return
+	}
+	var err error
+	*t, err = time.ParseDuration(s)
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -30,6 +53,7 @@ type Config struct {
 // template:
 //   dir: view
 //   root: layout
+//   minify: true
 //   components:
 //   - comp/comp1.tmpl
 //   - comp/comp2.tmpl
@@ -38,6 +62,14 @@ type Config struct {
 //     - main.tmpl
 //     - _layout.tmpl
 //     about.tmpl: [about.tmpl, _layout.tmpl]
+// server:
+//   readTimeout: 10s
+//   readHeaderTimeout: 5s
+//   writeTimeout: 5s
+//   idleTimeout: 30s
+// graceful:
+//   timeout: 1m
+//   wait: 5s
 func (app *App) Load(config Config) *App {
 	app.Globals(config.Globals)
 	app.Routes(config.Routes)
@@ -49,6 +81,19 @@ func (app *App) Load(config Config) *App {
 		app.Template(name, filenames...)
 	}
 
+	if config.Template.Minify {
+		app.Minify()
+	}
+
+	// load server config
+	parseDuration(config.Server.ReadTimeout, &app.ReadTimeout)
+	parseDuration(config.Server.ReadHeaderTimeout, &app.ReadHeaderTimeout)
+	parseDuration(config.Server.WriteTimeout, &app.WriteTimeout)
+	parseDuration(config.Server.IdleTimeout, &app.IdleTimeout)
+
+	// load graceful config
+	parseDuration(config.Graceful.Timeout, &app.graceful.timeout)
+	parseDuration(config.Graceful.Wait, &app.graceful.wait)
 	return app
 }
 
@@ -66,7 +111,5 @@ func (app *App) LoadFromFile(filename string) *App {
 		panic(err)
 	}
 
-	app.Load(config)
-
-	return app
+	return app.Load(config)
 }
