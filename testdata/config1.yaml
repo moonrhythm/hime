@@ -12,6 +12,10 @@ templates:
   - comp/footer.tmpl
   list:
     main.tmpl: [main.tmpl, _layout.tmpl]
+- dir: testdata/config1-2
+  root: root
+  list:
+    main2.tmpl: [main.tmpl, _layout.tmpl]
 server:
   readTimeout: 10s
   readHeaderTimeout: 5s
