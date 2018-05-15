@@ -8,6 +8,8 @@ import (
 )
 
 func TestBuildPath(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Input  string
 		Output string
@@ -30,6 +32,8 @@ func TestBuildPath(t *testing.T) {
 }
 
 func TestBuildPathParams(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Base   string
 		Params []interface{}
@@ -54,6 +58,8 @@ func TestBuildPathParams(t *testing.T) {
 }
 
 func TestSafeRedirectPath(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Input  string
 		Output string

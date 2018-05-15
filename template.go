@@ -19,11 +19,17 @@ func (app *App) Template() *Template {
 	}
 	return &Template{
 		list: app.template,
-		funcs: []template.FuncMap{template.FuncMap{
+		funcs: append([]template.FuncMap{template.FuncMap{
 			"route":  app.Route,
 			"global": app.Global,
-		}},
+		}}, app.templateFunc...),
 	}
+}
+
+// TemplateFuncs registers app's level template funcs
+func (app *App) TemplateFuncs(funcs ...template.FuncMap) *App {
+	app.templateFunc = append(app.templateFunc, funcs...)
+	return app
 }
 
 type tmpl struct {
