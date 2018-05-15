@@ -20,14 +20,16 @@ var tmplFunc = template.FuncMap{
 func main() {
 	app := hime.New()
 
-	err := app.
-		TemplateDir("view").
-		TemplateRoot("layout").
-		TemplateFuncs(tmplFunc).
+	app.Template().
+		Dir("view").
+		Root("layout").
+		Funcs(tmplFunc).
 		Component("_navbar.component.tmpl").
 		Template("index", "index.tmpl", "_layout.tmpl").
 		Template("about", "about.tmpl", "_layout.tmpl").
-		Minify().
+		Minify()
+
+	err := app.
 		Routes(hime.Routes{
 			"index":          "/",
 			"about":          "/about",

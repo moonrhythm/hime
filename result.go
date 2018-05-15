@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"net"
 	"net/http"
@@ -116,13 +115,15 @@ func (ctx *appContext) NoContent() Result {
 
 func (ctx *appContext) View(name string, data interface{}) Result {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t, ok := ctx.app.template.list[name]
+		t, ok := ctx.app.template[name]
 		if !ok {
 			panic(newErrTemplateNotFound(name))
 		}
 
 		ctx.invokeBeforeRender(func() {
-			ctx.renderView(t, ctx.statusCode(), data)
+			ctx.setContentType("text/html; charset=utf-8")
+			ctx.w.WriteHeader(ctx.statusCode())
+			panicRenderError(t.Execute(ctx.w, data))
 		})
 	})
 }
@@ -154,23 +155,6 @@ func panicRenderError(err error) {
 		return
 	}
 	panic(err)
-}
-
-func (ctx *appContext) renderView(t *template.Template, code int, data interface{}) {
-	ctx.setContentType("text/html; charset=utf-8")
-	ctx.w.WriteHeader(code)
-
-	if ctx.app.template.minifier == nil {
-		err := t.Execute(ctx.w, data)
-		panicRenderError(err)
-		return
-	}
-
-	buf := bytes.Buffer{}
-	err := t.Execute(&buf, data)
-	panicRenderError(err)
-	err = ctx.app.template.minifier.Minify("text/html", ctx.w, &buf)
-	panicRenderError(err)
 }
 
 func (ctx *appContext) JSON(data interface{}) Result {
