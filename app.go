@@ -46,17 +46,20 @@ type App struct {
 	// ErrorLog overrides http.Server ErrorLog
 	ErrorLog *log.Logger
 
-	srv                http.Server
-	handler            http.Handler
-	templateFuncs      []template.FuncMap
-	templateComponents []string
-	templateRoot       string
-	templateDir        string
-	template           map[string]*template.Template
-	minifier           *minify.M
-	routes             Routes
-	globals            Globals
-	beforeRender       middleware.Middleware
+	srv          http.Server
+	handler      http.Handler
+	routes       Routes
+	globals      Globals
+	beforeRender middleware.Middleware
+
+	template struct {
+		funcs      []template.FuncMap
+		components []string
+		root       string
+		dir        string
+		list       map[string]*template.Template
+		minifier   *minify.M
+	}
 
 	graceful struct {
 		timeout time.Duration
@@ -85,10 +88,10 @@ func (app *App) Handler(h http.Handler) *App {
 
 // Minify enables minify when render html, css, js
 func (app *App) Minify() *App {
-	app.minifier = minify.New()
-	app.minifier.AddFunc("text/html", html.Minify)
-	app.minifier.AddFunc("text/css", css.Minify)
-	app.minifier.AddFunc("text/javascript", js.Minify)
+	app.template.minifier = minify.New()
+	app.template.minifier.AddFunc("text/html", html.Minify)
+	app.template.minifier.AddFunc("text/css", css.Minify)
+	app.template.minifier.AddFunc("text/javascript", js.Minify)
 	return app
 }
 

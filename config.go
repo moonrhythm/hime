@@ -73,8 +73,8 @@ func parseDuration(s string, t *time.Duration) {
 func (app *App) Load(config Config) *App {
 	app.Globals(config.Globals)
 	app.Routes(config.Routes)
-	app.templateDir = config.Template.Dir
-	app.templateRoot = config.Template.Root
+	app.template.dir = config.Template.Dir
+	app.template.root = config.Template.Root
 	app.Component(config.Template.Components...)
 
 	for name, filenames := range config.Template.List {
@@ -94,6 +94,7 @@ func (app *App) Load(config Config) *App {
 	// load graceful config
 	parseDuration(config.Graceful.Timeout, &app.graceful.timeout)
 	parseDuration(config.Graceful.Wait, &app.graceful.wait)
+
 	return app
 }
 

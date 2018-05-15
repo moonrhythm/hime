@@ -10,7 +10,7 @@ import (
 //
 // default is ""
 func (app *App) TemplateRoot(name string) *App {
-	app.templateRoot = name
+	app.template.root = name
 	return app
 }
 
@@ -18,64 +18,64 @@ func (app *App) TemplateRoot(name string) *App {
 //
 // default is ""
 func (app *App) TemplateDir(path string) *App {
-	app.templateDir = path
+	app.template.dir = path
 	return app
 }
 
 // TemplateFuncs adds template funcs while load template
 func (app *App) TemplateFuncs(funcs ...template.FuncMap) *App {
-	app.templateFuncs = append(app.templateFuncs, funcs...)
+	app.template.funcs = append(app.template.funcs, funcs...)
 	return app
 }
 
 // Component adds given templates to every templates
 func (app *App) Component(filename ...string) *App {
-	app.templateComponents = append(app.templateComponents, filename...)
+	app.template.components = append(app.template.components, filename...)
 	return app
 }
 
 // Template loads template into memory
 func (app *App) Template(name string, filename ...string) *App {
-	if app.template == nil {
-		app.template = make(map[string]*template.Template)
+	if app.template.list == nil {
+		app.template.list = make(map[string]*template.Template)
 	}
 
-	if _, ok := app.template[name]; ok {
+	if _, ok := app.template.list[name]; ok {
 		panic(newErrTemplateDuplicate(name))
 	}
 
 	t := template.New("")
 
 	t.Funcs(template.FuncMap{
-		"templateName": func() string {
-			return name
-		},
-		"route":  app.Route,
-		"global": app.Global,
-		"param": func(name string, value interface{}) *Param {
-			return &Param{Name: name, Value: value}
-		},
+		"templateName": func() string { return name },
+		"route":        app.Route,
+		"global":       app.Global,
+		"param":        makeParam,
 	})
 
 	// register funcs
-	for _, fn := range app.templateFuncs {
+	for _, fn := range app.template.funcs {
 		t.Funcs(fn)
 	}
 
 	// load templates and components
 	fn := make([]string, len(filename))
 	copy(fn, filename)
-	fn = append(fn, app.templateComponents...)
+	fn = append(fn, app.template.components...)
 
-	t = template.Must(t.ParseFiles(joinTemplateDir(app.templateDir, fn...)...))
+	t = template.Must(t.ParseFiles(joinTemplateDir(app.template.dir, fn...)...))
 
-	if app.templateRoot != "" {
-		t = t.Lookup(app.templateRoot)
+	if app.template.root != "" {
+		t = t.Lookup(app.template.root)
 	}
 
-	app.template[name] = t
+	app.template.list[name] = t
 
 	return app
+}
+
+func makeParam(name string, value interface{}) *Param {
+	return &Param{Name: name, Value: value}
 }
 
 func joinTemplateDir(dir string, filenames ...string) []string {

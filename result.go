@@ -116,7 +116,7 @@ func (ctx *appContext) NoContent() Result {
 
 func (ctx *appContext) View(name string, data interface{}) Result {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t, ok := ctx.app.template[name]
+		t, ok := ctx.app.template.list[name]
 		if !ok {
 			panic(newErrTemplateNotFound(name))
 		}
@@ -160,7 +160,7 @@ func (ctx *appContext) renderView(t *template.Template, code int, data interface
 	ctx.setContentType("text/html; charset=utf-8")
 	ctx.w.WriteHeader(code)
 
-	if ctx.app.minifier == nil {
+	if ctx.app.template.minifier == nil {
 		err := t.Execute(ctx.w, data)
 		panicRenderError(err)
 		return
@@ -169,7 +169,7 @@ func (ctx *appContext) renderView(t *template.Template, code int, data interface
 	buf := bytes.Buffer{}
 	err := t.Execute(&buf, data)
 	panicRenderError(err)
-	err = ctx.app.minifier.Minify("text/html", ctx.w, &buf)
+	err = ctx.app.template.minifier.Minify("text/html", ctx.w, &buf)
 	panicRenderError(err)
 }
 
