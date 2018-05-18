@@ -160,10 +160,15 @@ func (gs *GracefulShutdownApps) ListenAndServe() error {
 			wg.Add(1)
 			go func() {
 				ctx := shutdownCtx
-				if app.gracefulShutdown != nil && app.gracefulShutdown.timeout > 0 {
-					var cancel context.CancelFunc
-					ctx, cancel = context.WithTimeout(shutdownCtx, app.gracefulShutdown.timeout)
-					defer cancel()
+				if app.gracefulShutdown != nil {
+					if app.gracefulShutdown.wait > 0 {
+						time.Sleep(app.gracefulShutdown.wait)
+					}
+					if app.gracefulShutdown.timeout > 0 {
+						var cancel context.CancelFunc
+						ctx, cancel = context.WithTimeout(shutdownCtx, app.gracefulShutdown.timeout)
+						defer cancel()
+					}
 				}
 				err := app.srv.Shutdown(ctx)
 				if err != nil {
