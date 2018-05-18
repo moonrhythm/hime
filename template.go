@@ -34,13 +34,13 @@ func (app *App) Template() *Template {
 		funcs: append([]template.FuncMap{template.FuncMap{
 			"route":  app.Route,
 			"global": app.Global,
-		}}, app.templateFunc...),
+		}}, app.templateFuncs...),
 	}
 }
 
 // TemplateFuncs registers app's level template funcs
 func (app *App) TemplateFuncs(funcs ...template.FuncMap) *App {
-	app.templateFunc = append(app.templateFunc, funcs...)
+	app.templateFuncs = append(app.templateFuncs, funcs...)
 	return app
 }
 

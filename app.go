@@ -48,8 +48,8 @@ type App struct {
 	globals      Globals
 	beforeRender middleware.Middleware
 
-	template     map[string]*tmpl
-	templateFunc []template.FuncMap
+	template      map[string]*tmpl
+	templateFuncs []template.FuncMap
 
 	gracefulShutdown *gracefulShutdown
 }

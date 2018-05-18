@@ -1,6 +1,7 @@
 package hime
 
 import (
+	"html/template"
 	"net/http"
 	"reflect"
 	"testing"
@@ -21,6 +22,18 @@ func TestApp(t *testing.T) {
 
 		app.BeforeRender(m)
 		assert.Equal(t, reflect.ValueOf(m).Pointer(), reflect.ValueOf(app.beforeRender).Pointer())
+	})
+
+	t.Run("TemplateFuncs", func(t *testing.T) {
+		app.TemplateFunc("a", func() {})
+		assert.Len(t, app.templateFuncs, 1)
+
+		app.TemplateFuncs(template.FuncMap{
+			"a": func() {},
+			"b": func() {},
+			"c": func() {},
+		})
+		assert.Len(t, app.templateFuncs, 2)
 	})
 
 	t.Run("Routes", func(t *testing.T) {
