@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 )
@@ -100,36 +99,4 @@ func (gs *GracefulShutdownApp) ListenAndServe() error {
 // ListenAndServeTLS starts web server in graceful shutdown and tls mode
 func (gs *GracefulShutdownApp) ListenAndServeTLS(certFile, keyFile string) error {
 	return gs.start(func() error { return gs.App.listenAndServeTLS(certFile, keyFile) })
-}
-
-// GracefulShutdown runs multiple hime's app in graceful shutdown mode
-func GracefulShutdown(apps []*App) error {
-	wg := &sync.WaitGroup{}
-	errChan := make(chan error)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	for _, app := range apps {
-		app := app
-		wg.Add(1)
-		go func() {
-			err := app.GracefulShutdown().ListenAndServe()
-			if err != http.ErrServerClosed {
-				errChan <- err
-			}
-			wg.Done()
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		cancel()
-	}()
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		return nil
-	}
 }
