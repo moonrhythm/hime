@@ -11,7 +11,12 @@ import (
 
 // GracefulShutdown is the app in graceful shutdown mode
 type GracefulShutdown struct {
-	App       *App
+	*gracefulShutdown
+
+	App *App
+}
+
+type gracefulShutdown struct {
 	timeout   time.Duration
 	wait      time.Duration
 	notiFns   []func()

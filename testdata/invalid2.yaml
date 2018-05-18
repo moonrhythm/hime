@@ -10,6 +10,7 @@ templates:
   - comp/footer.tmpl
   list:
     main.tmpl: [main.tmpl, _layout.tmpl]
-graceful:
-  timeout: abc
-  wait: 5s
+server:
+  gracefulShutdown:
+    timeout: abc
+    wait: 5s

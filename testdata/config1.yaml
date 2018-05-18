@@ -11,16 +11,16 @@ templates:
   components:
   - comp/footer.tmpl
   list:
-    main.tmpl: [main.tmpl, _layout.tmpl]
+    main: [main.tmpl, _layout.tmpl]
 - dir: testdata/config1-2
   root: root
   list:
-    main2.tmpl: [main.tmpl, _layout.tmpl]
+    main2: [main.tmpl, _layout.tmpl]
 server:
   readTimeout: 10s
   readHeaderTimeout: 5s
-  writeTimeout: 5s
+  writeTimeout: 6s
   idleTimeout: 30s
-graceful:
-  timeout: 1m
-  wait: 5s
+  gracefulShutdown:
+    timeout: 1m
+    wait: 5s
