@@ -1,7 +1,7 @@
 package hime
 
 import (
-	"os"
+	"io/ioutil"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -42,7 +42,7 @@ func parseDuration(s string, t *time.Duration) {
 	}
 }
 
-// Load loads config
+// Config merges config into app's config
 //
 // Example:
 //
@@ -72,7 +72,7 @@ func parseDuration(s string, t *time.Duration) {
 //   gracefulShutdown:
 //     timeout: 1m
 //     wait: 5s
-func (app *App) Load(config Config) *App {
+func (app *App) Config(config Config) *App {
 	app.Globals(config.Globals)
 	app.Routes(config.Routes)
 
@@ -110,19 +110,22 @@ func (app *App) Load(config Config) *App {
 	return app
 }
 
-// LoadFromFile loads config from file
-func (app *App) LoadFromFile(filename string) *App {
-	fs, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer fs.Close()
-
+// ParseConfig parses config data
+func (app *App) ParseConfig(data []byte) *App {
 	var config Config
-	err = yaml.NewDecoder(fs).Decode(&config)
+	err := yaml.Unmarshal(data, &config)
 	if err != nil {
 		panic(err)
 	}
 
-	return app.Load(config)
+	return app.Config(config)
+}
+
+// ParseConfigFile parses config from file
+func (app *App) ParseConfigFile(filename string) *App {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	return app.ParseConfig(data)
 }
