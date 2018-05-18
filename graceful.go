@@ -94,10 +94,10 @@ func (gs *GracefulShutdown) start(listenAndServe func() error) (err error) {
 
 // ListenAndServe starts web server in graceful shutdown mode
 func (gs *GracefulShutdown) ListenAndServe(addr string) error {
-	return gs.start(func() error { return gs.App.ListenAndServe(addr) })
+	return gs.start(func() error { return gs.App.listenAndServe(addr) })
 }
 
 // ListenAndServeTLS starts web server in graceful shutdown and tls mode
 func (gs *GracefulShutdown) ListenAndServeTLS(addr, certFile, keyFile string) error {
-	return gs.start(func() error { return gs.App.ListenAndServeTLS(addr, certFile, keyFile) })
+	return gs.start(func() error { return gs.App.listenAndServeTLS(addr, certFile, keyFile) })
 }
