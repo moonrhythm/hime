@@ -51,7 +51,7 @@ type App struct {
 	template     map[string]*tmpl
 	templateFunc []template.FuncMap
 
-	graceful struct {
+	gracefulShutdown struct {
 		timeout time.Duration
 		wait    time.Duration
 	}
@@ -122,7 +122,7 @@ func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
 func (app *App) GracefulShutdown() *GracefulShutdown {
 	return &GracefulShutdown{
 		App:     app,
-		timeout: app.graceful.timeout,
-		wait:    app.graceful.wait,
+		timeout: app.gracefulShutdown.timeout,
+		wait:    app.gracefulShutdown.wait,
 	}
 }

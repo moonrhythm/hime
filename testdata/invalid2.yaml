@@ -11,6 +11,6 @@ templates:
   list:
     main.tmpl: [main.tmpl, _layout.tmpl]
 server:
-  graceful:
+  gracefulShutdown:
     timeout: abc
     wait: 5s

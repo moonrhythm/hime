@@ -24,10 +24,10 @@ type Config struct {
 		ReadHeaderTimeout string `yaml:"readHeaderTimeout" json:"readHeaderTimeout"`
 		WriteTimeout      string `yaml:"writeTimeout" json:"writeTimeout"`
 		IdleTimeout       string `yaml:"idleTimeout" json:"idleTimeout"`
-		Graceful          struct {
+		GracefulShutdown  struct {
 			Timeout string `yaml:"timeout" json:"timeout"`
 			Wait    string `yaml:"wait" json:"wait"`
-		} `yaml:"graceful" json:"graceful"`
+		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
 	} `yaml:"server" json:"server"`
 }
 
@@ -99,8 +99,8 @@ func (app *App) Load(config Config) *App {
 	parseDuration(config.Server.IdleTimeout, &app.IdleTimeout)
 
 	// load graceful config
-	parseDuration(config.Server.Graceful.Timeout, &app.graceful.timeout)
-	parseDuration(config.Server.Graceful.Wait, &app.graceful.wait)
+	parseDuration(config.Server.GracefulShutdown.Timeout, &app.gracefulShutdown.timeout)
+	parseDuration(config.Server.GracefulShutdown.Wait, &app.gracefulShutdown.wait)
 
 	return app
 }

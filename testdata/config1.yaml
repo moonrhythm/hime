@@ -21,6 +21,6 @@ server:
   readHeaderTimeout: 5s
   writeTimeout: 5s
   idleTimeout: 30s
-  graceful:
+  gracefulShutdown:
     timeout: 1m
     wait: 5s
