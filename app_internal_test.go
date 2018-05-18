@@ -57,6 +57,11 @@ func TestApp(t *testing.T) {
 		gs.Notify(func() {})
 		assert.Len(t, gs.notiFns, 3)
 	})
+
+	t.Run("Address", func(t *testing.T) {
+		app.Address(":1234")
+		assert.Equal(t, ":1234", app.Addr)
+	})
 }
 
 func TestConfigServer(t *testing.T) {
