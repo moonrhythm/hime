@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type ctxKeyTest string
+
 func TestContext(t *testing.T) {
 	t.Parallel()
 
@@ -23,13 +25,13 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, 500, ctx.code)
 	assert.Equal(t, &Param{Name: "a", Value: 1}, ctx.Param("a", 1))
 
-	nctx := context.WithValue(ctx, "a", "b")
+	nctx := context.WithValue(ctx, ctxKeyTest("a"), "b")
 	ctx.WithContext(nctx)
 	assert.Equal(t, nctx, ctx.Request().Context())
-	assert.Equal(t, "b", ctx.Value("a"))
+	assert.Equal(t, "b", ctx.Value(ctxKeyTest("a")))
 
-	ctx.WithValue("t", "p")
-	assert.Equal(t, "p", ctx.Value("t"))
+	ctx.WithValue(ctxKeyTest("t"), "p")
+	assert.Equal(t, "p", ctx.Value(ctxKeyTest("t")))
 
 	nr := httptest.NewRequest(http.MethodPost, "/test", nil)
 	ctx.WithRequest(nr)
