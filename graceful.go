@@ -22,6 +22,12 @@ type gracefulShutdown struct {
 	notiFns []func()
 }
 
+// Address sets server address
+func (gs *GracefulShutdownApp) Address(addr string) *GracefulShutdownApp {
+	gs.App.Addr = addr
+	return gs
+}
+
 // Timeout sets shutdown timeout for graceful shutdown,
 // set to 0 to disable timeout
 //
@@ -86,11 +92,11 @@ func (gs *GracefulShutdownApp) start(listenAndServe func() error) (err error) {
 }
 
 // ListenAndServe starts web server in graceful shutdown mode
-func (gs *GracefulShutdownApp) ListenAndServe(addr string) error {
-	return gs.start(func() error { return gs.App.listenAndServe(addr) })
+func (gs *GracefulShutdownApp) ListenAndServe() error {
+	return gs.start(gs.App.listenAndServe)
 }
 
 // ListenAndServeTLS starts web server in graceful shutdown and tls mode
-func (gs *GracefulShutdownApp) ListenAndServeTLS(addr, certFile, keyFile string) error {
-	return gs.start(func() error { return gs.App.listenAndServeTLS(addr, certFile, keyFile) })
+func (gs *GracefulShutdownApp) ListenAndServeTLS(certFile, keyFile string) error {
+	return gs.start(func() error { return gs.App.listenAndServeTLS(certFile, keyFile) })
 }

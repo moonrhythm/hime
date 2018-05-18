@@ -63,6 +63,7 @@ func TestConfigServer(t *testing.T) {
 	t.Parallel()
 
 	app := &App{
+		Addr:              ":8080",
 		TLSConfig:         &tls.Config{},
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 6 * time.Second,
@@ -75,7 +76,7 @@ func TestConfigServer(t *testing.T) {
 	}
 
 	assert.Empty(t, &app.srv)
-	app.configServer(":8080")
+	app.configServer()
 	assert.NotEmpty(t, &app.srv)
 	assert.Equal(t, ":8080", app.srv.Addr)
 }

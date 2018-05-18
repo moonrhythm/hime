@@ -17,6 +17,7 @@ templates:
   list:
     main2: [main.tmpl, _layout.tmpl]
 server:
+  addr: :8080
   readTimeout: 10s
   readHeaderTimeout: 5s
   writeTimeout: 6s

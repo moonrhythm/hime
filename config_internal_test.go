@@ -30,6 +30,7 @@ func TestConfig(t *testing.T) {
 			assert.Contains(t, app.template, "main2")
 
 			// server
+			assert.Equal(t, ":8080", app.Addr)
 			assert.Equal(t, 10*time.Second, app.ReadTimeout)
 			assert.Equal(t, 5*time.Second, app.ReadHeaderTimeout)
 			assert.Equal(t, 6*time.Second, app.WriteTimeout)

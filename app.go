@@ -15,6 +15,9 @@ import (
 
 // App is the hime app
 type App struct {
+	// Addr is server address
+	Addr string
+
 	// TLSConfig overrides http.Server TLSConfig
 	TLSConfig *tls.Config
 
@@ -67,6 +70,12 @@ func New() *App {
 	return &App{}
 }
 
+// Address sets server address
+func (app *App) Address(addr string) *App {
+	app.Addr = addr
+	return app
+}
+
 // Handler sets the handler
 func (app *App) Handler(h http.Handler) *App {
 	app.handler = h
@@ -87,7 +96,8 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.handler.ServeHTTP(w, r)
 }
 
-func (app *App) configServer(addr string) {
+func (app *App) configServer() {
+	app.srv.Addr = app.Addr
 	app.srv.TLSConfig = app.TLSConfig
 	app.srv.ReadTimeout = app.ReadTimeout
 	app.srv.ReadHeaderTimeout = app.ReadHeaderTimeout
@@ -98,37 +108,36 @@ func (app *App) configServer(addr string) {
 	app.srv.ConnState = app.ConnState
 	app.srv.ErrorLog = app.ErrorLog
 	app.srv.Handler = app
-	app.srv.Addr = addr
 }
 
-func (app *App) listenAndServe(addr string) error {
-	app.configServer(addr)
+func (app *App) listenAndServe() error {
+	app.configServer()
 
 	return app.srv.ListenAndServe()
 }
 
-func (app *App) listenAndServeTLS(addr, certFile, keyFile string) error {
-	app.configServer(addr)
+func (app *App) listenAndServeTLS(certFile, keyFile string) error {
+	app.configServer()
 
 	return app.srv.ListenAndServeTLS(certFile, keyFile)
 }
 
 // ListenAndServe starts web server
-func (app *App) ListenAndServe(addr string) error {
+func (app *App) ListenAndServe() error {
 	if app.gracefulShutdown != nil {
-		return app.GracefulShutdown().ListenAndServe(addr)
+		return app.GracefulShutdown().ListenAndServe()
 	}
 
-	return app.listenAndServe(addr)
+	return app.listenAndServe()
 }
 
 // ListenAndServeTLS starts web server in tls mode
-func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
+func (app *App) ListenAndServeTLS(certFile, keyFile string) error {
 	if app.gracefulShutdown != nil {
-		return app.GracefulShutdown().ListenAndServeTLS(addr, certFile, keyFile)
+		return app.GracefulShutdown().ListenAndServeTLS(certFile, keyFile)
 	}
 
-	return app.listenAndServeTLS(addr, certFile, keyFile)
+	return app.listenAndServeTLS(certFile, keyFile)
 }
 
 // GracefulShutdown returns graceful shutdown server

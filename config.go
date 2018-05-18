@@ -13,6 +13,7 @@ type AppConfig struct {
 	Routes    map[string]string           `yaml:"routes" json:"routes"`
 	Templates []TemplateConfig            `yaml:"templates" json:"templates"`
 	Server    struct {
+		Addr              string `yaml:"addr" json:"addr"`
 		ReadTimeout       string `yaml:"readTimeout" json:"readTimeout"`
 		ReadHeaderTimeout string `yaml:"readHeaderTimeout" json:"readHeaderTimeout"`
 		WriteTimeout      string `yaml:"writeTimeout" json:"writeTimeout"`
@@ -74,6 +75,9 @@ func (app *App) Config(config AppConfig) *App {
 	}
 
 	// load server config
+	if config.Server.Addr != "" {
+		app.Addr = config.Server.Addr
+	}
 	parseDuration(config.Server.ReadTimeout, &app.ReadTimeout)
 	parseDuration(config.Server.ReadHeaderTimeout, &app.ReadHeaderTimeout)
 	parseDuration(config.Server.WriteTimeout, &app.WriteTimeout)
