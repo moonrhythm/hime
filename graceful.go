@@ -62,7 +62,7 @@ func (gs *GracefulShutdown) start(listenAndServe func() error) (err error) {
 		return
 	case <-stop:
 		for _, fn := range gs.notiFns {
-			fn()
+			go fn()
 		}
 		if gs.wait > 0 {
 			time.Sleep(gs.wait)
