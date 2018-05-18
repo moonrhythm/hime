@@ -7,19 +7,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// Config is app's config
-type Config struct {
+// AppConfig is hime app's config
+type AppConfig struct {
 	Globals   map[interface{}]interface{} `yaml:"globals" json:"globals"`
 	Routes    map[string]string           `yaml:"routes" json:"routes"`
-	Templates []struct {
-		Dir        string              `yaml:"dir" json:"dir"`
-		Root       string              `yaml:"root" json:"root"`
-		Minify     bool                `yaml:"minify" json:"minify"`
-		Components []string            `yaml:"components" json:"components"`
-		List       map[string][]string `yaml:"list" json:"list"`
-		Delims     []string            `yaml:"delims" json:"delims"`
-	} `yaml:"templates" json:"templates"`
-	Server struct {
+	Templates []TemplateConfig            `yaml:"templates" json:"templates"`
+	Server    struct {
 		ReadTimeout       string `yaml:"readTimeout" json:"readTimeout"`
 		ReadHeaderTimeout string `yaml:"readHeaderTimeout" json:"readHeaderTimeout"`
 		WriteTimeout      string `yaml:"writeTimeout" json:"writeTimeout"`
@@ -72,24 +65,12 @@ func parseDuration(s string, t *time.Duration) {
 //   gracefulShutdown:
 //     timeout: 1m
 //     wait: 5s
-func (app *App) Config(config Config) *App {
+func (app *App) Config(config AppConfig) *App {
 	app.Globals(config.Globals)
 	app.Routes(config.Routes)
 
 	for _, cfg := range config.Templates {
-		tp := app.Template()
-		tp.Dir(cfg.Dir)
-		tp.Root(cfg.Root)
-		if len(cfg.Delims) == 2 {
-			tp.Delims(cfg.Delims[0], cfg.Delims[1])
-		}
-		tp.Component(cfg.Components...)
-		for name, filenames := range cfg.List {
-			tp.Parse(name, filenames...)
-		}
-		if cfg.Minify {
-			tp.Minify()
-		}
+		app.Template().Config(cfg)
 	}
 
 	// load server config
@@ -112,12 +93,11 @@ func (app *App) Config(config Config) *App {
 
 // ParseConfig parses config data
 func (app *App) ParseConfig(data []byte) *App {
-	var config Config
+	var config AppConfig
 	err := yaml.Unmarshal(data, &config)
 	if err != nil {
 		panic(err)
 	}
-
 	return app.Config(config)
 }
 

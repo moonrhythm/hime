@@ -4,13 +4,25 @@ import (
 	"bytes"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/html"
 	"github.com/tdewolff/minify/js"
+	yaml "gopkg.in/yaml.v2"
 )
+
+// TemplateConfig is template config
+type TemplateConfig struct {
+	Dir        string              `yaml:"dir" json:"dir"`
+	Root       string              `yaml:"root" json:"root"`
+	Minify     bool                `yaml:"minify" json:"minify"`
+	Components []string            `yaml:"components" json:"components"`
+	List       map[string][]string `yaml:"list" json:"list"`
+	Delims     []string            `yaml:"delims" json:"delims"`
+}
 
 // Template creates new template loader
 func (app *App) Template() *Template {
@@ -22,14 +34,19 @@ func (app *App) Template() *Template {
 		funcs: append([]template.FuncMap{template.FuncMap{
 			"route":  app.Route,
 			"global": app.Global,
-		}}, app.templateFunc...),
+		}}, app.templateFuncs...),
 	}
 }
 
 // TemplateFuncs registers app's level template funcs
 func (app *App) TemplateFuncs(funcs ...template.FuncMap) *App {
-	app.templateFunc = append(app.templateFunc, funcs...)
+	app.templateFuncs = append(app.templateFuncs, funcs...)
 	return app
+}
+
+// TemplateFunc registers an app's level template func
+func (app *App) TemplateFunc(name string, f interface{}) *App {
+	return app.TemplateFuncs(template.FuncMap{name: f})
 }
 
 type tmpl struct {
@@ -63,6 +80,43 @@ type Template struct {
 	funcs      []template.FuncMap
 	components []string
 	minifier   *minify.M
+}
+
+// Config loads template config
+func (tp *Template) Config(cfg TemplateConfig) *Template {
+	tp.Dir(cfg.Dir)
+	tp.Root(cfg.Root)
+	if len(cfg.Delims) == 2 {
+		tp.Delims(cfg.Delims[0], cfg.Delims[1])
+	}
+	tp.Component(cfg.Components...)
+	for name, filenames := range cfg.List {
+		tp.Parse(name, filenames...)
+	}
+	if cfg.Minify {
+		tp.Minify()
+	}
+
+	return tp
+}
+
+// ParseConfig parses template config data
+func (tp *Template) ParseConfig(data []byte) *Template {
+	var config TemplateConfig
+	err := yaml.Unmarshal(data, &config)
+	if err != nil {
+		panic(err)
+	}
+	return tp.Config(config)
+}
+
+// ParseConfigFile parses template config from file
+func (tp *Template) ParseConfigFile(filename string) *Template {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	return tp.ParseConfig(data)
 }
 
 // Minify enables minify when render html, css, js
@@ -108,6 +162,11 @@ func (tp *Template) Dir(path string) *Template {
 func (tp *Template) Funcs(funcs ...template.FuncMap) *Template {
 	tp.funcs = append(tp.funcs, funcs...)
 	return tp
+}
+
+// Func adds a template func while load template
+func (tp *Template) Func(name string, f interface{}) *Template {
+	return tp.Funcs(template.FuncMap{name: f})
 }
 
 // Component adds given templates to every templates
