@@ -51,10 +51,12 @@ type App struct {
 	template     map[string]*tmpl
 	templateFunc []template.FuncMap
 
-	gracefulShutdown struct {
-		timeout time.Duration
-		wait    time.Duration
-	}
+	gracefulShutdown *gracefulShutdown
+}
+
+type gracefulShutdown struct {
+	timeout time.Duration
+	wait    time.Duration
 }
 
 var (
@@ -108,6 +110,10 @@ func (app *App) configServer(addr string) {
 func (app *App) ListenAndServe(addr string) error {
 	app.configServer(addr)
 
+	if app.gracefulShutdown != nil {
+		return app.GracefulShutdown().ListenAndServe(addr)
+	}
+
 	return app.srv.ListenAndServe()
 }
 
@@ -115,14 +121,21 @@ func (app *App) ListenAndServe(addr string) error {
 func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
 	app.configServer(addr)
 
+	if app.gracefulShutdown != nil {
+		return app.GracefulShutdown().ListenAndServeTLS(addr, certFile, keyFile)
+	}
+
 	return app.srv.ListenAndServeTLS(certFile, keyFile)
 }
 
 // GracefulShutdown returns graceful shutdown server
 func (app *App) GracefulShutdown() *GracefulShutdown {
-	return &GracefulShutdown{
-		App:     app,
-		timeout: app.gracefulShutdown.timeout,
-		wait:    app.gracefulShutdown.wait,
+	gs := &GracefulShutdown{
+		App: app,
 	}
+	if app.gracefulShutdown != nil {
+		gs.timeout = app.gracefulShutdown.timeout
+		gs.wait = app.gracefulShutdown.wait
+	}
+	return gs
 }

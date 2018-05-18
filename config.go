@@ -24,7 +24,7 @@ type Config struct {
 		ReadHeaderTimeout string `yaml:"readHeaderTimeout" json:"readHeaderTimeout"`
 		WriteTimeout      string `yaml:"writeTimeout" json:"writeTimeout"`
 		IdleTimeout       string `yaml:"idleTimeout" json:"idleTimeout"`
-		GracefulShutdown  struct {
+		GracefulShutdown  *struct {
 			Timeout string `yaml:"timeout" json:"timeout"`
 			Wait    string `yaml:"wait" json:"wait"`
 		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
@@ -69,9 +69,9 @@ func parseDuration(s string, t *time.Duration) {
 //   readHeaderTimeout: 5s
 //   writeTimeout: 5s
 //   idleTimeout: 30s
-// graceful:
-//   timeout: 1m
-//   wait: 5s
+//   graceful:
+//     timeout: 1m
+//     wait: 5s
 func (app *App) Load(config Config) *App {
 	app.Globals(config.Globals)
 	app.Routes(config.Routes)
@@ -99,8 +99,13 @@ func (app *App) Load(config Config) *App {
 	parseDuration(config.Server.IdleTimeout, &app.IdleTimeout)
 
 	// load graceful config
-	parseDuration(config.Server.GracefulShutdown.Timeout, &app.gracefulShutdown.timeout)
-	parseDuration(config.Server.GracefulShutdown.Wait, &app.gracefulShutdown.wait)
+	if config.Server.GracefulShutdown != nil {
+		if app.gracefulShutdown == nil {
+			app.gracefulShutdown = &gracefulShutdown{}
+		}
+		parseDuration(config.Server.GracefulShutdown.Timeout, &app.gracefulShutdown.timeout)
+		parseDuration(config.Server.GracefulShutdown.Wait, &app.gracefulShutdown.wait)
+	}
 
 	return app
 }
