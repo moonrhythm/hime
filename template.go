@@ -164,6 +164,11 @@ func (tp *Template) Funcs(funcs ...template.FuncMap) *Template {
 	return tp
 }
 
+// Func adds a template func while load template
+func (tp *Template) Func(name string, f interface{}) *Template {
+	return tp.Funcs(template.FuncMap{name: f})
+}
+
 // Component adds given templates to every templates
 func (tp *Template) Component(filename ...string) *Template {
 	tp.components = append(tp.components, filename...)
