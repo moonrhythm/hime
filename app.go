@@ -132,12 +132,12 @@ func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
 }
 
 // GracefulShutdown returns graceful shutdown server
-func (app *App) GracefulShutdown() *GracefulShutdown {
+func (app *App) GracefulShutdown() *GracefulShutdownApp {
 	if app.gracefulShutdown == nil {
 		app.gracefulShutdown = &gracefulShutdown{}
 	}
 
-	return &GracefulShutdown{
+	return &GracefulShutdownApp{
 		App:              app,
 		gracefulShutdown: app.gracefulShutdown,
 	}

@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// GracefulShutdown is the app in graceful shutdown mode
-type GracefulShutdown struct {
+// GracefulShutdownApp is the app in graceful shutdown mode
+type GracefulShutdownApp struct {
 	*gracefulShutdown
 
 	App *App
@@ -26,19 +26,19 @@ type gracefulShutdown struct {
 // set to 0 to disable timeout
 //
 // default is 0
-func (gs *GracefulShutdown) Timeout(d time.Duration) *GracefulShutdown {
+func (gs *GracefulShutdownApp) Timeout(d time.Duration) *GracefulShutdownApp {
 	gs.timeout = d
 	return gs
 }
 
 // Wait sets wait time before shutdown
-func (gs *GracefulShutdown) Wait(d time.Duration) *GracefulShutdown {
+func (gs *GracefulShutdownApp) Wait(d time.Duration) *GracefulShutdownApp {
 	gs.wait = d
 	return gs
 }
 
 // Notify calls fn when receive terminate signal from os
-func (gs *GracefulShutdown) Notify(fn func()) *GracefulShutdown {
+func (gs *GracefulShutdownApp) Notify(fn func()) *GracefulShutdownApp {
 	if fn != nil {
 		gs.notiFns = append(gs.notiFns, fn)
 	}
@@ -46,12 +46,12 @@ func (gs *GracefulShutdown) Notify(fn func()) *GracefulShutdown {
 }
 
 // OnShutdown calls server.RegisterOnShutdown(fn)
-func (gs *GracefulShutdown) OnShutdown(fn func()) *GracefulShutdown {
+func (gs *GracefulShutdownApp) OnShutdown(fn func()) *GracefulShutdownApp {
 	gs.App.srv.RegisterOnShutdown(fn)
 	return gs
 }
 
-func (gs *GracefulShutdown) start(listenAndServe func() error) (err error) {
+func (gs *GracefulShutdownApp) start(listenAndServe func() error) (err error) {
 	serverCtx, cancelServer := context.WithCancel(context.Background())
 	defer cancelServer()
 	go func() {
@@ -86,11 +86,11 @@ func (gs *GracefulShutdown) start(listenAndServe func() error) (err error) {
 }
 
 // ListenAndServe starts web server in graceful shutdown mode
-func (gs *GracefulShutdown) ListenAndServe(addr string) error {
+func (gs *GracefulShutdownApp) ListenAndServe(addr string) error {
 	return gs.start(func() error { return gs.App.listenAndServe(addr) })
 }
 
 // ListenAndServeTLS starts web server in graceful shutdown and tls mode
-func (gs *GracefulShutdown) ListenAndServeTLS(addr, certFile, keyFile string) error {
+func (gs *GracefulShutdownApp) ListenAndServeTLS(addr, certFile, keyFile string) error {
 	return gs.start(func() error { return gs.App.listenAndServeTLS(addr, certFile, keyFile) })
 }
