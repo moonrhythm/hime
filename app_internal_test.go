@@ -1,8 +1,12 @@
 package hime
 
 import (
+	"crypto/tls"
 	"html/template"
+	"log"
+	"net"
 	"net/http"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -36,20 +40,6 @@ func TestApp(t *testing.T) {
 		assert.Len(t, app.templateFuncs, 2)
 	})
 
-	t.Run("Routes", func(t *testing.T) {
-		app.Routes(Routes{"a": "/b", "b": "/cd"})
-		assert.Len(t, app.routes, 2)
-		assert.Equal(t, "/b", app.Route("a"))
-		assert.Equal(t, "/cd", app.Route("b"))
-	})
-
-	t.Run("Globals", func(t *testing.T) {
-		app.Globals(Globals{"a": 12, "b": "34"})
-		assert.Len(t, app.globals, 2)
-		assert.Equal(t, 12, app.Global("a"))
-		assert.Equal(t, "34", app.Global("b"))
-	})
-
 	t.Run("GracefulShutdown", func(t *testing.T) {
 		assert.Nil(t, app.gracefulShutdown)
 		gs := app.GracefulShutdown()
@@ -71,4 +61,25 @@ func TestApp(t *testing.T) {
 		gs.Notify(func() {})
 		assert.Len(t, gs.notiFns, 3)
 	})
+}
+
+func TestConfigServer(t *testing.T) {
+	t.Parallel()
+
+	app := &App{
+		TLSConfig:         &tls.Config{},
+		ReadTimeout:       5 * time.Second,
+		ReadHeaderTimeout: 6 * time.Second,
+		WriteTimeout:      7 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+		MaxHeaderBytes:    1024,
+		TLSNextProto:      map[string]func(*http.Server, *tls.Conn, http.Handler){},
+		ConnState:         func(net.Conn, http.ConnState) {},
+		ErrorLog:          log.New(os.Stderr, "", log.LstdFlags),
+	}
+
+	assert.Empty(t, &app.srv)
+	app.configServer(":8080")
+	assert.NotEmpty(t, &app.srv)
+	assert.Equal(t, ":8080", app.srv.Addr)
 }
