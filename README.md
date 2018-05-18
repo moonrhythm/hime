@@ -52,7 +52,8 @@ func main() {
         BeforeRender(addHeaderRender).
         Handler(router(app)).
         GracefulShutdown().
-        ListenAndServe(":8080")
+        Address(":8080").
+        ListenAndServe()
 }
 
 func router(app *hime.App) http.Handler {

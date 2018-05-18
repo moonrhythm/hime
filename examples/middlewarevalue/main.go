@@ -11,7 +11,8 @@ import (
 func main() {
 	err := hime.New().
 		Handler(router()).
-		ListenAndServe(":8080")
+		Address(":8080").
+		ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
