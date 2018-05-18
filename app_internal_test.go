@@ -52,10 +52,6 @@ func TestApp(t *testing.T) {
 		gs.Wait(5 * time.Second)
 		assert.Equal(t, 5*time.Second, gs.wait)
 
-		gs.Before(func() {})
-		gs.Before(func() {})
-		assert.Len(t, gs.beforeFns, 2)
-
 		gs.Notify(func() {})
 		gs.Notify(func() {})
 		gs.Notify(func() {})

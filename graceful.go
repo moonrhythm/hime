@@ -17,10 +17,9 @@ type GracefulShutdown struct {
 }
 
 type gracefulShutdown struct {
-	timeout   time.Duration
-	wait      time.Duration
-	notiFns   []func()
-	beforeFns []func()
+	timeout time.Duration
+	wait    time.Duration
+	notiFns []func()
 }
 
 // Timeout sets shutdown timeout for graceful shutdown,
@@ -46,14 +45,6 @@ func (gs *GracefulShutdown) Notify(fn func()) *GracefulShutdown {
 	return gs
 }
 
-// Before runs fn before start waiting to SIGTERM
-func (gs *GracefulShutdown) Before(fn func()) *GracefulShutdown {
-	if fn != nil {
-		gs.beforeFns = append(gs.beforeFns, fn)
-	}
-	return gs
-}
-
 func (gs *GracefulShutdown) start(listenAndServe func() error) (err error) {
 	serverCtx, cancelServer := context.WithCancel(context.Background())
 	defer cancelServer()
@@ -62,10 +53,6 @@ func (gs *GracefulShutdown) start(listenAndServe func() error) (err error) {
 			cancelServer()
 		}
 	}()
-
-	for _, fn := range gs.beforeFns {
-		fn()
-	}
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM)
