@@ -101,26 +101,34 @@ func (app *App) configServer(addr string) {
 	app.srv.Addr = addr
 }
 
-// ListenAndServe starts web server
-func (app *App) ListenAndServe(addr string) error {
+func (app *App) listenAndServe(addr string) error {
 	app.configServer(addr)
-
-	if app.gracefulShutdown != nil {
-		return app.GracefulShutdown().ListenAndServe(addr)
-	}
 
 	return app.srv.ListenAndServe()
 }
 
-// ListenAndServeTLS starts web server in tls mode
-func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
+func (app *App) listenAndServeTLS(addr, certFile, keyFile string) error {
 	app.configServer(addr)
 
+	return app.srv.ListenAndServeTLS(certFile, keyFile)
+}
+
+// ListenAndServe starts web server
+func (app *App) ListenAndServe(addr string) error {
+	if app.gracefulShutdown != nil {
+		return app.GracefulShutdown().ListenAndServe(addr)
+	}
+
+	return app.listenAndServe(addr)
+}
+
+// ListenAndServeTLS starts web server in tls mode
+func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
 	if app.gracefulShutdown != nil {
 		return app.GracefulShutdown().ListenAndServeTLS(addr, certFile, keyFile)
 	}
 
-	return app.srv.ListenAndServeTLS(certFile, keyFile)
+	return app.listenAndServeTLS(addr, certFile, keyFile)
 }
 
 // GracefulShutdown returns graceful shutdown server
