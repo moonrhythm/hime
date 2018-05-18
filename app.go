@@ -54,11 +54,6 @@ type App struct {
 	gracefulShutdown *gracefulShutdown
 }
 
-type gracefulShutdown struct {
-	timeout time.Duration
-	wait    time.Duration
-}
-
 var (
 	ctxKeyApp = struct{}{}
 )
@@ -130,12 +125,12 @@ func (app *App) ListenAndServeTLS(addr, certFile, keyFile string) error {
 
 // GracefulShutdown returns graceful shutdown server
 func (app *App) GracefulShutdown() *GracefulShutdown {
-	gs := &GracefulShutdown{
-		App: app,
+	if app.gracefulShutdown == nil {
+		app.gracefulShutdown = &gracefulShutdown{}
 	}
-	if app.gracefulShutdown != nil {
-		gs.timeout = app.gracefulShutdown.timeout
-		gs.wait = app.gracefulShutdown.wait
+
+	return &GracefulShutdown{
+		App:              app,
+		gracefulShutdown: app.gracefulShutdown,
 	}
-	return gs
 }

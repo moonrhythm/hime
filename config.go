@@ -69,7 +69,7 @@ func parseDuration(s string, t *time.Duration) {
 //   readHeaderTimeout: 5s
 //   writeTimeout: 5s
 //   idleTimeout: 30s
-//   graceful:
+//   gracefulShutdown:
 //     timeout: 1m
 //     wait: 5s
 func (app *App) Load(config Config) *App {
