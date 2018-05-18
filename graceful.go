@@ -45,6 +45,12 @@ func (gs *GracefulShutdown) Notify(fn func()) *GracefulShutdown {
 	return gs
 }
 
+// OnShutdown calls server.RegisterOnShutdown(fn)
+func (gs *GracefulShutdown) OnShutdown(fn func()) *GracefulShutdown {
+	gs.App.srv.RegisterOnShutdown(fn)
+	return gs
+}
+
 func (gs *GracefulShutdown) start(listenAndServe func() error) (err error) {
 	serverCtx, cancelServer := context.WithCancel(context.Background())
 	defer cancelServer()
