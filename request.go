@@ -98,6 +98,9 @@ func (ctx *appContext) FormFile(key string) (multipart.File, *multipart.FileHead
 
 func (ctx *appContext) FormFileNotEmpty(key string) (multipart.File, *multipart.FileHeader, error) {
 	file, header, err := ctx.r.FormFile(key)
+	if err != nil {
+		return nil, nil, err
+	}
 	if header.Size == 0 {
 		return nil, nil, http.ErrMissingFile
 	}
