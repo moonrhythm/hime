@@ -326,6 +326,7 @@ app.Template().ParseConfigFile("template.web.yaml")
 - [acoshift/hsts](https://github.com/acoshift/hsts)
 - [acoshift/cachestatic](https://github.com/acoshift/cachestatic)
 - [acoshift/gzip](https://github.com/acoshift/gzip)
+- [acoshift/methodmux](https://github.com/acoshift/methodmux)
 
 ## FAQ
 
