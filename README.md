@@ -254,6 +254,7 @@ templates:
     - _layout.tmpl
     about.tmpl: [about.tmpl, _layout.tmpl]
 server:
+  addr: :8080
   readTimeout: 10s
   readHeaderTimeout: 5s
   writeTimeout: 5s
@@ -280,6 +281,7 @@ routes:
 ```yaml
 // server.yaml
 server:
+  addr: :8080
   readTimeout: 10s
   readHeaderTimeout: 5s
   writeTimeout: 5s
@@ -311,6 +313,29 @@ app := hime.New().
     ParseConfigFile("server.yaml")
 
 app.Template().ParseConfigFile("template.web.yaml")
+```
+
+## Graceful Shutdown Multiple Apps
+
+Hime can handle graceful shutdown for multiple Apps.
+
+```go
+app1 := hime.New().ParseConfigFile("app1.yaml")
+app2 := hime.New().ParseConfigFile("app2.yaml")
+
+probe := probehandler.New() // github.com/acoshift/probehandler
+health := http.NewServeMux()
+health.Handle("/readiness", probe)
+health.Handle("/liveness", probehandler.Success())
+go http.ListenAndServe(":18080", health)
+
+err := hime.Merge(app1, app2).
+    GracefulShutdown().
+    Notify(probe.Fail).
+    ListenAndServe()
+if err != nil {
+    log.Fatal(err)
+}
 ```
 
 ## Useful handlers and middlewares
