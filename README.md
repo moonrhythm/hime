@@ -229,6 +229,90 @@ Hime try to reduce developer errors,
 some error can detect while development.
 Hime will panic for that type of errors.
 
+## Init App with YAML
+
+Hime can init using YAML.
+
+```yaml
+// app.yaml
+globals:
+  data1: test
+routes:
+  index: /
+  about: /about
+templates:
+- dir: view
+  root: layout
+  delims: ["{{", "}}"]
+  minify: true
+  components:
+  - comp/comp1.tmpl
+  - comp/comp2.tmpl
+  list:
+    main.tmpl:
+    - main.tmpl
+    - _layout.tmpl
+    about.tmpl: [about.tmpl, _layout.tmpl]
+server:
+  readTimeout: 10s
+  readHeaderTimeout: 5s
+  writeTimeout: 5s
+  idleTimeout: 30s
+  gracefulShutdown:
+    timeout: 1m
+    wait: 5s
+```
+
+```go
+app := hime.New().
+    ParseConfigFile("app.yaml")
+```
+
+### Multiple Configs
+
+```yaml
+// routes.yaml
+routes:
+  index: /
+  about: /about
+```
+
+```yaml
+// server.yaml
+server:
+  readTimeout: 10s
+  readHeaderTimeout: 5s
+  writeTimeout: 5s
+  idleTimeout: 30s
+  gracefulShutdown:
+    timeout: 1m
+    wait: 5s
+```
+
+```yaml
+// template.web.yaml
+dir: view
+root: layout
+delims: ["{{", "}}"]
+minify: true
+components:
+- comp/comp1.tmpl
+- comp/comp2.tmpl
+list:
+main.tmpl:
+- main.tmpl
+- _layout.tmpl
+about.tmpl: [about.tmpl, _layout.tmpl]
+```
+
+```go
+app := hime.New().
+    ParseConfigFile("routes.yaml").
+    ParseConfigFile("server.yaml")
+
+app.Template().ParseConfigFile("template.web.yaml")
+```
+
 ## Useful handlers and middlewares
 
 - [acoshift/middleware](https://github.com/acoshift/middleware)
