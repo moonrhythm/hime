@@ -102,6 +102,7 @@ func (ctx *appContext) FormFileNotEmpty(key string) (multipart.File, *multipart.
 		return nil, nil, err
 	}
 	if header.Size == 0 {
+		file.Close()
 		return nil, nil, http.ErrMissingFile
 	}
 	return file, header, err
