@@ -181,4 +181,33 @@ func TestResult(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, w.Result().StatusCode)
 		assert.Equal(t, "some not found error :P\n", w.Body.String())
 	})
+
+	t.Run("RedirectTo", func(t *testing.T) {
+		t.Parallel()
+
+		app := hime.New().
+			Routes(hime.Routes{
+				"route1": "/route/1",
+			}).
+			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+				return ctx.RedirectTo("route1")
+			}))
+
+		w := invokeHandler(app, "GET", "/", nil)
+		assert.Equal(t, http.StatusFound, w.Result().StatusCode)
+		l, err := w.Result().Location()
+		assert.NoError(t, err)
+		assert.Equal(t, "/route/1", l.String())
+	})
+
+	t.Run("RedirectToUnknownRoute", func(t *testing.T) {
+		t.Parallel()
+
+		app := hime.New().
+			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+				return ctx.RedirectTo("unknown")
+			}))
+
+		assert.Panics(t, func() { invokeHandler(app, "GET", "/", nil) })
+	})
 }
