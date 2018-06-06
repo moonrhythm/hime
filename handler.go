@@ -7,7 +7,7 @@ import (
 // Wrap wraps hime handler with http.Handler
 func Wrap(h Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := newInternalContext(w, r)
+		ctx := NewContext(w, r)
 		h(ctx).ServeHTTP(ctx.w, ctx.r)
 	})
 }

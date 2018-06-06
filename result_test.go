@@ -155,4 +155,59 @@ func TestResult(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 		assert.Equal(t, "public, max-age=3600", w.Header().Get("Cache-Control"))
 	})
+
+	t.Run("Error", func(t *testing.T) {
+		t.Parallel()
+
+		app := hime.New().
+			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+				return ctx.Error("some error :P")
+			}))
+
+		w := invokeHandler(app, "GET", "/", nil)
+		assert.Equal(t, http.StatusInternalServerError, w.Result().StatusCode)
+		assert.Equal(t, "some error :P\n", w.Body.String())
+	})
+
+	t.Run("ErrorCustomStatusCode", func(t *testing.T) {
+		t.Parallel()
+
+		app := hime.New().
+			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+				return ctx.Status(http.StatusNotFound).Error("some not found error :P")
+			}))
+
+		w := invokeHandler(app, "GET", "/", nil)
+		assert.Equal(t, http.StatusNotFound, w.Result().StatusCode)
+		assert.Equal(t, "some not found error :P\n", w.Body.String())
+	})
+
+	t.Run("RedirectTo", func(t *testing.T) {
+		t.Parallel()
+
+		app := hime.New().
+			Routes(hime.Routes{
+				"route1": "/route/1",
+			}).
+			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+				return ctx.RedirectTo("route1")
+			}))
+
+		w := invokeHandler(app, "GET", "/", nil)
+		assert.Equal(t, http.StatusFound, w.Result().StatusCode)
+		l, err := w.Result().Location()
+		assert.NoError(t, err)
+		assert.Equal(t, "/route/1", l.String())
+	})
+
+	t.Run("RedirectToUnknownRoute", func(t *testing.T) {
+		t.Parallel()
+
+		app := hime.New().
+			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+				return ctx.RedirectTo("unknown")
+			}))
+
+		assert.Panics(t, func() { invokeHandler(app, "GET", "/", nil) })
+	})
 }

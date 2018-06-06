@@ -8,7 +8,12 @@ import (
 	"strings"
 )
 
-func trimComma(s string) string {
+const (
+	// defaultMaxMemory is http.defaultMaxMemory
+	defaultMaxMemory = 32 << 20 // 32 MB
+)
+
+func removeComma(s string) string {
 	return strings.Replace(s, ",", "", -1)
 }
 
@@ -44,7 +49,7 @@ func (ctx *Context) FormValueTrimSpace(key string) string {
 
 // FormValueTrimSpaceComma trims space and remove comma from form value
 func (ctx *Context) FormValueTrimSpaceComma(key string) string {
-	return trimComma(strings.TrimSpace(ctx.FormValue(key)))
+	return removeComma(strings.TrimSpace(ctx.FormValue(key)))
 }
 
 // FormValueInt converts form value to int
@@ -83,7 +88,7 @@ func (ctx *Context) PostFormValueTrimSpace(key string) string {
 
 // PostFormValueTrimSpaceComma trims space and remove comma from post form value
 func (ctx *Context) PostFormValueTrimSpaceComma(key string) string {
-	return trimComma(strings.TrimSpace(ctx.PostFormValue(key)))
+	return removeComma(strings.TrimSpace(ctx.PostFormValue(key)))
 }
 
 // PostFormValueInt converts post form value to int
@@ -128,6 +133,36 @@ func (ctx *Context) FormFileNotEmpty(key string) (multipart.File, *multipart.Fil
 		return nil, nil, http.ErrMissingFile
 	}
 	return file, header, err
+}
+
+// FormFileHeader returns file header for given key without open file
+func (ctx *Context) FormFileHeader(key string) (*multipart.FileHeader, error) {
+	// edit from http.Request.FormFile
+	if ctx.r.MultipartForm == nil {
+		err := ctx.r.ParseMultipartForm(defaultMaxMemory)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if ctx.r.MultipartForm != nil && ctx.r.MultipartForm.File != nil {
+		if fhs := ctx.r.MultipartForm.File[key]; len(fhs) > 0 {
+			return fhs[0], nil
+		}
+	}
+	return nil, http.ErrMissingFile
+}
+
+// FormFileHeaderNotEmpty returns file header if not empty,
+// or http.ErrMissingFile if file is empty
+func (ctx *Context) FormFileHeaderNotEmpty(key string) (*multipart.FileHeader, error) {
+	fh, err := ctx.FormFileHeader(key)
+	if err != nil {
+		return nil, err
+	}
+	if fh.Size == 0 {
+		return nil, http.ErrMissingFile
+	}
+	return fh, nil
 }
 
 // MultipartForm returns r.MultipartForm
