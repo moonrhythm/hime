@@ -13,7 +13,7 @@ const (
 	defaultMaxMemory = 32 << 20 // 32 MB
 )
 
-func trimComma(s string) string {
+func removeComma(s string) string {
 	return strings.Replace(s, ",", "", -1)
 }
 
@@ -49,7 +49,7 @@ func (ctx *Context) FormValueTrimSpace(key string) string {
 
 // FormValueTrimSpaceComma trims space and remove comma from form value
 func (ctx *Context) FormValueTrimSpaceComma(key string) string {
-	return trimComma(strings.TrimSpace(ctx.FormValue(key)))
+	return removeComma(strings.TrimSpace(ctx.FormValue(key)))
 }
 
 // FormValueInt converts form value to int
@@ -88,7 +88,7 @@ func (ctx *Context) PostFormValueTrimSpace(key string) string {
 
 // PostFormValueTrimSpaceComma trims space and remove comma from post form value
 func (ctx *Context) PostFormValueTrimSpaceComma(key string) string {
-	return trimComma(strings.TrimSpace(ctx.PostFormValue(key)))
+	return removeComma(strings.TrimSpace(ctx.PostFormValue(key)))
 }
 
 // PostFormValueInt converts post form value to int

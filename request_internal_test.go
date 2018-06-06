@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTrimComma(t *testing.T) {
+func TestRemoveComma(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -21,6 +21,6 @@ func TestTrimComma(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, c.Output, trimComma(c.Input))
+		assert.Equal(t, c.Output, removeComma(c.Input))
 	}
 }
