@@ -19,6 +19,7 @@ func (app *App) Global(key interface{}) interface{} {
 	return app.globals[key]
 }
 
-func (ctx *appContext) Global(key interface{}) interface{} {
+// Global returns global value
+func (ctx *Context) Global(key interface{}) interface{} {
 	return ctx.app.Global(key)
 }

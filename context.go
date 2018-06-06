@@ -7,11 +7,11 @@ import (
 )
 
 // NewContext creates new hime's context
-func NewContext(w http.ResponseWriter, r *http.Request) Context {
+func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 	return newInternalContext(w, r)
 }
 
-func newInternalContext(w http.ResponseWriter, r *http.Request) *appContext {
+func newInternalContext(w http.ResponseWriter, r *http.Request) *Context {
 	app, ok := r.Context().Value(ctxKeyApp).(*App)
 	if !ok {
 		panic(ErrAppNotFound)
@@ -19,11 +19,12 @@ func newInternalContext(w http.ResponseWriter, r *http.Request) *appContext {
 	return newContext(app, w, r)
 }
 
-func newContext(app *App, w http.ResponseWriter, r *http.Request) *appContext {
-	return &appContext{app, r, w, 0}
+func newContext(app *App, w http.ResponseWriter, r *http.Request) *Context {
+	return &Context{app, r, w, 0}
 }
 
-type appContext struct {
+// Context is hime context
+type Context struct {
 	app *App
 	r   *http.Request
 	w   http.ResponseWriter
@@ -32,54 +33,62 @@ type appContext struct {
 }
 
 // Deadline implements context.Context
-func (ctx *appContext) Deadline() (deadline time.Time, ok bool) {
+func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
 	return ctx.r.Context().Deadline()
 }
 
 // Done implements context.Context
-func (ctx *appContext) Done() <-chan struct{} {
+func (ctx *Context) Done() <-chan struct{} {
 	return ctx.r.Context().Done()
 }
 
 // Err implements context.Context
-func (ctx *appContext) Err() error {
+func (ctx *Context) Err() error {
 	return ctx.r.Context().Err()
 }
 
 // Value implements context.Context
-func (ctx *appContext) Value(key interface{}) interface{} {
+func (ctx *Context) Value(key interface{}) interface{} {
 	return ctx.r.Context().Value(key)
 }
 
-func (ctx *appContext) WithContext(nctx context.Context) {
+// WithContext sets r to r.WithContext with given context
+func (ctx *Context) WithContext(nctx context.Context) {
 	ctx.r = ctx.r.WithContext(nctx)
 }
 
-func (ctx *appContext) WithRequest(r *http.Request) {
+// WithRequest overrides request
+func (ctx *Context) WithRequest(r *http.Request) {
 	ctx.r = r
 }
 
-func (ctx *appContext) WithResponseWriter(w http.ResponseWriter) {
+// WithResponseWriter overrides response writer
+func (ctx *Context) WithResponseWriter(w http.ResponseWriter) {
 	ctx.w = w
 }
 
-func (ctx *appContext) WithValue(key interface{}, val interface{}) {
+// WithValue calls WithContext with value context
+func (ctx *Context) WithValue(key interface{}, val interface{}) {
 	ctx.WithContext(context.WithValue(ctx.r.Context(), key, val))
 }
 
-func (ctx *appContext) Request() *http.Request {
+// Request returns request
+func (ctx *Context) Request() *http.Request {
 	return ctx.r
 }
 
-func (ctx *appContext) ResponseWriter() http.ResponseWriter {
+// ResponseWriter returns response writer
+func (ctx *Context) ResponseWriter() http.ResponseWriter {
 	return ctx.w
 }
 
-func (ctx *appContext) Status(code int) Context {
+// Status sets response status code
+func (ctx *Context) Status(code int) *Context {
 	ctx.code = code
 	return ctx
 }
 
-func (ctx *appContext) Param(name string, value interface{}) *Param {
+// Param is the short-hand for hime.Param
+func (ctx *Context) Param(name string, value interface{}) *Param {
 	return &Param{Name: name, Value: value}
 }

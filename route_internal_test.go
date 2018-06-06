@@ -19,6 +19,6 @@ func TestRoute(t *testing.T) {
 
 	assert.Panics(t, func() { app.Route("notexists") })
 
-	ctx := appContext{app: app}
+	ctx := Context{app: app}
 	assert.Equal(t, "/b", ctx.Route("a"))
 }
