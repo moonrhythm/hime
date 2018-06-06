@@ -8,10 +8,6 @@ import (
 
 // NewContext creates new hime's context
 func NewContext(w http.ResponseWriter, r *http.Request) *Context {
-	return newInternalContext(w, r)
-}
-
-func newInternalContext(w http.ResponseWriter, r *http.Request) *Context {
 	app, ok := r.Context().Value(ctxKeyApp).(*App)
 	if !ok {
 		panic(ErrAppNotFound)
