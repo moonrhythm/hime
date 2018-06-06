@@ -22,7 +22,7 @@ func TestHandler(t *testing.T) {
 
 	t.Run("hime", func(t *testing.T) {
 		app := hime.New().
-			Handler(hime.H(func(ctx hime.Context) hime.Result {
+			Handler(hime.H(func(ctx *hime.Context) hime.Result {
 				return ctx.String("ok")
 			}))
 

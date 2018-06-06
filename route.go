@@ -23,6 +23,7 @@ func (app *App) Route(name string, params ...interface{}) string {
 	return buildPath(path, params...)
 }
 
-func (ctx *appContext) Route(name string, params ...interface{}) string {
+// Route gets route path from name
+func (ctx *Context) Route(name string, params ...interface{}) string {
 	return ctx.app.Route(name, params...)
 }
