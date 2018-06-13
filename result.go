@@ -8,8 +8,6 @@ import (
 	"net"
 	"net/http"
 	"syscall"
-
-	"github.com/acoshift/header"
 )
 
 func (ctx *Context) statusCode() int {
@@ -152,8 +150,8 @@ func (ctx *Context) invokeBeforeRender(after func()) {
 }
 
 func (ctx *Context) setContentType(value string) {
-	if len(ctx.w.Header().Get(header.ContentType)) == 0 {
-		ctx.w.Header().Set(header.ContentType, value)
+	if len(ctx.w.Header().Get("Content-Type")) == 0 {
+		ctx.w.Header().Set("Content-Type", value)
 	}
 }
 
