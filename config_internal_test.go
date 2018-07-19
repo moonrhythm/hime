@@ -35,6 +35,8 @@ func TestConfig(t *testing.T) {
 			assert.Equal(t, 5*time.Second, app.ReadHeaderTimeout)
 			assert.Equal(t, 6*time.Second, app.WriteTimeout)
 			assert.Equal(t, 30*time.Second, app.IdleTimeout)
+			assert.Equal(t, "tls.crt", app.certFile)
+			assert.Equal(t, "tls.key", app.keyFile)
 
 			// graceful
 			assert.NotNil(t, app.gracefulShutdown)

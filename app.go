@@ -55,6 +55,8 @@ type App struct {
 	templateFuncs []template.FuncMap
 
 	gracefulShutdown *gracefulShutdown
+
+	certFile, keyFile string
 }
 
 var (
@@ -124,6 +126,10 @@ func (app *App) listenAndServeTLS(certFile, keyFile string) error {
 
 // ListenAndServe starts web server
 func (app *App) ListenAndServe() error {
+	if app.certFile != "" && app.keyFile != "" {
+		return app.ListenAndServeTLS(app.certFile, app.keyFile)
+	}
+
 	if app.gracefulShutdown != nil {
 		return app.GracefulShutdown().ListenAndServe()
 	}
