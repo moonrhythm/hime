@@ -22,6 +22,8 @@ type AppConfig struct {
 			Timeout string `yaml:"timeout" json:"timeout"`
 			Wait    string `yaml:"wait" json:"wait"`
 		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
+		CertFile string `yaml:"certFile" json:"certFile"`
+		KeyFile  string `yaml:"keyFile" json:"keyFile"`
 	} `yaml:"server" json:"server"`
 }
 
@@ -82,6 +84,8 @@ func (app *App) Config(config AppConfig) *App {
 	parseDuration(config.Server.ReadHeaderTimeout, &app.ReadHeaderTimeout)
 	parseDuration(config.Server.WriteTimeout, &app.WriteTimeout)
 	parseDuration(config.Server.IdleTimeout, &app.IdleTimeout)
+	app.certFile = config.Server.CertFile
+	app.keyFile = config.Server.KeyFile
 
 	// load graceful config
 	if config.Server.GracefulShutdown != nil {
