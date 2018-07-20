@@ -2,6 +2,7 @@ package hime
 
 import (
 	"io/ioutil"
+	"strings"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -22,8 +23,9 @@ type AppConfig struct {
 			Timeout string `yaml:"timeout" json:"timeout"`
 			Wait    string `yaml:"wait" json:"wait"`
 		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
-		CertFile string `yaml:"certFile" json:"certFile"`
-		KeyFile  string `yaml:"keyFile" json:"keyFile"`
+		CertFile   string `yaml:"certFile" json:"certFile"`
+		KeyFile    string `yaml:"keyFile" json:"keyFile"`
+		TLSProfile string `yaml:"tlsProfile" json:"tlsProfile"`
 	} `yaml:"server" json:"server"`
 }
 
@@ -90,6 +92,9 @@ func (app *App) Config(config AppConfig) *App {
 	}
 	if config.Server.KeyFile != "" {
 		app.keyFile = config.Server.KeyFile
+	}
+	if config.Server.TLSProfile != "" {
+		app.tlsProfile = strings.ToLower(config.Server.TLSProfile)
 	}
 
 	// load graceful config
