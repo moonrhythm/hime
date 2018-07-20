@@ -84,8 +84,13 @@ func (app *App) Config(config AppConfig) *App {
 	parseDuration(config.Server.ReadHeaderTimeout, &app.ReadHeaderTimeout)
 	parseDuration(config.Server.WriteTimeout, &app.WriteTimeout)
 	parseDuration(config.Server.IdleTimeout, &app.IdleTimeout)
-	app.certFile = config.Server.CertFile
-	app.keyFile = config.Server.KeyFile
+
+	if config.Server.CertFile != "" {
+		app.certFile = config.Server.CertFile
+	}
+	if config.Server.KeyFile != "" {
+		app.keyFile = config.Server.KeyFile
+	}
 
 	// load graceful config
 	if config.Server.GracefulShutdown != nil {
