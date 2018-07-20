@@ -8,9 +8,8 @@ import (
 var Restricted = tls.Config{
 	MinVersion: tls.VersionTLS12,
 	CurvePreferences: []tls.CurveID{
-		tls.CurveP521,
-		tls.CurveP384,
 		tls.CurveP256,
+		tls.X25519,
 	},
 	PreferServerCipherSuites: true,
 	CipherSuites: []uint16{
@@ -27,9 +26,8 @@ var Restricted = tls.Config{
 var Modern = tls.Config{
 	MinVersion: tls.VersionTLS12,
 	CurvePreferences: []tls.CurveID{
-		tls.CurveP521,
-		tls.CurveP384,
 		tls.CurveP256,
+		tls.X25519,
 	},
 	PreferServerCipherSuites: true,
 	CipherSuites: []uint16{
@@ -50,9 +48,8 @@ var Modern = tls.Config{
 var Compatible = tls.Config{
 	MinVersion: tls.VersionTLS10,
 	CurvePreferences: []tls.CurveID{
-		tls.CurveP521,
-		tls.CurveP384,
 		tls.CurveP256,
+		tls.X25519,
 	},
 	PreferServerCipherSuites: true,
 	CipherSuites: []uint16{
