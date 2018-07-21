@@ -22,8 +22,10 @@ server:
   readHeaderTimeout: 5s
   writeTimeout: 6s
   idleTimeout: 30s
-  certFile: tls.crt
-  keyFile: tls.key
   gracefulShutdown:
     timeout: 1m
     wait: 5s
+  tls:
+    certFile: tls.crt
+    keyFile: tls.key
+    profile: modern

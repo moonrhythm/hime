@@ -23,9 +23,11 @@ type AppConfig struct {
 			Timeout string `yaml:"timeout" json:"timeout"`
 			Wait    string `yaml:"wait" json:"wait"`
 		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
-		CertFile   string `yaml:"certFile" json:"certFile"`
-		KeyFile    string `yaml:"keyFile" json:"keyFile"`
-		TLSProfile string `yaml:"tlsProfile" json:"tlsProfile"`
+		TLS struct {
+			CertFile string `yaml:"certFile" json:"certFile"`
+			KeyFile  string `yaml:"keyFile" json:"keyFile"`
+			Profile  string `yaml:"profile" json:"profile"`
+		} `yaml:"tls" json:"tls"`
 	} `yaml:"server" json:"server"`
 }
 
@@ -87,14 +89,18 @@ func (app *App) Config(config AppConfig) *App {
 	parseDuration(config.Server.WriteTimeout, &app.WriteTimeout)
 	parseDuration(config.Server.IdleTimeout, &app.IdleTimeout)
 
-	if config.Server.CertFile != "" {
-		app.certFile = config.Server.CertFile
-	}
-	if config.Server.KeyFile != "" {
-		app.keyFile = config.Server.KeyFile
-	}
-	if config.Server.TLSProfile != "" {
-		app.tlsProfile = strings.ToLower(config.Server.TLSProfile)
+	{
+		// tls
+		tls := config.Server.TLS
+		if tls.CertFile != "" {
+			app.certFile = tls.CertFile
+		}
+		if tls.KeyFile != "" {
+			app.keyFile = tls.KeyFile
+		}
+		if tls.Profile != "" {
+			app.tlsProfile = strings.ToLower(tls.Profile)
+		}
 	}
 
 	// load graceful config
