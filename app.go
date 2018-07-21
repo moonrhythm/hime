@@ -57,7 +57,6 @@ type App struct {
 	gracefulShutdown *gracefulShutdown
 
 	certFile, keyFile string
-	tlsProfile        string
 }
 
 var (
@@ -111,17 +110,6 @@ func (app *App) configServer() {
 	app.srv.ConnState = app.ConnState
 	app.srv.ErrorLog = app.ErrorLog
 	app.srv.Handler = app
-
-	if app.srv.TLSConfig == nil {
-		switch app.tlsProfile {
-		case "restricted":
-			app.srv.TLSConfig = &Restricted
-		case "modern":
-			app.srv.TLSConfig = &Modern
-		case "compatible":
-			app.srv.TLSConfig = &Compatible
-		}
-	}
 }
 
 func (app *App) listenAndServe() error {

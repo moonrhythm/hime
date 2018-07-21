@@ -1,7 +1,9 @@
 package hime
 
 import (
+	"crypto/tls"
 	"io/ioutil"
+	"log"
 	"strings"
 	"time"
 
@@ -24,9 +26,12 @@ type AppConfig struct {
 			Wait    string `yaml:"wait" json:"wait"`
 		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
 		TLS *struct {
-			CertFile string `yaml:"certFile" json:"certFile"`
-			KeyFile  string `yaml:"keyFile" json:"keyFile"`
-			Profile  string `yaml:"profile" json:"profile"`
+			CertFile   string   `yaml:"certFile" json:"certFile"`
+			KeyFile    string   `yaml:"keyFile" json:"keyFile"`
+			Profile    string   `yaml:"profile" json:"profile"`
+			MinVersion string   `yaml:"minVersion" json:"minVersion"`
+			MaxVersion string   `yaml:"maxVersion" json:"maxVersion"`
+			Curves     []string `yaml:"curves" json:"curves"`
 		} `yaml:"tls" json:"tls"`
 		HTTPSRedirect *struct {
 			Addr string `json:"addr"`
@@ -95,17 +100,69 @@ func (app *App) Config(config AppConfig) *App {
 		parseDuration(server.WriteTimeout, &app.WriteTimeout)
 		parseDuration(server.IdleTimeout, &app.IdleTimeout)
 
-		if tls := server.TLS; tls != nil {
+		if t := server.TLS; t != nil {
+			var tlsConfig *tls.Config
+
+			switch strings.ToLower(t.Profile) {
+			case "restricted":
+				tlsConfig = Restricted.Clone()
+			case "modern":
+				tlsConfig = Modern.Clone()
+			case "compatible":
+				tlsConfig = Compatible.Clone()
+			default:
+				tlsConfig = &tls.Config{}
+			}
+
+			switch strings.ToLower(t.MinVersion) {
+			case "ssl3.0":
+				tlsConfig.MinVersion = tls.VersionSSL30
+			case "tls1.0":
+				tlsConfig.MinVersion = tls.VersionTLS10
+			case "tls1.1":
+				tlsConfig.MinVersion = tls.VersionTLS11
+			case "tls1.2":
+				tlsConfig.MinVersion = tls.VersionTLS12
+			}
+
+			switch strings.ToLower(t.MaxVersion) {
+			case "ssl3.0":
+				tlsConfig.MaxVersion = tls.VersionSSL30
+			case "tls1.0":
+				tlsConfig.MaxVersion = tls.VersionTLS10
+			case "tls1.1":
+				tlsConfig.MaxVersion = tls.VersionTLS11
+			case "tls1.2":
+				tlsConfig.MaxVersion = tls.VersionTLS12
+			}
+
+			if t.Curves != nil {
+				tlsConfig.CurvePreferences = []tls.CurveID{}
+				for _, c := range t.Curves {
+					switch strings.ToLower(c) {
+					case "p256":
+						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.CurveP256)
+					case "p384":
+						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.CurveP384)
+					case "p521":
+						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.CurveP521)
+					case "x25519":
+						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.X25519)
+					default:
+						log.Panicf("hime: unknown tls curve '%s'", c)
+					}
+				}
+			}
+
 			// TODO: auto generate self-signed tls if cert file, key file empty
-			if tls.CertFile != "" {
-				app.certFile = tls.CertFile
+			if t.CertFile != "" {
+				app.certFile = t.CertFile
 			}
-			if tls.KeyFile != "" {
-				app.keyFile = tls.KeyFile
+			if t.KeyFile != "" {
+				app.keyFile = t.KeyFile
 			}
-			if tls.Profile != "" {
-				app.tlsProfile = strings.ToLower(tls.Profile)
-			}
+
+			app.srv.TLSConfig = tlsConfig
 		}
 
 		if gs := server.GracefulShutdown; gs != nil {
@@ -122,7 +179,12 @@ func (app *App) Config(config AppConfig) *App {
 				rd.Addr = ":80"
 			}
 
-			go StartHTTPSRedirectServer(rd.Addr)
+			go func() {
+				err := StartHTTPSRedirectServer(rd.Addr)
+				if err != nil {
+					log.Panicf("hime: start https redirect server error; %v", err)
+				}
+			}()
 		}
 	}
 
