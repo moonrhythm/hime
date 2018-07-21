@@ -28,6 +28,9 @@ type AppConfig struct {
 			KeyFile  string `yaml:"keyFile" json:"keyFile"`
 			Profile  string `yaml:"profile" json:"profile"`
 		} `yaml:"tls" json:"tls"`
+		HTTPSRedirect *struct {
+			Addr string `json:"addr"`
+		} `yaml:"httpsRedirect" json:"httpsRedirect"`
 	} `yaml:"server" json:"server"`
 }
 
@@ -110,6 +113,17 @@ func (app *App) Config(config AppConfig) *App {
 		}
 		parseDuration(config.Server.GracefulShutdown.Timeout, &app.gracefulShutdown.timeout)
 		parseDuration(config.Server.GracefulShutdown.Wait, &app.gracefulShutdown.wait)
+	}
+
+	{
+		httpsRedirect := config.Server.HTTPSRedirect
+		if httpsRedirect != nil {
+			if httpsRedirect.Addr == "" {
+				httpsRedirect.Addr = ":80"
+			}
+
+			go StartHTTPSRedirectServer(httpsRedirect.Addr)
+		}
 	}
 
 	return app
