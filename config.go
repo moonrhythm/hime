@@ -23,7 +23,7 @@ type AppConfig struct {
 			Timeout string `yaml:"timeout" json:"timeout"`
 			Wait    string `yaml:"wait" json:"wait"`
 		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
-		TLS struct {
+		TLS *struct {
 			CertFile string `yaml:"certFile" json:"certFile"`
 			KeyFile  string `yaml:"keyFile" json:"keyFile"`
 			Profile  string `yaml:"profile" json:"profile"`
@@ -83,46 +83,46 @@ func (app *App) Config(config AppConfig) *App {
 		app.Template().Config(cfg)
 	}
 
-	// load server config
-	if config.Server.Addr != "" {
-		app.Addr = config.Server.Addr
-	}
-	parseDuration(config.Server.ReadTimeout, &app.ReadTimeout)
-	parseDuration(config.Server.ReadHeaderTimeout, &app.ReadHeaderTimeout)
-	parseDuration(config.Server.WriteTimeout, &app.WriteTimeout)
-	parseDuration(config.Server.IdleTimeout, &app.IdleTimeout)
-
 	{
-		// tls
-		tls := config.Server.TLS
-		if tls.CertFile != "" {
-			app.certFile = tls.CertFile
-		}
-		if tls.KeyFile != "" {
-			app.keyFile = tls.KeyFile
-		}
-		if tls.Profile != "" {
-			app.tlsProfile = strings.ToLower(tls.Profile)
-		}
-	}
+		// server config
+		server := config.Server
 
-	// load graceful config
-	if config.Server.GracefulShutdown != nil {
-		if app.gracefulShutdown == nil {
-			app.gracefulShutdown = &gracefulShutdown{}
+		if server.Addr != "" {
+			app.Addr = server.Addr
 		}
-		parseDuration(config.Server.GracefulShutdown.Timeout, &app.gracefulShutdown.timeout)
-		parseDuration(config.Server.GracefulShutdown.Wait, &app.gracefulShutdown.wait)
-	}
+		parseDuration(server.ReadTimeout, &app.ReadTimeout)
+		parseDuration(server.ReadHeaderTimeout, &app.ReadHeaderTimeout)
+		parseDuration(server.WriteTimeout, &app.WriteTimeout)
+		parseDuration(server.IdleTimeout, &app.IdleTimeout)
 
-	{
-		httpsRedirect := config.Server.HTTPSRedirect
-		if httpsRedirect != nil {
-			if httpsRedirect.Addr == "" {
-				httpsRedirect.Addr = ":80"
+		if tls := server.TLS; tls != nil {
+			// TODO: auto generate self-signed tls if cert file, key file empty
+			if tls.CertFile != "" {
+				app.certFile = tls.CertFile
+			}
+			if tls.KeyFile != "" {
+				app.keyFile = tls.KeyFile
+			}
+			if tls.Profile != "" {
+				app.tlsProfile = strings.ToLower(tls.Profile)
+			}
+		}
+
+		if gs := server.GracefulShutdown; gs != nil {
+			if app.gracefulShutdown == nil {
+				app.gracefulShutdown = &gracefulShutdown{}
 			}
 
-			go StartHTTPSRedirectServer(httpsRedirect.Addr)
+			parseDuration(gs.Timeout, &app.gracefulShutdown.timeout)
+			parseDuration(gs.Wait, &app.gracefulShutdown.wait)
+		}
+
+		if rd := server.HTTPSRedirect; rd != nil {
+			if rd.Addr == "" {
+				rd.Addr = ":80"
+			}
+
+			go StartHTTPSRedirectServer(rd.Addr)
 		}
 	}
 
