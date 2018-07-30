@@ -177,6 +177,12 @@ func (app *App) ListenAndServe() error {
 	return app.listenAndServe()
 }
 
+// TLS sets cert and key file
+func (app *App) TLS(certFile, keyFile string) *App {
+	app.certFile, app.keyFile = certFile, keyFile
+	return app
+}
+
 // ListenAndServeTLS starts web server in tls mode
 func (app *App) ListenAndServeTLS(certFile, keyFile string) error {
 	if app.gracefulShutdown != nil {
