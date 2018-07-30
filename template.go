@@ -223,3 +223,27 @@ func joinTemplateDir(dir string, filenames ...string) []string {
 	}
 	return xs
 }
+
+func cloneFuncMaps(xs []template.FuncMap) []template.FuncMap {
+	if xs == nil {
+		return nil
+	}
+
+	rs := make([]template.FuncMap, len(xs))
+	for i := range xs {
+		rs[i] = xs[i]
+	}
+	return rs
+}
+
+func cloneTmpl(xs map[string]*tmpl) map[string]*tmpl {
+	if xs == nil {
+		return nil
+	}
+
+	rs := make(map[string]*tmpl)
+	for k, v := range xs {
+		rs[k] = v
+	}
+	return rs
+}

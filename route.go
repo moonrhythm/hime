@@ -1,5 +1,19 @@
 package hime
 
+// Routes is the map for route name => path
+type Routes map[string]string
+
+func cloneRoutes(xs Routes) Routes {
+	if xs == nil {
+		return nil
+	}
+	rs := make(Routes)
+	for k, v := range xs {
+		rs[k] = v
+	}
+	return rs
+}
+
 // Routes registers route name and path
 func (app *App) Routes(routes Routes) *App {
 	if app.routes == nil {

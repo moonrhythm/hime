@@ -72,6 +72,46 @@ func New() *App {
 	return &App{}
 }
 
+// Clone clones app
+func (app *App) Clone() *App {
+	x := &App{
+		Addr:              app.Addr,
+		ReadTimeout:       app.ReadTimeout,
+		ReadHeaderTimeout: app.ReadHeaderTimeout,
+		WriteTimeout:      app.WriteTimeout,
+		IdleTimeout:       app.IdleTimeout,
+		MaxHeaderBytes:    app.MaxHeaderBytes,
+		TLSNextProto:      cloneTLSNextProto(app.TLSNextProto),
+		ConnState:         app.ConnState,
+		ErrorLog:          app.ErrorLog,
+		handler:           app.handler,
+		routes:            cloneRoutes(app.routes),
+		globals:           cloneGlobals(app.globals),
+		beforeRender:      app.beforeRender,
+		template:          cloneTmpl(app.template),
+		templateFuncs:     cloneFuncMaps(app.templateFuncs),
+		gracefulShutdown:  &*app.gracefulShutdown,
+		certFile:          app.certFile,
+		keyFile:           app.keyFile,
+	}
+	if app.TLSConfig != nil {
+		x.TLSConfig = app.TLSConfig.Clone()
+	}
+	return x
+}
+
+func cloneTLSNextProto(xs map[string]func(*http.Server, *tls.Conn, http.Handler)) map[string]func(*http.Server, *tls.Conn, http.Handler) {
+	if xs == nil {
+		return nil
+	}
+
+	rs := make(map[string]func(*http.Server, *tls.Conn, http.Handler))
+	for k, v := range xs {
+		rs[k] = v
+	}
+	return rs
+}
+
 // Address sets server address
 func (app *App) Address(addr string) *App {
 	app.Addr = addr
