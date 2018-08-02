@@ -93,14 +93,5 @@ func (gs *GracefulShutdownApp) start(listenAndServe func() error) (err error) {
 
 // ListenAndServe starts web server in graceful shutdown mode
 func (gs *GracefulShutdownApp) ListenAndServe() error {
-	if gs.App.certFile != "" && gs.App.keyFile != "" {
-		return gs.ListenAndServeTLS(gs.App.certFile, gs.App.keyFile)
-	}
-
 	return gs.start(gs.App.listenAndServe)
-}
-
-// ListenAndServeTLS starts web server in graceful shutdown and tls mode
-func (gs *GracefulShutdownApp) ListenAndServeTLS(certFile, keyFile string) error {
-	return gs.start(func() error { return gs.App.listenAndServeTLS(certFile, keyFile) })
 }

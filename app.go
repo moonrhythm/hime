@@ -55,8 +55,6 @@ type App struct {
 	templateFuncs []template.FuncMap
 
 	gracefulShutdown *gracefulShutdown
-
-	certFile, keyFile string
 }
 
 var (
@@ -91,8 +89,6 @@ func (app *App) Clone() *App {
 		template:          cloneTmpl(app.template),
 		templateFuncs:     cloneFuncMaps(app.templateFuncs),
 		gracefulShutdown:  &*app.gracefulShutdown,
-		certFile:          app.certFile,
-		keyFile:           app.keyFile,
 	}
 	if app.TLSConfig != nil {
 		x.TLSConfig = app.TLSConfig.Clone()
@@ -155,21 +151,15 @@ func (app *App) configServer() {
 func (app *App) listenAndServe() error {
 	app.configServer()
 
+	if app.srv.TLSConfig != nil {
+		return app.srv.ListenAndServeTLS("", "")
+	}
+
 	return app.srv.ListenAndServe()
-}
-
-func (app *App) listenAndServeTLS(certFile, keyFile string) error {
-	app.configServer()
-
-	return app.srv.ListenAndServeTLS(certFile, keyFile)
 }
 
 // ListenAndServe starts web server
 func (app *App) ListenAndServe() error {
-	if app.certFile != "" && app.keyFile != "" {
-		return app.ListenAndServeTLS(app.certFile, app.keyFile)
-	}
-
 	if app.gracefulShutdown != nil {
 		return app.GracefulShutdown().ListenAndServe()
 	}
@@ -179,17 +169,16 @@ func (app *App) ListenAndServe() error {
 
 // TLS sets cert and key file
 func (app *App) TLS(certFile, keyFile string) *App {
-	app.certFile, app.keyFile = certFile, keyFile
-	return app
-}
-
-// ListenAndServeTLS starts web server in tls mode
-func (app *App) ListenAndServeTLS(certFile, keyFile string) error {
-	if app.gracefulShutdown != nil {
-		return app.GracefulShutdown().ListenAndServeTLS(certFile, keyFile)
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		panic("hime: load key pair error; " + err.Error())
 	}
 
-	return app.listenAndServeTLS(certFile, keyFile)
+	if app.TLSConfig == nil {
+		app.TLSConfig = &tls.Config{}
+	}
+	app.TLSConfig.Certificates = append(app.TLSConfig.Certificates, cert)
+	return app
 }
 
 // GracefulShutdown returns graceful shutdown server
