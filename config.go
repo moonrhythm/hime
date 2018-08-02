@@ -1,9 +1,18 @@
 package hime
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"io/ioutil"
 	"log"
+	"math/big"
+	"net"
 	"strings"
 	"time"
 
@@ -26,6 +35,14 @@ type AppConfig struct {
 			Wait    string `yaml:"wait" json:"wait"`
 		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
 		TLS *struct {
+			SelfSign *struct {
+				Key struct {
+					Algo string `yaml:"algo" json:"algo"`
+					Size int    `yaml:"size" json:"size"`
+				} `yaml:"key" json:"key"`
+				CN    string   `yaml:"cn" json:"cn"`
+				Hosts []string `yaml:"host" json:"host"`
+			} `yaml:"selfSign" json:"selfSign"`
 			CertFile   string   `yaml:"certFile" json:"certFile"`
 			KeyFile    string   `yaml:"keyFile" json:"keyFile"`
 			Profile    string   `yaml:"profile" json:"profile"`
@@ -154,15 +171,100 @@ func (app *App) Config(config AppConfig) *App {
 				}
 			}
 
-			// TODO: auto generate self-signed tls if cert file, key file empty
-			if t.CertFile != "" {
-				app.certFile = t.CertFile
-			}
-			if t.KeyFile != "" {
-				app.keyFile = t.KeyFile
+			if t.CertFile != "" && t.KeyFile != "" {
+				cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
+				if err != nil {
+					panic("hime: load key pair error; " + err.Error())
+				}
+				tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
+			} else if c := t.SelfSign; c != nil {
+				var priv interface{}
+				var pub interface{}
+
+				switch c.Key.Algo {
+				case "ecdsa", "":
+					var curve elliptic.Curve
+					switch c.Key.Size {
+					case 224:
+						curve = elliptic.P224()
+					case 256, 0:
+						curve = elliptic.P256()
+					case 384:
+						curve = elliptic.P384()
+					case 521:
+						curve = elliptic.P521()
+					default:
+						panic("hime: invalid self-sign key size")
+					}
+
+					pri, err := ecdsa.GenerateKey(curve, rand.Reader)
+					if err != nil {
+						panic("hime: generate private key error;" + err.Error())
+					}
+					priv, pub = pri, &pri.PublicKey
+				case "rsa":
+					// TODO: make rsa key size configurable
+					pri, err := rsa.GenerateKey(rand.Reader, 2048)
+					if err != nil {
+						panic("hime: generate private key error; " + err.Error())
+					}
+					priv, pub = pri, &pri.PublicKey
+				default:
+					panic("hime: invalid self-sign key algo")
+				}
+
+				sn, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+				if err != nil {
+					panic("hime: generate serial number error; " + err.Error())
+				}
+
+				cert := x509.Certificate{
+					SerialNumber: sn,
+					Subject: pkix.Name{
+						Organization: []string{"Acme Co"},
+					},
+					NotAfter:              time.Now().AddDate(1, 0, 0), // TODO: make not before configurable
+					KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+					ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+					BasicConstraintsValid: true,
+				}
+
+				for _, h := range c.Hosts {
+					if ip := net.ParseIP(h); ip != nil {
+						cert.IPAddresses = append(cert.IPAddresses, ip)
+					} else {
+						cert.DNSNames = append(cert.DNSNames, h)
+					}
+				}
+
+				certBytes, err := x509.CreateCertificate(rand.Reader, &cert, &cert, pub, priv)
+				if err != nil {
+					panic("hime: create cvertificate error; " + err.Error())
+				}
+
+				certPem := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certBytes})
+
+				var keyPemBlock pem.Block
+				switch k := priv.(type) {
+				case *ecdsa.PrivateKey:
+					b, err := x509.MarshalECPrivateKey(k)
+					if err != nil {
+						panic("hime: marshal ec private key error; " + err.Error())
+					}
+					keyPemBlock = pem.Block{Type: "EC PRIVATE KEY", Bytes: b}
+				case *rsa.PrivateKey:
+					keyPemBlock = pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}
+				}
+				keyPem := pem.EncodeToMemory(&keyPemBlock)
+
+				tlsCert, err := tls.X509KeyPair(certPem, keyPem)
+				if err != nil {
+					panic("hime: load key pair error; " + err.Error())
+				}
+				tlsConfig.Certificates = append(tlsConfig.Certificates, tlsCert)
 			}
 
-			app.srv.TLSConfig = tlsConfig
+			app.TLSConfig = tlsConfig
 		}
 
 		if gs := server.GracefulShutdown; gs != nil {
