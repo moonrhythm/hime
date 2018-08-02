@@ -26,6 +26,5 @@ server:
     timeout: 1m
     wait: 5s
   tls:
-    certFile: tls.crt
-    keyFile: tls.key
+    selfSign: {}
     profile: modern
