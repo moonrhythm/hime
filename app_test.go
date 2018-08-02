@@ -28,4 +28,9 @@ func TestHandler(t *testing.T) {
 
 		assert.HTTPBodyContains(t, app.ServeHTTP, "GET", "/", nil, "ok")
 	})
+
+	t.Run("default handler", func(t *testing.T) {
+		app := hime.New()
+		assert.HTTPBodyContains(t, app.ServeHTTP, "GET", "/", nil, "404")
+	})
 }

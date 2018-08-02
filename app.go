@@ -131,6 +131,11 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, ctxKeyApp, app)
 	r = r.WithContext(ctx)
+
+	if app.handler == nil {
+		http.DefaultServeMux.ServeHTTP(w, r)
+		return
+	}
 	app.handler.ServeHTTP(w, r)
 }
 
