@@ -26,6 +26,14 @@ type AppConfig struct {
 			Wait    string `yaml:"wait" json:"wait"`
 		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
 		TLS *struct {
+			SelfSign *struct {
+				Key struct {
+					Algo string `yaml:"algo" json:"algo"`
+					Size int    `yaml:"size" json:"size"`
+				} `yaml:"key" json:"key"`
+				CN    string   `yaml:"cn" json:"cn"`
+				Hosts []string `yaml:"host" json:"host"`
+			} `yaml:"selfSign" json:"selfSign"`
 			CertFile   string   `yaml:"certFile" json:"certFile"`
 			KeyFile    string   `yaml:"keyFile" json:"keyFile"`
 			Profile    string   `yaml:"profile" json:"profile"`
