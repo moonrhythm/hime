@@ -37,7 +37,7 @@ func TestGlobal(t *testing.T) {
 	app.ServeHTTP(w, r)
 }
 
-func TestCloneGlobal(t *testing.T) {
+func TestCloneGlobals(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Nil", func(t *testing.T) {
