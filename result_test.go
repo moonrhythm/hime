@@ -124,6 +124,21 @@ func TestResult(t *testing.T) {
 		assert.Equal(t, "hello, hime", w.Body.String())
 	})
 
+	t.Run("Nil", func(t *testing.T) {
+		t.Parallel()
+
+		app := hime.New().
+			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+				return nil
+			}))
+
+		assert.NotPanics(t, func() {
+			w := invokeHandler(app, "GET", "/", nil)
+			assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+			assert.Empty(t, w.Body.String())
+		})
+	})
+
 	t.Run("Nothing", func(t *testing.T) {
 		t.Parallel()
 
