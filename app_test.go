@@ -85,3 +85,30 @@ func TestConfigServer(t *testing.T) {
 	assert.NotEmpty(t, &app.srv)
 	assert.Equal(t, ":8080", app.srv.Addr)
 }
+
+func TestAppClone(t *testing.T) {
+	t.Parallel()
+
+	app := New().
+		Routes(Routes{
+			"a": "1",
+			"b": "2",
+		}).
+		Globals(Globals{
+			"q": "z",
+			"w": "x",
+		})
+
+	app2 := app.Clone()
+	assert.NotNil(t, app2)
+
+	app2.Routes(Routes{
+		"a": "4",
+	}).Globals(Globals{
+		"q": "p",
+	})
+
+	assert.NotEqual(t, app, app2)
+	assert.NotEqual(t, app.routes, app2.routes)
+	assert.NotEqual(t, app.globals, app2.globals)
+}

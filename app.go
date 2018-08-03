@@ -88,10 +88,12 @@ func (app *App) Clone() *App {
 		beforeRender:      app.beforeRender,
 		template:          cloneTmpl(app.template),
 		templateFuncs:     cloneFuncMaps(app.templateFuncs),
-		gracefulShutdown:  &*app.gracefulShutdown,
 	}
 	if app.TLSConfig != nil {
 		x.TLSConfig = app.TLSConfig.Clone()
+	}
+	if app.gracefulShutdown != nil {
+		x.gracefulShutdown = &*app.gracefulShutdown
 	}
 	return x
 }
