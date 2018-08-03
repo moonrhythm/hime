@@ -28,6 +28,12 @@ func (gs *GracefulShutdownApp) Address(addr string) *GracefulShutdownApp {
 	return gs
 }
 
+// TLS sets cert and key file
+func (gs *GracefulShutdownApp) TLS(certFile, keyFile string) *GracefulShutdownApp {
+	gs.App.TLS(certFile, keyFile)
+	return gs
+}
+
 // Timeout sets shutdown timeout for graceful shutdown,
 // set to 0 to disable timeout
 //
