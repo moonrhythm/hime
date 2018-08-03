@@ -1,4 +1,4 @@
-package hime_test
+package hime
 
 import (
 	"io"
@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/acoshift/hime"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,8 +22,8 @@ func TestResult(t *testing.T) {
 	t.Run("StatusCode", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.Status(http.StatusNotFound).String("not found")
 			}))
 
@@ -36,8 +35,8 @@ func TestResult(t *testing.T) {
 	t.Run("StatusTest", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.Status(http.StatusTeapot).StatusText()
 			}))
 
@@ -49,8 +48,8 @@ func TestResult(t *testing.T) {
 	t.Run("NotFound", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.NotFound()
 			}))
 
@@ -62,8 +61,8 @@ func TestResult(t *testing.T) {
 	t.Run("NoContent", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.NoContent()
 			}))
 
@@ -74,8 +73,8 @@ func TestResult(t *testing.T) {
 	t.Run("Bytes", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.Bytes([]byte("hello hime"))
 			}))
 
@@ -87,8 +86,8 @@ func TestResult(t *testing.T) {
 	t.Run("File", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.File("testdata/file.txt")
 			}))
 
@@ -100,8 +99,8 @@ func TestResult(t *testing.T) {
 	t.Run("JSON", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.JSON(map[string]interface{}{"abc": "afg", "bbb": 123})
 			}))
 
@@ -114,8 +113,8 @@ func TestResult(t *testing.T) {
 	t.Run("String", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.String("hello, hime")
 			}))
 
@@ -127,8 +126,8 @@ func TestResult(t *testing.T) {
 	t.Run("Nil", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return nil
 			}))
 
@@ -139,30 +138,17 @@ func TestResult(t *testing.T) {
 		})
 	})
 
-	t.Run("Nothing", func(t *testing.T) {
-		t.Parallel()
-
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
-				return ctx.Nothing()
-			}))
-
-		w := invokeHandler(app, "GET", "/", nil)
-		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
-		assert.Empty(t, w.Body.String())
-	})
-
 	t.Run("BeforeRender", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
+		app := New().
 			BeforeRender(func(h http.Handler) http.Handler {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Cache-Control", "public, max-age=3600")
 					h.ServeHTTP(w, r)
 				})
 			}).
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+			Handler(H(func(ctx *Context) error {
 				return ctx.String("hello, hime")
 			}))
 
@@ -174,8 +160,8 @@ func TestResult(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.Error("some error :P")
 			}))
 
@@ -187,8 +173,8 @@ func TestResult(t *testing.T) {
 	t.Run("ErrorCustomStatusCode", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.Status(http.StatusNotFound).Error("some not found error :P")
 			}))
 
@@ -200,11 +186,11 @@ func TestResult(t *testing.T) {
 	t.Run("RedirectTo", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Routes(hime.Routes{
+		app := New().
+			Routes(Routes{
 				"route1": "/route/1",
 			}).
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+			Handler(H(func(ctx *Context) error {
 				return ctx.RedirectTo("route1")
 			}))
 
@@ -218,8 +204,8 @@ func TestResult(t *testing.T) {
 	t.Run("RedirectToUnknownRoute", func(t *testing.T) {
 		t.Parallel()
 
-		app := hime.New().
-			Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		app := New().
+			Handler(H(func(ctx *Context) error {
 				return ctx.RedirectTo("unknown")
 			}))
 

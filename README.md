@@ -66,7 +66,7 @@ func router(app *hime.App) http.Handler {
 }
 
 func logRequestURI(h http.Handler) http.Handler {
-    return hime.H(func(ctx *hime.Context) hime.Result {
+    return hime.H(func(ctx *hime.Context) error {
         log.Println(ctx.Request().RequestURI)
         return h
     })
@@ -86,7 +86,7 @@ func addHeaderRender(h http.Handler) http.Handler {
     })
 }
 
-func indexHandler(ctx *hime.Context) hime.Result {
+func indexHandler(ctx *hime.Context) error {
     if ctx.Request().URL.Path != "/" {
         return ctx.RedirectTo("index")
     }
@@ -126,9 +126,9 @@ You can also use hime's handler with middleware
 
 ```go
 func logRequestURI(h http.Handler) http.Handler {
-    return hime.H(func(ctx *hime.Context) hime.Result {
+    return hime.H(func(ctx *hime.Context) error {
         log.Println(ctx.Request().RequestURI)
-        return h // hime.Result is http.Handler alias
+        return ctx.Handle(h)
     })
 }
 ```
@@ -137,9 +137,9 @@ Inject data to context
 
 ```go
 func injectData(h http.Handler) http.Handler {
-    return hime.H(func(ctx *hime.Context) hime.Result {
+    return hime.H(func(ctx *hime.Context) error {
         ctx.WithValue(ctxKeyData{}, "injected data!")
-        return h
+        return ctx.Handle(h)
     })
 }
 ```
@@ -174,54 +174,25 @@ func main() {
 }
 ```
 
-## Why return Result
+## Panic when return error
 
-Bacause many developers forgot to return to end handler
-
-```go
-func signInHandler(w http.ResponseWriter, r *http.Request) {
-    username := r.FormValue("username")
-    if username == "" {
-        http.Error(w, "username required", http.StatusBadRequest)
-        return // many return like this, sometime developers forgot about it
-    }
-    ...
-}
-```
-
-with Result
-
-```go
-func signInHandler(ctx *hime.Context) hime.Result {
-    username := r.FormValue("username")
-    if username == "" {
-        return ctx.Status(http.StatusBadRequest).Error("username required")
-    }
-    ...
-}
-```
-
-Why not return error, like this...
+When return error from handler, hime will panic,
+this mean you should handle error and only return unrecovery error.
 
 ```go
 func signInHandler(ctx *hime.Context) error {
     username := r.FormValue("username")
-    if username == "" {
-        return ctx.Status(http.StatusBadRequest).Error("username required")
+
+    user, err := findUser(username)
+    if err == ErrUserNotFound {
+        return ctx.Status(http.StatusBadRequest).Error("invalid username")
+    }
+    if err != nil {
+        return err // database connection error ?
     }
     ...
 }
 ```
-
-Then, what if you return an error ?
-
-```go
-return err
-```
-
-Hime won't handle error for you :D
-
-You can see that hime won't response anything, you must handle on your own.
 
 ## Why some functions use panic
 
