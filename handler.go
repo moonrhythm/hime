@@ -9,9 +9,8 @@ func Wrap(h Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := NewContext(w, r)
 
-		result := h(ctx)
-		if result != nil {
-			result.ServeHTTP(ctx.w, ctx.r)
+		if err := h(ctx); err != nil {
+			panic(err)
 		}
 	})
 }

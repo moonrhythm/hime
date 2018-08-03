@@ -22,11 +22,11 @@ func TestGlobal(t *testing.T) {
 			"key1": "value1",
 			"key2": "value2",
 		}).
-		Handler(hime.H(func(ctx *hime.Context) hime.Result {
+		Handler(hime.H(func(ctx *hime.Context) error {
 			assert.Equal(t, "value1", ctx.Global("key1"))
 			assert.Equal(t, "value2", ctx.Global("key2"))
 			assert.Nil(t, ctx.Global("invalid"))
-			return ctx.Nothing()
+			return nil
 		}))
 
 	assert.Equal(t, "value1", app.Global("key1"))
