@@ -104,9 +104,7 @@ func (ctx *Context) Error(error string) Result {
 
 // Nothing does nothing
 func (ctx *Context) Nothing() Result {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// do nothing
-	})
+	return nil
 }
 
 // NotFound calls http.NotFound
