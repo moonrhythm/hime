@@ -21,7 +21,7 @@ func TestGlobal(t *testing.T) {
 			"key1": "value1",
 			"key2": "value2",
 		}).
-		Handler(H(func(ctx *Context) error {
+		Handler(Handler(func(ctx *Context) error {
 			assert.Equal(t, "value1", ctx.Global("key1"))
 			assert.Equal(t, "value2", ctx.Global("key2"))
 			assert.Nil(t, ctx.Global("invalid"))

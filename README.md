@@ -58,7 +58,7 @@ func main() {
 
 func router(app *hime.App) http.Handler {
     mux := http.NewServeMux()
-    mux.Handle(app.Route("index"), hime.H(indexHandler))
+    mux.Handle(app.Route("index"), hime.Handler(indexHandler))
     return middleware.Chain(
         logRequestMethod,
         logRequestURI,
@@ -66,7 +66,7 @@ func router(app *hime.App) http.Handler {
 }
 
 func logRequestURI(h http.Handler) http.Handler {
-    return hime.H(func(ctx *hime.Context) error {
+    return hime.Handler(func(ctx *hime.Context) error {
         log.Println(ctx.Request().RequestURI)
         return h
     })
@@ -106,7 +106,7 @@ func indexHandler(ctx *hime.Context) error {
 
 Hime doesn't have built-in router, you can use any http.Handler.
 
-`hime.Wrap` (or `hime.H` for short-hand) wraps hime.Handler into http.Handler, so you can use hime's handler anywhere in your router that support http.Handler.
+`hime.Handler` already implements `http.Handler`, so you can use hime's handler anywhere in your router that support http.Handler.
 
 ### Middleware
 
@@ -126,7 +126,7 @@ You can also use hime's handler with middleware
 
 ```go
 func logRequestURI(h http.Handler) http.Handler {
-    return hime.H(func(ctx *hime.Context) error {
+    return hime.Handler(func(ctx *hime.Context) error {
         log.Println(ctx.Request().RequestURI)
         return ctx.Handle(h)
     })
@@ -137,7 +137,7 @@ Inject data to context
 
 ```go
 func injectData(h http.Handler) http.Handler {
-    return hime.H(func(ctx *hime.Context) error {
+    return hime.Handler(func(ctx *hime.Context) error {
         ctx.WithValue(ctxKeyData{}, "injected data!")
         return ctx.Handle(h)
     })
