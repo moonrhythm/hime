@@ -110,6 +110,20 @@ func TestResult(t *testing.T) {
 		assert.JSONEq(t, `{"abc":"afg","bbb":123}`, w.Body.String())
 	})
 
+	t.Run("HTML", func(t *testing.T) {
+		t.Parallel()
+
+		app := New().
+			Handler(Handler(func(ctx *Context) error {
+				return ctx.HTML([]byte(`<h1>Hello</h1>`))
+			}))
+
+		w := invokeHandler(app, "GET", "/", nil)
+		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+		assert.Equal(t, "text/html; charset=utf-8", w.Header().Get("Content-Type"))
+		assert.Equal(t, `<h1>Hello</h1>`, w.Body.String())
+	})
+
 	t.Run("String", func(t *testing.T) {
 		t.Parallel()
 
@@ -136,6 +150,21 @@ func TestResult(t *testing.T) {
 			assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 			assert.Empty(t, w.Body.String())
 		})
+	})
+
+	t.Run("Handle", func(t *testing.T) {
+		t.Parallel()
+
+		app := New().
+			Handler(Handler(func(ctx *Context) error {
+				return ctx.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte("handler"))
+				}))
+			}))
+
+		w := invokeHandler(app, "GET", "/", nil)
+		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+		assert.Equal(t, "handler", w.Body.String())
 	})
 
 	t.Run("BeforeRender", func(t *testing.T) {
