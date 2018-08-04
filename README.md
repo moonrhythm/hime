@@ -318,10 +318,7 @@ if err != nil {
 - [acoshift/webstatic](https://github.com/acoshift/webstatic)
 - [acoshift/httprouter](https://github.com/acoshift/httprouter)
 - [acoshift/redirecthttps](https://github.com/acoshift/redirecthttps)
-- [acoshift/cors](https://github.com/acoshift/cors)
-- [acoshift/hsts](https://github.com/acoshift/hsts)
 - [acoshift/cachestatic](https://github.com/acoshift/cachestatic)
-- [acoshift/gzip](https://github.com/acoshift/gzip)
 - [acoshift/methodmux](https://github.com/acoshift/methodmux)
 
 ## FAQ
