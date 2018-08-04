@@ -14,8 +14,3 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 }
-
-// H is the short hand for Handler
-func H(h Handler) Handler {
-	return h
-}

@@ -39,7 +39,7 @@ func TestHandler(t *testing.T) {
 		t.Parallel()
 
 		app := New().
-			Handler(H(func(ctx *Context) error {
+			Handler(Handler(func(ctx *Context) error {
 				return ctx.String("ok")
 			}))
 
