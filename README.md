@@ -50,15 +50,15 @@ func main() {
             "index": "/",
         }).
         BeforeRender(addHeaderRender).
-        Handler(router(app)).
+        Handler(router()).
         GracefulShutdown().
         Address(":8080").
         ListenAndServe()
 }
 
-func router(app *hime.App) http.Handler {
+func router() http.Handler {
     mux := http.NewServeMux()
-    mux.Handle(app.Route("index"), hime.Handler(indexHandler))
+    mux.Handle("/", hime.Handler(indexHandler))
     return middleware.Chain(
         logRequestMethod,
         logRequestURI,
@@ -168,7 +168,7 @@ func main() {
             "index": "/",
         }).
         BeforeRender(addHeaderRender).
-        Handler(router(app))
+        Handler(router())
 
     http.ListenAndServe(":8080", app)
 }
