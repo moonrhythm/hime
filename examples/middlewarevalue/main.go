@@ -22,7 +22,7 @@ type ctxKeyData struct{}
 
 func router() http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle("/", hime.H(func(ctx *hime.Context) error {
+	mux.Handle("/", hime.Handler(func(ctx *hime.Context) error {
 		return ctx.String(ctx.Value(ctxKeyData{}).(string))
 	}))
 
@@ -32,7 +32,7 @@ func router() http.Handler {
 }
 
 func injectData(h http.Handler) http.Handler {
-	return hime.H(func(ctx *hime.Context) error {
+	return hime.Handler(func(ctx *hime.Context) error {
 		ctx.WithValue(ctxKeyData{}, "injected data!")
 		return ctx.Handle(h)
 	})

@@ -56,10 +56,10 @@ func main() {
 
 func router(app *hime.App) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle(app.Route("index"), hime.H(indexHandler))
-	mux.Handle(app.Route("about"), hime.H(aboutHandler))
-	mux.Handle(app.Route("api/json"), hime.H(apiJSONHandler))
-	mux.Handle(app.Route("api/json/error"), hime.H(apiJSONErrorHandler))
+	mux.Handle(app.Route("index"), hime.Handler(indexHandler))
+	mux.Handle(app.Route("about"), hime.Handler(aboutHandler))
+	mux.Handle(app.Route("api/json"), hime.Handler(apiJSONHandler))
+	mux.Handle(app.Route("api/json/error"), hime.Handler(apiJSONErrorHandler))
 	return middleware.Chain(
 		logRequestMethod,
 		logRequestURI,
@@ -67,7 +67,7 @@ func router(app *hime.App) http.Handler {
 }
 
 func logRequestURI(h http.Handler) http.Handler {
-	return hime.H(func(ctx *hime.Context) error {
+	return hime.Handler(func(ctx *hime.Context) error {
 		log.Println(ctx.Request().RequestURI)
 		return ctx.Handle(h)
 	})
