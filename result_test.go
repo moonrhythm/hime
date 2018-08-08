@@ -240,6 +240,33 @@ func TestResult(t *testing.T) {
 		assert.Equal(t, "text/html; charset=utf-8", w.Header().Get("Content-Type"))
 		assert.Equal(t, "hello", w.Body.String())
 	})
+
+	t.Run("ViewNotFound", func(t *testing.T) {
+		t.Parallel()
+
+		app := New().
+			Handler(Handler(func(ctx *Context) error {
+				return ctx.View("index", nil)
+			}))
+
+		assert.Panics(t, func() { invokeHandler(app, "GET", "/", nil) })
+	})
+
+	t.Run("ViewWrongTemplateFunc", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+
+		app.TemplateFunc("fn", func(s string) string { return s })
+
+		app.Template().Dir("testdata").Root("root").Parse("index", "call_fn.tmpl")
+
+		app.Handler(Handler(func(ctx *Context) error {
+			return ctx.View("index", nil)
+		}))
+
+		assert.Panics(t, func() { invokeHandler(app, "GET", "/", nil) })
+	})
 }
 
 func panicRecovery(h http.Handler) http.Handler {
