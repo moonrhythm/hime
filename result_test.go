@@ -168,25 +168,6 @@ func TestResult(t *testing.T) {
 		assert.Equal(t, "handler", w.Body.String())
 	})
 
-	t.Run("BeforeRender", func(t *testing.T) {
-		t.Parallel()
-
-		app := New().
-			BeforeRender(func(h http.Handler) http.Handler {
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.Header().Set("Cache-Control", "public, max-age=3600")
-					h.ServeHTTP(w, r)
-				})
-			}).
-			Handler(Handler(func(ctx *Context) error {
-				return ctx.String("hello, hime")
-			}))
-
-		w := invokeHandler(app, "GET", "/", nil)
-		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
-		assert.Equal(t, "public, max-age=3600", w.Header().Get("Cache-Control"))
-	})
-
 	t.Run("Error", func(t *testing.T) {
 		t.Parallel()
 

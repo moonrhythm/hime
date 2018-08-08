@@ -49,7 +49,6 @@ func main() {
         Routes(hime.Routes{
             "index": "/",
         }).
-        BeforeRender(addHeaderRender).
         Handler(router()).
         GracefulShutdown().
         Address(":8080").
@@ -75,13 +74,6 @@ func logRequestURI(h http.Handler) http.Handler {
 func logRequestMethod(h http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         log.Println(r.Method)
-        h.ServeHTTP(w, r)
-    })
-}
-
-func addHeaderRender(h http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
         h.ServeHTTP(w, r)
     })
 }
@@ -167,7 +159,6 @@ func main() {
         Routes(hime.Routes{
             "index": "/",
         }).
-        BeforeRender(addHeaderRender).
         Handler(router())
 
     http.ListenAndServe(":8080", app)

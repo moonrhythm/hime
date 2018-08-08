@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
@@ -18,15 +17,6 @@ func TestApp(t *testing.T) {
 	t.Parallel()
 
 	app := New()
-
-	t.Run("BeforeRender", func(t *testing.T) {
-		m := func(h http.Handler) http.Handler {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-		}
-
-		app.BeforeRender(m)
-		assert.Equal(t, reflect.ValueOf(m).Pointer(), reflect.ValueOf(app.beforeRender).Pointer())
-	})
 
 	t.Run("TemplateFuncs", func(t *testing.T) {
 		app.TemplateFunc("a", func() {})

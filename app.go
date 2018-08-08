@@ -9,8 +9,6 @@ import (
 	"net"
 	"net/http"
 	"time"
-
-	"github.com/acoshift/middleware"
 )
 
 // App is the hime app
@@ -45,11 +43,10 @@ type App struct {
 	// ErrorLog overrides http.Server ErrorLog
 	ErrorLog *log.Logger
 
-	srv          http.Server
-	handler      http.Handler
-	routes       Routes
-	globals      Globals
-	beforeRender middleware.Middleware
+	srv     http.Server
+	handler http.Handler
+	routes  Routes
+	globals Globals
 
 	template      map[string]*tmpl
 	templateFuncs []template.FuncMap
@@ -85,7 +82,6 @@ func (app *App) Clone() *App {
 		handler:           app.handler,
 		routes:            cloneRoutes(app.routes),
 		globals:           cloneGlobals(app.globals),
-		beforeRender:      app.beforeRender,
 		template:          cloneTmpl(app.template),
 		templateFuncs:     cloneFuncMaps(app.templateFuncs),
 	}
@@ -119,13 +115,6 @@ func (app *App) Address(addr string) *App {
 // Handler sets the handler
 func (app *App) Handler(h http.Handler) *App {
 	app.handler = h
-	return app
-}
-
-// BeforeRender runs given middleware for before render,
-// ex. View, JSON, String, Bytes, CopyForm, etc
-func (app *App) BeforeRender(m middleware.Middleware) *App {
-	app.beforeRender = m
 	return app
 }
 

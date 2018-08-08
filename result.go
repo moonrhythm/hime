@@ -131,22 +131,10 @@ func (ctx *Context) View(name string, data interface{}) error {
 		return err
 	}
 
-	return ctx.invokeBeforeRender(func() error {
-		ctx.setContentType("text/html; charset=utf-8")
-		ctx.w.WriteHeader(ctx.statusCode())
-		_, err = io.Copy(ctx.w, &buf)
-		return filterRenderError(err)
-	})
-}
-
-func (ctx *Context) invokeBeforeRender(after func() error) (err error) {
-	if ctx.app.beforeRender != nil {
-		ctx.app.beforeRender(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			err = after()
-		})).ServeHTTP(ctx.w, ctx.r)
-		return
-	}
-	return after()
+	ctx.setContentType("text/html; charset=utf-8")
+	ctx.w.WriteHeader(ctx.statusCode())
+	_, err = io.Copy(ctx.w, &buf)
+	return filterRenderError(err)
 }
 
 func (ctx *Context) setContentType(value string) {
@@ -170,31 +158,25 @@ func filterRenderError(err error) error {
 
 // JSON encodes given data into json then writes to response writer
 func (ctx *Context) JSON(data interface{}) error {
-	return ctx.invokeBeforeRender(func() error {
-		ctx.setContentType("application/json; charset=utf-8")
-		ctx.writeHeader()
-		return json.NewEncoder(ctx.w).Encode(data)
-	})
+	ctx.setContentType("application/json; charset=utf-8")
+	ctx.writeHeader()
+	return json.NewEncoder(ctx.w).Encode(data)
 }
 
 // HTML writes html to response writer
 func (ctx *Context) HTML(data []byte) error {
-	return ctx.invokeBeforeRender(func() error {
-		ctx.setContentType("text/html; charset=utf-8")
-		ctx.writeHeader()
-		_, err := io.Copy(ctx.w, bytes.NewReader(data))
-		return filterRenderError(err)
-	})
+	ctx.setContentType("text/html; charset=utf-8")
+	ctx.writeHeader()
+	_, err := io.Copy(ctx.w, bytes.NewReader(data))
+	return filterRenderError(err)
 }
 
 // String writes string into response writer
 func (ctx *Context) String(format string, a ...interface{}) error {
-	return ctx.invokeBeforeRender(func() error {
-		ctx.setContentType("text/plain; charset=utf-8")
-		ctx.writeHeader()
-		_, err := fmt.Fprintf(ctx.w, format, a...)
-		return filterRenderError(err)
-	})
+	ctx.setContentType("text/plain; charset=utf-8")
+	ctx.writeHeader()
+	_, err := fmt.Fprintf(ctx.w, format, a...)
+	return filterRenderError(err)
 }
 
 // StatusText writes status text from seted status code tnto response writer
@@ -204,12 +186,10 @@ func (ctx *Context) StatusText() error {
 
 // CopyFrom copies src reader into response writer
 func (ctx *Context) CopyFrom(src io.Reader) error {
-	return ctx.invokeBeforeRender(func() error {
-		ctx.setContentType("application/octet-stream")
-		ctx.writeHeader()
-		_, err := io.Copy(ctx.w, src)
-		return filterRenderError(err)
-	})
+	ctx.setContentType("application/octet-stream")
+	ctx.writeHeader()
+	_, err := io.Copy(ctx.w, src)
+	return filterRenderError(err)
 }
 
 // Bytes writes bytes into response writer
