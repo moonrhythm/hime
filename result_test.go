@@ -1,6 +1,7 @@
 package hime
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -239,5 +240,81 @@ func TestResult(t *testing.T) {
 			}))
 
 		assert.Panics(t, func() { invokeHandler(app, "GET", "/", nil) })
+	})
+
+	t.Run("View", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+
+		app.Template().Dir("testdata").Root("root").Parse("index", "hello.tmpl")
+
+		app.
+			Handler(Handler(func(ctx *Context) error {
+				return ctx.View("index", nil)
+			}))
+
+		w := invokeHandler(app, "GET", "/", nil)
+		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+		assert.Equal(t, "text/html; charset=utf-8", w.Header().Get("Content-Type"))
+		assert.Equal(t, "hello", w.Body.String())
+	})
+}
+
+func panicRecovery(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprint(w, err)
+			}
+		}()
+		h.ServeHTTP(w, r)
+	})
+}
+
+func TestPanicInView(t *testing.T) {
+	t.Parallel()
+
+	t.Run("MinifyDisabled", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+
+		app.TemplateFunc("panic", func() string { panic("panic") })
+		app.Template().Dir("testdata").Root("root").Parse("index", "panic.tmpl")
+
+		app.
+			Handler(Handler(func(ctx *Context) error {
+				return ctx.View("index", nil)
+			}))
+
+		ts := httptest.NewServer(panicRecovery(app))
+		defer ts.Close()
+
+		resp, err := http.Get(ts.URL)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+
+	t.Run("MinifyEnabled", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+
+		app.TemplateFunc("panic", func() string { panic("panic") })
+		app.Template().Dir("testdata").Root("root").Parse("index", "panic.tmpl").Minify()
+
+		app.
+			Handler(Handler(func(ctx *Context) error {
+				return ctx.View("index", nil)
+			}))
+
+		ts := httptest.NewServer(panicRecovery(app))
+		defer ts.Close()
+
+		resp, err := http.Get(ts.URL)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 }

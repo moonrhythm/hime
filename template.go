@@ -54,11 +54,11 @@ type tmpl struct {
 	m *minify.M
 }
 
-func (t *tmpl) Execute(wr io.Writer, data interface{}) error {
+func (t *tmpl) Execute(w io.Writer, data interface{}) error {
 	// t.m.Writer is too slow for short data (html)
 
 	if t.m == nil {
-		return t.Template.Execute(wr, data)
+		return t.Template.Execute(w, data)
 	}
 
 	// TODO: this can optimize using pool
@@ -67,7 +67,8 @@ func (t *tmpl) Execute(wr io.Writer, data interface{}) error {
 	if err != nil {
 		return err
 	}
-	return t.m.Minify("text/html", wr, &buf)
+
+	return t.m.Minify("text/html", w, &buf)
 }
 
 // Template is template loader
