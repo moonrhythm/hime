@@ -125,10 +125,17 @@ func (ctx *Context) View(name string, data interface{}) error {
 		panic(newErrTemplateNotFound(name))
 	}
 
+	buf := bytes.Buffer{}
+	err := t.Execute(&buf, data)
+	if err != nil {
+		return err
+	}
+
 	return ctx.invokeBeforeRender(func() error {
 		ctx.setContentType("text/html; charset=utf-8")
 		ctx.w.WriteHeader(ctx.statusCode())
-		return filterRenderError(t.Execute(ctx.w, data))
+		_, err = io.Copy(ctx.w, &buf)
+		return filterRenderError(err)
 	})
 }
 
