@@ -39,7 +39,6 @@ func main() {
 		Globals(hime.Globals{
 			"github": "https://github.com/acoshift/hime",
 		}).
-		BeforeRender(addHeaderRender).
 		Handler(router(app)).
 		Address(":8080").
 		GracefulShutdown().
@@ -80,17 +79,11 @@ func logRequestMethod(h http.Handler) http.Handler {
 	})
 }
 
-func addHeaderRender(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		h.ServeHTTP(w, r)
-	})
-}
-
 func indexHandler(ctx *hime.Context) error {
 	if ctx.Request().URL.Path != "/" {
 		return ctx.RedirectTo("index")
 	}
+
 	return ctx.View("index", map[string]interface{}{
 		"Name": "Acoshift",
 	})
