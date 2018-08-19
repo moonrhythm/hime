@@ -11,6 +11,20 @@ import (
 )
 
 var _ = Describe("Global", func() {
+	Describe("given new app without globals data", func() {
+		var (
+			app *hime.App
+		)
+
+		BeforeEach(func() {
+			app = hime.New()
+		})
+
+		It("shoudld return nil when retrieve any data from globals", func() {
+			Expect(app.Global("key1")).To(BeNil())
+		})
+	})
+
 	Describe("given new app with globals data", func() {
 		var (
 			app *hime.App
