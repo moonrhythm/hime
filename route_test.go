@@ -1,45 +1,78 @@
-package hime
+package hime_test
 
 import (
-	"testing"
+	"net/http"
+	"net/http/httptest"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"github.com/acoshift/hime"
 )
 
-func TestRoute(t *testing.T) {
-	t.Parallel()
+var _ = Describe("Route", func() {
+	Describe("given new app without routes data", func() {
+		var (
+			app *hime.App
+		)
 
-	app := New()
-	assert.Panics(t, func() { app.Route("empty") })
+		BeforeEach(func() {
+			app = hime.New()
+		})
 
-	app.Routes(Routes{"a": "/b", "b": "/cd"})
-	assert.Len(t, app.routes, 2)
-	assert.Equal(t, "/b", app.Route("a"))
-	assert.Equal(t, "/cd", app.Route("b"))
-
-	assert.Panics(t, func() { app.Route("notexists") })
-
-	ctx := Context{app: app}
-	assert.Equal(t, "/b", ctx.Route("a"))
-}
-
-func TestCloneRoutes(t *testing.T) {
-	t.Parallel()
-
-	t.Run("Nil", func(t *testing.T) {
-		assert.Nil(t, cloneRoutes(nil))
+		It("should panic when retrieve any route", func() {
+			Expect(func() { app.Route("r1") }).Should(Panic())
+		})
 	})
 
-	t.Run("Normal", func(t *testing.T) {
-		g := Routes{
-			"a": "1",
-			"b": "2",
-		}
+	Describe("given new app with routes", func() {
+		var (
+			app *hime.App
+		)
 
-		p := cloneRoutes(g)
-		p["a"] = "2"
-		p["c"] = "3"
+		BeforeEach(func() {
+			app = hime.New()
 
-		assert.NotEqual(t, g, p)
+			app.Routes(hime.Routes{
+				"a": "/b",
+				"b": "/cd",
+			})
+		})
+
+		It("should be able to retrieve route from app", func() {
+			Expect(app.Route("a")).To(Equal("/b"))
+			Expect(app.Route("b")).To(Equal("/cd"))
+		})
+
+		It("should panic when retrieve not exist route from app", func() {
+			Expect(func() { app.Route("c") }).Should(Panic())
+		})
+
+		When("calling app with a handler", func() {
+			var (
+				w *httptest.ResponseRecorder
+				r *http.Request
+			)
+
+			BeforeEach(func() {
+				w = httptest.NewRecorder()
+				r = httptest.NewRequest("GET", "/", nil)
+			})
+
+			It("should be able to retrieve route from handler", func() {
+				app.Handler(hime.Handler(func(ctx *hime.Context) error {
+					Expect(ctx.Route("a")).To(Equal("/b"))
+					Expect(ctx.Route("b")).To(Equal("/cd"))
+					return nil
+				})).ServeHTTP(w, r)
+			})
+
+			It("should panic when retrieve not exist route from handler", func() {
+				app.Handler(hime.Handler(func(ctx *hime.Context) error {
+					Expect(func() { app.Route("c") }).Should(Panic())
+					return nil
+				})).ServeHTTP(w, r)
+			})
+		})
 	})
-}
+})

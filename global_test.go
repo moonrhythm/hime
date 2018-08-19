@@ -20,7 +20,7 @@ var _ = Describe("Global", func() {
 			app = hime.New()
 		})
 
-		It("shoudld return nil when retrieve any data from globals", func() {
+		It("should return nil when retrieve any data from globals", func() {
 			Expect(app.Global("key1")).To(BeNil())
 		})
 	})
