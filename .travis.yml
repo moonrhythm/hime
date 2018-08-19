@@ -7,7 +7,7 @@ go:
 before_install:
   - go get github.com/mattn/goveralls
   - go get github.com/onsi/ginkgo
-  - github.com/onsi/gomega/...
+  - go get github.com/onsi/gomega/...
 
 script:
   - go test -v -covermode=count -coverprofile=profile.cov .
