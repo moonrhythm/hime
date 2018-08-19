@@ -519,6 +519,22 @@ var _ = Describe("Context", func() {
 				})
 			})
 
+			Describe("testing SafeRedirect", func() {
+				When("calling SafeRedirect", func() {
+					BeforeEach(func() {
+						ctx.SafeRedirect("https://google.com")
+					})
+
+					Specify("responsed status code to be 302", func() {
+						Expect(w.Code).To(Equal(302))
+					})
+
+					Specify("responsed location should be safe path", func() {
+						Expect(w.Header().Get("Location")).To(Equal("/"))
+					})
+				})
+			})
+
 			Describe("testing View", func() {
 				It("should panic when calling View with not exist template", func() {
 					Expect(func() { ctx.View("invalid", nil) }).Should(Panic())
