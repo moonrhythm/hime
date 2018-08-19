@@ -519,6 +519,184 @@ var _ = Describe("Context", func() {
 				})
 			})
 
+			Describe("testing RedirectBack", func() {
+				When("calling RedirectBack with empty fallback", func() {
+					BeforeEach(func() {
+						ctx.RedirectBack("")
+					})
+
+					Specify("responsed status code to be 302", func() {
+						Expect(w.Code).To(Equal(302))
+					})
+
+					Specify("responsed location should be the request uri", func() {
+						Expect(w.Header().Get("Location")).To(Equal(r.RequestURI))
+					})
+				})
+
+				When("calling RedirectBack with a fallback", func() {
+					BeforeEach(func() {
+						ctx.RedirectBack("/path2")
+					})
+
+					Specify("responsed status code to be 302", func() {
+						Expect(w.Code).To(Equal(302))
+					})
+
+					Specify("responsed location should be the fallback url", func() {
+						Expect(w.Header().Get("Location")).To(Equal("/path2"))
+					})
+				})
+
+				Context("given referer to request", func() {
+					BeforeEach(func() {
+						r.Header.Set("Referer", "http://localhost/path1")
+					})
+
+					When("calling RedirectBack with empty fallback", func() {
+						BeforeEach(func() {
+							ctx.RedirectBack("")
+						})
+
+						Specify("responsed status code to be 302", func() {
+							Expect(w.Code).To(Equal(302))
+						})
+
+						Specify("responsed location should be the referer url", func() {
+							Expect(w.Header().Get("Location")).To(Equal(r.Referer()))
+						})
+					})
+
+					When("calling RedirectBack with a fallback", func() {
+						BeforeEach(func() {
+							ctx.RedirectBack("/path2")
+						})
+
+						Specify("responsed status code to be 302", func() {
+							Expect(w.Code).To(Equal(302))
+						})
+
+						Specify("responsed location should still be the referer url", func() {
+							Expect(w.Header().Get("Location")).To(Equal(r.Referer()))
+						})
+					})
+				})
+			})
+
+			Describe("testing SafeRedirectBack", func() {
+				When("calling SafeRedirectBack with empty fallback", func() {
+					BeforeEach(func() {
+						ctx.SafeRedirectBack("")
+					})
+
+					Specify("responsed status code to be 302", func() {
+						Expect(w.Code).To(Equal(302))
+					})
+
+					Specify("responsed location should be the request uri", func() {
+						Expect(w.Header().Get("Location")).To(Equal(r.RequestURI))
+					})
+				})
+
+				When("calling SafeRedirectBack with a fallback", func() {
+					BeforeEach(func() {
+						ctx.SafeRedirectBack("/path2")
+					})
+
+					Specify("responsed status code to be 302", func() {
+						Expect(w.Code).To(Equal(302))
+					})
+
+					Specify("responsed location should be the fallback url", func() {
+						Expect(w.Header().Get("Location")).To(Equal("/path2"))
+					})
+				})
+
+				When("calling SafeRedirectBack with a dangerous fallback", func() {
+					BeforeEach(func() {
+						ctx.SafeRedirectBack("https://google.com/path2")
+					})
+
+					Specify("responsed status code to be 302", func() {
+						Expect(w.Code).To(Equal(302))
+					})
+
+					Specify("responsed location should be the safe fallback url", func() {
+						Expect(w.Header().Get("Location")).To(Equal("/path2"))
+					})
+				})
+
+				Context("given referer to request", func() {
+					BeforeEach(func() {
+						r.Header.Set("Referer", "http://localhost/path1")
+					})
+
+					When("calling SafeRedirectBack with empty fallback", func() {
+						BeforeEach(func() {
+							ctx.SafeRedirectBack("")
+						})
+
+						Specify("responsed status code to be 302", func() {
+							Expect(w.Code).To(Equal(302))
+						})
+
+						Specify("responsed location should be the safe referer url", func() {
+							Expect(w.Header().Get("Location")).To(Equal(hime.SafeRedirectPath(r.Referer())))
+						})
+					})
+
+					When("calling SafeRedirectBack with a fallback", func() {
+						BeforeEach(func() {
+							ctx.SafeRedirectBack("/path2")
+						})
+
+						Specify("responsed status code to be 302", func() {
+							Expect(w.Code).To(Equal(302))
+						})
+
+						Specify("responsed location should still be the safe referer url", func() {
+							Expect(w.Header().Get("Location")).To(Equal(hime.SafeRedirectPath(r.Referer())))
+						})
+					})
+				})
+			})
+
+			Describe("testing RedirectBackToGet", func() {
+				When("calling RedirectBackToGet", func() {
+					BeforeEach(func() {
+						ctx.RedirectBackToGet()
+					})
+
+					Specify("responsed status code to be 303", func() {
+						Expect(w.Code).To(Equal(303))
+					})
+
+					Specify("responsed location should be the request uri", func() {
+						Expect(w.Header().Get("Location")).To(Equal(r.RequestURI))
+					})
+				})
+
+				Context("given referer to request", func() {
+					BeforeEach(func() {
+						r.Header.Set("Referer", "http://localhost/path1")
+					})
+
+					When("calling RedirectBackToGet", func() {
+						BeforeEach(func() {
+							ctx.RedirectBackToGet()
+						})
+
+						Specify("responsed status code to be 303", func() {
+							Expect(w.Code).To(Equal(303))
+						})
+
+						Specify("responsed location should be the referer", func() {
+							Expect(w.Header().Get("Location")).To(Equal(r.Referer()))
+						})
+					})
+				})
+			})
+
 			Describe("testing SafeRedirect", func() {
 				When("calling SafeRedirect", func() {
 					BeforeEach(func() {
