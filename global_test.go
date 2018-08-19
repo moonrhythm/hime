@@ -1,59 +1,69 @@
-package hime
+package hime_test
 
 import (
 	"net/http"
 	"net/http/httptest"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"github.com/acoshift/hime"
 )
 
-func TestGlobal(t *testing.T) {
-	t.Parallel()
+var _ = Describe("Global", func() {
+	Describe("given new app without globals data", func() {
+		var (
+			app *hime.App
+		)
 
-	app := New()
+		BeforeEach(func() {
+			app = hime.New()
+		})
 
-	assert.Nil(t, app.Global("key1"))
-	assert.Nil(t, app.Global("key2"))
-
-	app.
-		Globals(Globals{
-			"key1": "value1",
-			"key2": "value2",
-		}).
-		Handler(Handler(func(ctx *Context) error {
-			assert.Equal(t, "value1", ctx.Global("key1"))
-			assert.Equal(t, "value2", ctx.Global("key2"))
-			assert.Nil(t, ctx.Global("invalid"))
-			return nil
-		}))
-
-	assert.Equal(t, "value1", app.Global("key1"))
-	assert.Equal(t, "value2", app.Global("key2"))
-	assert.Nil(t, app.Global("invalid"))
-
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
-	w := httptest.NewRecorder()
-	app.ServeHTTP(w, r)
-}
-
-func TestCloneGlobals(t *testing.T) {
-	t.Parallel()
-
-	t.Run("Nil", func(t *testing.T) {
-		assert.Nil(t, cloneGlobals(nil))
+		It("should return nil when retrieve any data from globals", func() {
+			Expect(app.Global("key1")).To(BeNil())
+		})
 	})
 
-	t.Run("Normal", func(t *testing.T) {
-		g := Globals{
-			"a": 1,
-			"b": 2,
-		}
+	Describe("given new app with globals data", func() {
+		var (
+			app *hime.App
+		)
 
-		p := cloneGlobals(g)
-		p["a"] = 2
-		p["c"] = 3
+		BeforeEach(func() {
+			app = hime.New()
 
-		assert.NotEqual(t, g, p)
+			app.Globals(hime.Globals{
+				"key1": "value1",
+				"key2": "value2",
+			})
+		})
+
+		It("should be able to retrieve globals data from app", func() {
+			Expect(app.Global("key1")).To(Equal("value1"))
+			Expect(app.Global("key2")).To(Equal("value2"))
+			Expect(app.Global("key3")).To(BeNil())
+		})
+
+		When("calling app with a handler", func() {
+			var (
+				w *httptest.ResponseRecorder
+				r *http.Request
+			)
+
+			BeforeEach(func() {
+				w = httptest.NewRecorder()
+				r = httptest.NewRequest("GET", "/", nil)
+			})
+
+			It("should be able to retrieve globals data from handler", func() {
+				app.Handler(hime.Handler(func(ctx *hime.Context) error {
+					Expect(ctx.Global("key1")).To(Equal("value1"))
+					Expect(ctx.Global("key2")).To(Equal("value2"))
+					Expect(ctx.Global("key3")).To(BeNil())
+					return nil
+				})).ServeHTTP(w, r)
+			})
+		})
 	})
-}
+})
