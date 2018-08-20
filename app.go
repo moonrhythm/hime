@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"html/template"
 	"log"
-	"mime"
 	"net"
 	"net/http"
 	"time"
@@ -57,10 +56,6 @@ type App struct {
 var (
 	ctxKeyApp = struct{}{}
 )
-
-func init() {
-	mime.AddExtensionType(".js", "text/javascript")
-}
 
 // New creates new app
 func New() *App {
