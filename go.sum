@@ -2,6 +2,10 @@ github.com/tdewolff/minify v2.3.5+incompatible h1:oFxBKxTIY1F/1DEJhLeh/T507W56Jq
 github.com/tdewolff/minify v2.3.5+incompatible/go.mod h1:9Ov578KJUmAWpS6NeZwRZyT56Uf6o3Mcz9CEsg8USYs=
 github.com/tdewolff/parse v2.3.3+incompatible h1:q6OSjvHtvBucLb34z24OH1xl5wGdw1mI9Vd38Qj9evs=
 github.com/tdewolff/parse v2.3.3+incompatible/go.mod h1:8oBwCsVmUkgHO8M5iCzSIDtpzXOT0WXX9cWhz+bIzJQ=
+golang.org/x/net v0.0.0-20180816102801-aaf60122140d h1:211XH5RPVP5tOBkz6xm3/b7KxtjqVf6PYG+evqJpE08=
+golang.org/x/net v0.0.0-20180816102801-aaf60122140d/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
+golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f h1:wMNYb4v58l5UBM7MYRLPG6ZhfOqbKu7X5eyFl8ZhKvA=
+golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.2.1 h1:mUhvW9EsL+naU5Q3cakzfE91YhliOondGd6ZrsDBHQE=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
