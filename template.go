@@ -92,7 +92,7 @@ func (tp *Template) Config(cfg TemplateConfig) *Template {
 	}
 	tp.Component(cfg.Components...)
 	for name, filenames := range cfg.List {
-		tp.Parse(name, filenames...)
+		tp.ParseFile(name, filenames...)
 	}
 	if cfg.Minify {
 		tp.Minify()
@@ -176,8 +176,8 @@ func (tp *Template) Component(filename ...string) *Template {
 	return tp
 }
 
-// Parse loads template into memory
-func (tp *Template) Parse(name string, filenames ...string) *Template {
+// ParseFile loads template from file
+func (tp *Template) ParseFile(name string, filenames ...string) *Template {
 	if _, ok := tp.list[name]; ok {
 		panic(newErrTemplateDuplicate(name))
 	}

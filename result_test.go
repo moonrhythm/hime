@@ -38,7 +38,7 @@ func TestPanicInView(t *testing.T) {
 		app := New()
 
 		app.TemplateFunc("panic", func() string { panic("panic") })
-		app.Template().Dir("testdata").Root("root").Parse("index", "panic.tmpl")
+		app.Template().Dir("testdata").Root("root").ParseFile("index", "panic.tmpl")
 
 		app.
 			Handler(Handler(func(ctx *Context) error {
@@ -59,7 +59,7 @@ func TestPanicInView(t *testing.T) {
 		app := New()
 
 		app.TemplateFunc("panic", func() string { panic("panic") })
-		app.Template().Dir("testdata").Root("root").Parse("index", "panic.tmpl").Minify()
+		app.Template().Dir("testdata").Root("root").ParseFile("index", "panic.tmpl").Minify()
 
 		app.
 			Handler(Handler(func(ctx *Context) error {
