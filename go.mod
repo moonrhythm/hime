@@ -1,4 +1,4 @@
-module github.com/acoshift/hime/v0
+module github.com/acoshift/hime
 
 require (
 	github.com/tdewolff/minify v2.3.5+incompatible
