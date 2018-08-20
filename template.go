@@ -62,14 +62,16 @@ func (t *tmpl) Execute(w io.Writer, data interface{}) error {
 		return t.Template.Execute(w, data)
 	}
 
-	// TODO: this can optimize using pool
-	buf := bytes.Buffer{}
-	err := t.Template.Execute(&buf, data)
+	buf := bytesPool.Get().(*bytes.Buffer)
+	defer bytesPool.Put(buf)
+
+	buf.Reset()
+	err := t.Template.Execute(buf, data)
 	if err != nil {
 		return err
 	}
 
-	return t.m.Minify("text/html", w, &buf)
+	return t.m.Minify("text/html", w, buf)
 }
 
 // Template is template loader
