@@ -25,9 +25,17 @@ func main() {
 		Root("layout").
 		Funcs(tmplFunc).
 		Component("_navbar.component.tmpl").
-		Parse("index", "index.tmpl", "_layout.tmpl").
-		Parse("about", "about.tmpl", "_layout.tmpl").
+		ParseFiles("index", "index.tmpl", "_layout.tmpl").
+		ParseFiles("about", "about.tmpl", "_layout.tmpl").
 		Minify()
+
+	app.
+		GracefulShutdown().
+		Notify(func() {
+			log.Println("Received terminate signal")
+		}).
+		Wait(5 * time.Second).
+		Timeout(5 * time.Second)
 
 	err := app.
 		Routes(hime.Routes{
@@ -41,12 +49,6 @@ func main() {
 		}).
 		Handler(router(app)).
 		Address(":8080").
-		GracefulShutdown().
-		Notify(func() {
-			log.Println("Received terminate signal")
-		}).
-		Wait(5 * time.Second).
-		Timeout(5 * time.Second).
 		ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
@@ -67,7 +69,7 @@ func router(app *hime.App) http.Handler {
 
 func logRequestURI(h http.Handler) http.Handler {
 	return hime.Handler(func(ctx *hime.Context) error {
-		log.Println(ctx.Request().RequestURI)
+		log.Println(ctx.RequestURI)
 		return ctx.Handle(h)
 	})
 }
@@ -80,7 +82,7 @@ func logRequestMethod(h http.Handler) http.Handler {
 }
 
 func indexHandler(ctx *hime.Context) error {
-	if ctx.Request().URL.Path != "/" {
+	if ctx.URL.Path != "/" {
 		return ctx.RedirectTo("index")
 	}
 

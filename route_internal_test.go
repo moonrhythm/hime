@@ -1,39 +1,31 @@
 package hime
 
 import (
-	g "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-var _ = g.Describe("Route internal", func() {
-	g.Specify("clone nil return nil", func() {
-		Expect(cloneRoutes(nil)).To(BeNil())
+func TestRoute(t *testing.T) {
+	t.Run("clone nil", func(t *testing.T) {
+		assert.Nil(t, cloneRoutes(nil))
 	})
 
-	g.Context("given routes with data", func() {
-		var (
-			t Routes
-		)
-
-		g.BeforeEach(func() {
-			t = Routes{
-				"a": "/b",
-				"b": "/cd",
-			}
-		})
-
-		g.When("clone that routes", func() {
-			var (
-				p Routes
-			)
-
-			g.BeforeEach(func() {
-				p = cloneRoutes(t)
-			})
-
-			g.Specify("cloned not identical to original", func() {
-				Expect(p).NotTo(BeIdenticalTo(t))
-			})
-		})
+	t.Run("clone empty", func(t *testing.T) {
+		r := Routes{}
+		assert.Equal(t, Routes{}, cloneRoutes(r))
 	})
-})
+
+	t.Run("clone data", func(t *testing.T) {
+		r := Routes{
+			"a": "/b",
+			"b": "/cd",
+		}
+
+		p := cloneRoutes(r)
+		assert.Equal(t, r, p)
+
+		p["a"] = "/a"
+		assert.NotEqual(t, r, p)
+	})
+}

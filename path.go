@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+// Param is the query param when redirect
+type Param struct {
+	Name  string
+	Value interface{}
+}
+
 // SafeRedirectPath filters domain out from path
 func SafeRedirectPath(p string) string {
 	l, err := url.ParseRequestURI(p)

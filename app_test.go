@@ -31,10 +31,10 @@ func TestApp(t *testing.T) {
 	})
 
 	t.Run("GracefulShutdown", func(t *testing.T) {
-		assert.Nil(t, app.gracefulShutdown)
+		assert.Nil(t, app.gs)
 		gs := app.GracefulShutdown()
-		assert.NotNil(t, app.gracefulShutdown)
-		assert.Equal(t, app.gracefulShutdown, gs.gracefulShutdown)
+		assert.NotNil(t, app.gs)
+		assert.Equal(t, app.gs, gs)
 
 		gs.Timeout(10 * time.Second)
 		assert.Equal(t, 10*time.Second, gs.timeout)

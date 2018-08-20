@@ -41,7 +41,7 @@ var _ = Describe("Context", func() {
 			})
 
 			Specify("an Request() is given request", func() {
-				Expect(ctx.Request()).To(Equal(r))
+				Expect(ctx.Request).To(Equal(r))
 			})
 
 			Specify("an ResponseWriter() is given response writer", func() {
@@ -59,22 +59,6 @@ var _ = Describe("Context", func() {
 
 				It("should be able to retrieve that value", func() {
 					Expect(ctx.Value("data")).To(Equal("text"))
-				})
-			})
-
-			When("override request", func() {
-				var (
-					nr *http.Request
-				)
-
-				BeforeEach(func() {
-					nr = httptest.NewRequest(http.MethodPost, "/test", nil)
-					ctx.WithRequest(nr)
-				})
-
-				Specify("an Request() is new request", func() {
-					Expect(ctx.Request()).To(BeIdenticalTo(nr))
-					Expect(ctx.Request()).NotTo(BeIdenticalTo(r))
 				})
 			})
 
@@ -405,7 +389,7 @@ var _ = Describe("Context", func() {
 
 				When("calling Redirect with request POST method", func() {
 					BeforeEach(func() {
-						ctx.Request().Method = "POST"
+						ctx.Request.Method = "POST"
 						ctx.Redirect("/signin")
 					})
 
@@ -720,7 +704,7 @@ var _ = Describe("Context", func() {
 
 				Context("given a view to the app", func() {
 					BeforeEach(func() {
-						app.Template().Dir("testdata").Root("root").Parse("index", "hello.tmpl")
+						app.Template().Dir("testdata").Root("root").ParseFiles("index", "hello.tmpl")
 					})
 
 					When("calling View with valid template", func() {
@@ -770,7 +754,7 @@ var _ = Describe("Context", func() {
 
 					Context("given a template that invoke wrong template func argument", func() {
 						BeforeEach(func() {
-							app.Template().Dir("testdata").Root("root").Parse("index", "call_fn.tmpl")
+							app.Template().Dir("testdata").Root("root").ParseFiles("index", "call_fn.tmpl")
 						})
 
 						Specify("an error to be return calling View", func() {
@@ -780,7 +764,7 @@ var _ = Describe("Context", func() {
 
 					Context("given a template that invoke panic template func", func() {
 						BeforeEach(func() {
-							app.Template().Dir("testdata").Root("root").Parse("index", "panic.tmpl")
+							app.Template().Dir("testdata").Root("root").ParseFiles("index", "panic.tmpl")
 						})
 
 						It("should panic when calling View", func() {

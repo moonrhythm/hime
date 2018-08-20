@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
@@ -61,14 +62,16 @@ func (t *tmpl) Execute(w io.Writer, data interface{}) error {
 		return t.Template.Execute(w, data)
 	}
 
-	// TODO: this can optimize using pool
-	buf := bytes.Buffer{}
-	err := t.Template.Execute(&buf, data)
+	buf := bytesPool.Get().(*bytes.Buffer)
+	defer bytesPool.Put(buf)
+
+	buf.Reset()
+	err := t.Template.Execute(buf, data)
 	if err != nil {
 		return err
 	}
 
-	return t.m.Minify("text/html", w, &buf)
+	return t.m.Minify("text/html", w, buf)
 }
 
 // Template is template loader
@@ -92,7 +95,7 @@ func (tp *Template) Config(cfg TemplateConfig) *Template {
 	}
 	tp.Component(cfg.Components...)
 	for name, filenames := range cfg.List {
-		tp.Parse(name, filenames...)
+		tp.ParseFiles(name, filenames...)
 	}
 	if cfg.Minify {
 		tp.Minify()
@@ -106,7 +109,7 @@ func (tp *Template) ParseConfig(data []byte) *Template {
 	var config TemplateConfig
 	err := yaml.Unmarshal(data, &config)
 	if err != nil {
-		panic(err)
+		panicf("can not parse template config; %v", err)
 	}
 	return tp.Config(config)
 }
@@ -115,7 +118,7 @@ func (tp *Template) ParseConfig(data []byte) *Template {
 func (tp *Template) ParseConfigFile(filename string) *Template {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		panicf("read template config file; %v", err)
 	}
 	return tp.ParseConfig(data)
 }
@@ -176,8 +179,7 @@ func (tp *Template) Component(filename ...string) *Template {
 	return tp
 }
 
-// Parse loads template into memory
-func (tp *Template) Parse(name string, filenames ...string) *Template {
+func (tp *Template) newTemplate(name string, parser func(t *template.Template) *template.Template) {
 	if _, ok := tp.list[name]; ok {
 		panic(newErrTemplateDuplicate(name))
 	}
@@ -196,12 +198,12 @@ func (tp *Template) Parse(name string, filenames ...string) *Template {
 		t.Funcs(fn)
 	}
 
-	// load templates and components
-	fn := make([]string, len(filenames))
-	copy(fn, filenames)
-	fn = append(fn, tp.components...)
+	// parse components
+	if len(tp.components) > 0 {
+		t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, tp.components...)...))
+	}
 
-	t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, fn...)...))
+	parser(t)
 
 	if tp.root != "" {
 		t = t.Lookup(tp.root)
@@ -211,6 +213,35 @@ func (tp *Template) Parse(name string, filenames ...string) *Template {
 		Template: *t,
 		m:        tp.minifier,
 	}
+}
+
+// Parse parses template from text
+func (tp *Template) Parse(name string, text string) *Template {
+	tp.newTemplate(name, func(t *template.Template) *template.Template {
+		return template.Must(t.Parse(text))
+	})
+
+	return tp
+}
+
+// ParseFiles loads template from file
+func (tp *Template) ParseFiles(name string, filenames ...string) *Template {
+	tp.newTemplate(name, func(t *template.Template) *template.Template {
+		return template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...))
+	})
+
+	return tp
+}
+
+// ParseGlob loads template from pattern
+func (tp *Template) ParseGlob(name string, pattern string) *Template {
+	tp.newTemplate(name, func(t *template.Template) *template.Template {
+		d := tp.dir
+		if !strings.HasSuffix(d, "/") {
+			d += "/"
+		}
+		return template.Must(t.ParseGlob(tp.dir + pattern))
+	})
 
 	return tp
 }

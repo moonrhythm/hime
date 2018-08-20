@@ -23,13 +23,18 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 
 // NewAppContext creates new hime's context with given app
 func NewAppContext(app *App, w http.ResponseWriter, r *http.Request) *Context {
-	return &Context{app, r, w, 0}
+	return &Context{
+		Request: r,
+		app:     app,
+		w:       w,
+	}
 }
 
 // Context is hime context
 type Context struct {
+	*http.Request
+
 	app *App
-	r   *http.Request
 	w   http.ResponseWriter
 
 	code int
@@ -37,32 +42,27 @@ type Context struct {
 
 // Deadline implements context.Context
 func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
-	return ctx.r.Context().Deadline()
+	return ctx.Request.Context().Deadline()
 }
 
 // Done implements context.Context
 func (ctx *Context) Done() <-chan struct{} {
-	return ctx.r.Context().Done()
+	return ctx.Request.Context().Done()
 }
 
 // Err implements context.Context
 func (ctx *Context) Err() error {
-	return ctx.r.Context().Err()
+	return ctx.Request.Context().Err()
 }
 
 // Value implements context.Context
 func (ctx *Context) Value(key interface{}) interface{} {
-	return ctx.r.Context().Value(key)
+	return ctx.Request.Context().Value(key)
 }
 
 // WithContext sets r to r.WithContext with given context
 func (ctx *Context) WithContext(nctx context.Context) {
-	ctx.r = ctx.r.WithContext(nctx)
-}
-
-// WithRequest overrides request
-func (ctx *Context) WithRequest(r *http.Request) {
-	ctx.r = r
+	ctx.Request = ctx.Request.WithContext(nctx)
 }
 
 // WithResponseWriter overrides response writer
@@ -72,17 +72,7 @@ func (ctx *Context) WithResponseWriter(w http.ResponseWriter) {
 
 // WithValue calls WithContext with value context
 func (ctx *Context) WithValue(key interface{}, val interface{}) {
-	ctx.WithContext(context.WithValue(ctx.r.Context(), key, val))
-}
-
-// Request returns request
-func (ctx *Context) Request() *http.Request {
-	return ctx.r
-}
-
-// ResponseWriter returns response writer
-func (ctx *Context) ResponseWriter() http.ResponseWriter {
-	return ctx.w
+	ctx.WithContext(context.WithValue(ctx.Context(), key, val))
 }
 
 // Status sets response status code
@@ -104,8 +94,8 @@ func (ctx *Context) statusCode() int {
 }
 
 func (ctx *Context) statusCodeRedirect() int {
-	if ctx.code == 0 {
-		if ctx.r.Method == http.MethodPost {
+	if ctx.code == 0 || ctx.code < 300 || ctx.code >= 400 {
+		if ctx.Request.Method == http.MethodPost {
 			return http.StatusSeeOther
 		}
 		return http.StatusFound
@@ -114,7 +104,7 @@ func (ctx *Context) statusCodeRedirect() int {
 }
 
 func (ctx *Context) statusCodeError() int {
-	if ctx.code == 0 {
+	if ctx.code < 400 {
 		return http.StatusInternalServerError
 	}
 	return ctx.code
@@ -126,14 +116,14 @@ func (ctx *Context) writeHeader() {
 
 // Handle calls h.ServeHTTP
 func (ctx *Context) Handle(h http.Handler) error {
-	h.ServeHTTP(ctx.w, ctx.r)
+	h.ServeHTTP(ctx.w, ctx.Request)
 	return nil
 }
 
 // Redirect redircets to given url
 func (ctx *Context) Redirect(url string, params ...interface{}) error {
 	p := buildPath(url, params...)
-	http.Redirect(ctx.w, ctx.r, p, ctx.statusCodeRedirect())
+	http.Redirect(ctx.w, ctx.Request, p, ctx.statusCodeRedirect())
 	return nil
 }
 
@@ -151,17 +141,17 @@ func (ctx *Context) RedirectTo(name string, params ...interface{}) error {
 
 // RedirectToGet redirects to same url with status SeeOther
 func (ctx *Context) RedirectToGet() error {
-	return ctx.Status(http.StatusSeeOther).Redirect(ctx.Request().RequestURI)
+	return ctx.Status(http.StatusSeeOther).Redirect(ctx.RequestURI)
 }
 
 // RedirectBack redirects to referer or fallback if referer not exists
 func (ctx *Context) RedirectBack(fallback string) error {
-	u := ctx.r.Referer()
+	u := ctx.Referer()
 	if u == "" {
 		u = fallback
 	}
 	if u == "" {
-		u = ctx.Request().RequestURI
+		u = ctx.RequestURI
 	}
 	return ctx.Redirect(u)
 }
@@ -174,12 +164,12 @@ func (ctx *Context) RedirectBackToGet() error {
 
 // SafeRedirectBack safe redirects to referer
 func (ctx *Context) SafeRedirectBack(fallback string) error {
-	u := ctx.r.Referer()
+	u := ctx.Request.Referer()
 	if u == "" {
 		u = fallback
 	}
 	if u == "" {
-		u = ctx.Request().RequestURI
+		u = ctx.RequestURI
 	}
 	return ctx.SafeRedirect(u)
 }
@@ -192,7 +182,7 @@ func (ctx *Context) Error(error string) error {
 
 // NotFound calls http.NotFound
 func (ctx *Context) NotFound() error {
-	http.NotFound(ctx.w, ctx.r)
+	http.NotFound(ctx.w, ctx.Request)
 	return nil
 }
 
@@ -209,16 +199,16 @@ func (ctx *Context) View(name string, data interface{}) error {
 		panic(newErrTemplateNotFound(name))
 	}
 
-	buf := bytes.Buffer{}
-	err := t.Execute(&buf, data)
+	buf := bytesPool.Get().(*bytes.Buffer)
+	defer bytesPool.Put(buf)
+
+	buf.Reset()
+	err := t.Execute(buf, data)
 	if err != nil {
 		return err
 	}
 
-	ctx.setContentType("text/html; charset=utf-8")
-	ctx.w.WriteHeader(ctx.statusCode())
-	_, err = io.Copy(ctx.w, &buf)
-	return filterRenderError(err)
+	return ctx.HTML(buf.Bytes())
 }
 
 func (ctx *Context) setContentType(value string) {
@@ -283,6 +273,33 @@ func (ctx *Context) Bytes(b []byte) error {
 
 // File serves file using http.ServeFile
 func (ctx *Context) File(name string) error {
-	http.ServeFile(ctx.w, ctx.r, name)
+	http.ServeFile(ctx.w, ctx.Request, name)
 	return nil
+}
+
+// ResponseWriter returns response writer
+func (ctx *Context) ResponseWriter() http.ResponseWriter {
+	return ctx.w
+}
+
+// AddHeader adds a header to response
+func (ctx *Context) AddHeader(key, value string) {
+	ctx.w.Header().Add(key, value)
+}
+
+// AddHeaderIfNotExists adds a header to response if not exists
+func (ctx *Context) AddHeaderIfNotExists(key, value string) {
+	if v := ctx.w.Header().Get(key); v == "" {
+		ctx.w.Header().Add(key, value)
+	}
+}
+
+// SetHeader sets a header to response
+func (ctx *Context) SetHeader(key, value string) {
+	ctx.w.Header().Set(key, value)
+}
+
+// DelHeader deletes a header from response
+func (ctx *Context) DelHeader(key string) {
+	ctx.w.Header().Del(key)
 }

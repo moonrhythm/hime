@@ -5,9 +5,11 @@ import (
 	"crypto/tls"
 	"html/template"
 	"log"
-	"mime"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -51,16 +53,12 @@ type App struct {
 	template      map[string]*tmpl
 	templateFuncs []template.FuncMap
 
-	gracefulShutdown *gracefulShutdown
+	gs *GracefulShutdown
 }
 
 var (
 	ctxKeyApp = struct{}{}
 )
-
-func init() {
-	mime.AddExtensionType(".js", "text/javascript")
-}
 
 // New creates new app
 func New() *App {
@@ -88,8 +86,12 @@ func (app *App) Clone() *App {
 	if app.TLSConfig != nil {
 		x.TLSConfig = app.TLSConfig.Clone()
 	}
-	if app.gracefulShutdown != nil {
-		x.gracefulShutdown = &*app.gracefulShutdown
+	if app.gs != nil {
+		x.gs = &GracefulShutdown{
+			timeout: app.gs.timeout,
+			wait:    app.gs.wait,
+			notiFns: app.gs.notiFns,
+		}
 	}
 	return x
 }
@@ -156,35 +158,89 @@ func (app *App) listenAndServe() error {
 
 // ListenAndServe starts web server
 func (app *App) ListenAndServe() error {
-	if app.gracefulShutdown != nil {
-		return app.GracefulShutdown().ListenAndServe()
+	if app.gs != nil {
+		return app.startGracefulShutdown()
 	}
 
 	return app.listenAndServe()
 }
 
-// TLS sets cert and key file
-func (app *App) TLS(certFile, keyFile string) *App {
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		panic("hime: load key pair error; " + err.Error())
-	}
-
+func (app *App) ensureTLSConfig() {
 	if app.TLSConfig == nil {
 		app.TLSConfig = &tls.Config{}
 	}
-	app.TLSConfig.Certificates = append(app.TLSConfig.Certificates, cert)
+}
+
+// TLS sets cert and key file
+func (app *App) TLS(certFile, keyFile string) *App {
+	app.ensureTLSConfig()
+
+	err := loadTLSCertKey(app.TLSConfig, certFile, keyFile)
+	if err != nil {
+		panicf("load key pair; %v", err)
+	}
+
 	return app
 }
 
-// GracefulShutdown returns graceful shutdown server
-func (app *App) GracefulShutdown() *GracefulShutdownApp {
-	if app.gracefulShutdown == nil {
-		app.gracefulShutdown = &gracefulShutdown{}
+// SelfSign generates self sign cert
+func (app *App) SelfSign() *App {
+	app.ensureTLSConfig()
+
+	err := generateSelfSign(app.TLSConfig, "", 0, "", nil)
+	if err != nil {
+		panicf("generate self sign; %v", err)
 	}
 
-	return &GracefulShutdownApp{
-		App:              app,
-		gracefulShutdown: app.gracefulShutdown,
+	return app
+}
+
+// OnShutdown calls server.RegisterOnShutdown(fn)
+func (app *App) OnShutdown(fn func()) *App {
+	app.srv.RegisterOnShutdown(fn)
+	return app
+}
+
+// GracefulShutdown changes server to graceful shutdown mode
+func (app *App) GracefulShutdown() *GracefulShutdown {
+	if app.gs == nil {
+		app.gs = &GracefulShutdown{}
+	}
+
+	return app.gs
+}
+
+func (app *App) startGracefulShutdown() error {
+	errChan := make(chan error)
+
+	go func() {
+		if err := app.listenAndServe(); err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM)
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-stop:
+		for _, fn := range app.gs.notiFns {
+			go fn()
+		}
+
+		if app.gs.wait > 0 {
+			time.Sleep(app.gs.wait)
+		}
+
+		ctx := context.Background()
+		if app.gs.timeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, app.gs.timeout)
+			defer cancel()
+		}
+
+		return app.srv.Shutdown(ctx)
 	}
 }

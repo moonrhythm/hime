@@ -38,9 +38,9 @@ func TestConfig(t *testing.T) {
 			assert.Len(t, app.TLSConfig.Certificates, 1)
 
 			// graceful
-			assert.NotNil(t, app.gracefulShutdown)
-			assert.Equal(t, time.Minute, app.gracefulShutdown.timeout)
-			assert.Equal(t, 5*time.Second, app.gracefulShutdown.wait)
+			assert.NotNil(t, app.gs)
+			assert.Equal(t, time.Minute, app.gs.timeout)
+			assert.Equal(t, 5*time.Second, app.gs.wait)
 		})
 	})
 
@@ -59,9 +59,9 @@ func TestConfig(t *testing.T) {
 			assert.Empty(t, app.IdleTimeout)
 
 			// graceful
-			assert.NotNil(t, app.gracefulShutdown)
-			assert.Empty(t, app.gracefulShutdown.timeout)
-			assert.Empty(t, app.gracefulShutdown.wait)
+			assert.NotNil(t, app.gs)
+			assert.Empty(t, app.gs.timeout)
+			assert.Empty(t, app.gs.wait)
 		})
 	})
 
@@ -80,7 +80,7 @@ func TestConfig(t *testing.T) {
 			assert.Empty(t, app.IdleTimeout)
 
 			// graceful
-			assert.Nil(t, app.gracefulShutdown)
+			assert.Nil(t, app.gs)
 		})
 	})
 

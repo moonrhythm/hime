@@ -1,18 +1,9 @@
 package hime
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/pem"
+	"fmt"
 	"io/ioutil"
-	"log"
-	"math/big"
-	"net"
 	"strings"
 	"time"
 
@@ -60,10 +51,11 @@ func parseDuration(s string, t *time.Duration) {
 	if s == "" {
 		return
 	}
+
 	var err error
 	*t, err = time.ParseDuration(s)
 	if err != nil {
-		panic(err)
+		panicf("can not parse duration; %v", err)
 	}
 }
 
@@ -127,11 +119,14 @@ func (app *App) Config(config AppConfig) *App {
 				tlsConfig = Modern.Clone()
 			case "compatible":
 				tlsConfig = Compatible.Clone()
-			default:
+			case "":
 				tlsConfig = &tls.Config{}
+			default:
+				panicf("unknown tls profile '%s'", t.Profile)
 			}
 
 			switch strings.ToLower(t.MinVersion) {
+			case "":
 			case "ssl3.0":
 				tlsConfig.MinVersion = tls.VersionSSL30
 			case "tls1.0":
@@ -140,9 +135,12 @@ func (app *App) Config(config AppConfig) *App {
 				tlsConfig.MinVersion = tls.VersionTLS11
 			case "tls1.2":
 				tlsConfig.MinVersion = tls.VersionTLS12
+			default:
+				panicf("unknown tls min version '%s'", t.MinVersion)
 			}
 
 			switch strings.ToLower(t.MaxVersion) {
+			case "":
 			case "ssl3.0":
 				tlsConfig.MaxVersion = tls.VersionSSL30
 			case "tls1.0":
@@ -151,6 +149,8 @@ func (app *App) Config(config AppConfig) *App {
 				tlsConfig.MaxVersion = tls.VersionTLS11
 			case "tls1.2":
 				tlsConfig.MaxVersion = tls.VersionTLS12
+			default:
+				panicf("unknown tls max version '%s'", t.MaxVersion)
 			}
 
 			if t.Curves != nil {
@@ -166,114 +166,28 @@ func (app *App) Config(config AppConfig) *App {
 					case "x25519":
 						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.X25519)
 					default:
-						log.Panicf("hime: unknown tls curve '%s'", c)
+						panicf("unknown tls curve '%s'", c)
 					}
 				}
 			}
 
 			if t.CertFile != "" && t.KeyFile != "" {
-				cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
+				err := loadTLSCertKey(tlsConfig, t.CertFile, t.KeyFile)
 				if err != nil {
-					panic("hime: load key pair error; " + err.Error())
+					panicf("load key pair error; %v", err)
 				}
-				tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 			} else if c := t.SelfSign; c != nil {
-				var priv interface{}
-				var pub interface{}
-
-				switch c.Key.Algo {
-				case "ecdsa", "":
-					var curve elliptic.Curve
-					switch c.Key.Size {
-					case 224:
-						curve = elliptic.P224()
-					case 256, 0:
-						curve = elliptic.P256()
-					case 384:
-						curve = elliptic.P384()
-					case 521:
-						curve = elliptic.P521()
-					default:
-						panic("hime: invalid self-sign key size")
-					}
-
-					pri, err := ecdsa.GenerateKey(curve, rand.Reader)
-					if err != nil {
-						panic("hime: generate private key error;" + err.Error())
-					}
-					priv, pub = pri, &pri.PublicKey
-				case "rsa":
-					// TODO: make rsa key size configurable
-					pri, err := rsa.GenerateKey(rand.Reader, 2048)
-					if err != nil {
-						panic("hime: generate private key error; " + err.Error())
-					}
-					priv, pub = pri, &pri.PublicKey
-				default:
-					panic("hime: invalid self-sign key algo")
-				}
-
-				sn, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
-				if err != nil {
-					panic("hime: generate serial number error; " + err.Error())
-				}
-
-				cert := x509.Certificate{
-					SerialNumber: sn,
-					Subject: pkix.Name{
-						Organization: []string{"Acme Co"},
-					},
-					NotAfter:              time.Now().AddDate(1, 0, 0), // TODO: make not before configurable
-					KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-					ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-					BasicConstraintsValid: true,
-				}
-
-				for _, h := range c.Hosts {
-					if ip := net.ParseIP(h); ip != nil {
-						cert.IPAddresses = append(cert.IPAddresses, ip)
-					} else {
-						cert.DNSNames = append(cert.DNSNames, h)
-					}
-				}
-
-				certBytes, err := x509.CreateCertificate(rand.Reader, &cert, &cert, pub, priv)
-				if err != nil {
-					panic("hime: create cvertificate error; " + err.Error())
-				}
-
-				certPem := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certBytes})
-
-				var keyPemBlock pem.Block
-				switch k := priv.(type) {
-				case *ecdsa.PrivateKey:
-					b, err := x509.MarshalECPrivateKey(k)
-					if err != nil {
-						panic("hime: marshal ec private key error; " + err.Error())
-					}
-					keyPemBlock = pem.Block{Type: "EC PRIVATE KEY", Bytes: b}
-				case *rsa.PrivateKey:
-					keyPemBlock = pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}
-				}
-				keyPem := pem.EncodeToMemory(&keyPemBlock)
-
-				tlsCert, err := tls.X509KeyPair(certPem, keyPem)
-				if err != nil {
-					panic("hime: load key pair error; " + err.Error())
-				}
-				tlsConfig.Certificates = append(tlsConfig.Certificates, tlsCert)
+				generateSelfSign(tlsConfig, c.Key.Algo, c.Key.Size, c.CN, c.Hosts)
 			}
 
 			app.TLSConfig = tlsConfig
 		}
 
 		if gs := server.GracefulShutdown; gs != nil {
-			if app.gracefulShutdown == nil {
-				app.gracefulShutdown = &gracefulShutdown{}
-			}
+			g := app.GracefulShutdown()
 
-			parseDuration(gs.Timeout, &app.gracefulShutdown.timeout)
-			parseDuration(gs.Wait, &app.gracefulShutdown.wait)
+			parseDuration(gs.Timeout, &g.timeout)
+			parseDuration(gs.Wait, &g.wait)
 		}
 
 		if rd := server.HTTPSRedirect; rd != nil {
@@ -284,7 +198,7 @@ func (app *App) Config(config AppConfig) *App {
 			go func() {
 				err := StartHTTPSRedirectServer(rd.Addr)
 				if err != nil {
-					log.Panicf("hime: start https redirect server error; %v", err)
+					panicf("start https redirect server error; %v", err)
 				}
 			}()
 		}
@@ -298,7 +212,7 @@ func (app *App) ParseConfig(data []byte) *App {
 	var config AppConfig
 	err := yaml.Unmarshal(data, &config)
 	if err != nil {
-		panic(err)
+		panicf("can not parse config; %v", err)
 	}
 	return app.Config(config)
 }
@@ -307,7 +221,11 @@ func (app *App) ParseConfig(data []byte) *App {
 func (app *App) ParseConfigFile(filename string) *App {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		panicf("can not read config from file; %v", err)
 	}
 	return app.ParseConfig(data)
+}
+
+func panicf(format string, a ...interface{}) {
+	panic(fmt.Sprintf("hime: "+format, a...))
 }
