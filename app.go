@@ -177,7 +177,7 @@ func (app *App) TLS(certFile, keyFile string) *App {
 
 	err := loadTLSCertKey(app.TLSConfig, certFile, keyFile)
 	if err != nil {
-		panic("hime: load key pair error; " + err.Error())
+		panicf("load key pair; %v", err)
 	}
 
 	return app
@@ -189,7 +189,7 @@ func (app *App) SelfSign() *App {
 
 	err := generateSelfSign(app.TLSConfig, "", 0, "", nil)
 	if err != nil {
-		panic("hime: generate self sign error; " + err.Error())
+		panicf("generate self sign; %v", err)
 	}
 
 	return app

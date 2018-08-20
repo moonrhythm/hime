@@ -108,7 +108,7 @@ func generateSelfSign(t *tls.Config, algo string, size int, cn string, hosts []s
 		case 521:
 			curve = elliptic.P521()
 		default:
-			panic("hime: invalid self-sign key size")
+			return fmt.Errorf("invalid self-sign key size '%d'", size)
 		}
 
 		pri, err := ecdsa.GenerateKey(curve, rand.Reader)
@@ -124,7 +124,7 @@ func generateSelfSign(t *tls.Config, algo string, size int, cn string, hosts []s
 		}
 		priv, pub = pri, &pri.PublicKey
 	default:
-		return fmt.Errorf("invalid self-sign key algo")
+		return fmt.Errorf("invalid self-sign key algo '%s'", algo)
 	}
 
 	sn, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))

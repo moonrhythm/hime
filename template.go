@@ -107,7 +107,7 @@ func (tp *Template) ParseConfig(data []byte) *Template {
 	var config TemplateConfig
 	err := yaml.Unmarshal(data, &config)
 	if err != nil {
-		panic(err)
+		panicf("can not parse template config; %v", err)
 	}
 	return tp.Config(config)
 }
@@ -116,7 +116,7 @@ func (tp *Template) ParseConfig(data []byte) *Template {
 func (tp *Template) ParseConfigFile(filename string) *Template {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		panicf("read template config file; %v", err)
 	}
 	return tp.ParseConfig(data)
 }

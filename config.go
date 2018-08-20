@@ -2,8 +2,8 @@ package hime
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"strings"
 	"time"
 
@@ -51,10 +51,11 @@ func parseDuration(s string, t *time.Duration) {
 	if s == "" {
 		return
 	}
+
 	var err error
 	*t, err = time.ParseDuration(s)
 	if err != nil {
-		panic(err)
+		panicf("can not parse duration; %v", err)
 	}
 }
 
@@ -118,11 +119,14 @@ func (app *App) Config(config AppConfig) *App {
 				tlsConfig = Modern.Clone()
 			case "compatible":
 				tlsConfig = Compatible.Clone()
-			default:
+			case "":
 				tlsConfig = &tls.Config{}
+			default:
+				panicf("unknown tls profile '%s'", t.Profile)
 			}
 
 			switch strings.ToLower(t.MinVersion) {
+			case "":
 			case "ssl3.0":
 				tlsConfig.MinVersion = tls.VersionSSL30
 			case "tls1.0":
@@ -131,9 +135,12 @@ func (app *App) Config(config AppConfig) *App {
 				tlsConfig.MinVersion = tls.VersionTLS11
 			case "tls1.2":
 				tlsConfig.MinVersion = tls.VersionTLS12
+			default:
+				panicf("unknown tls min version '%s'", t.MinVersion)
 			}
 
 			switch strings.ToLower(t.MaxVersion) {
+			case "":
 			case "ssl3.0":
 				tlsConfig.MaxVersion = tls.VersionSSL30
 			case "tls1.0":
@@ -142,6 +149,8 @@ func (app *App) Config(config AppConfig) *App {
 				tlsConfig.MaxVersion = tls.VersionTLS11
 			case "tls1.2":
 				tlsConfig.MaxVersion = tls.VersionTLS12
+			default:
+				panicf("unknown tls max version '%s'", t.MaxVersion)
 			}
 
 			if t.Curves != nil {
@@ -157,7 +166,7 @@ func (app *App) Config(config AppConfig) *App {
 					case "x25519":
 						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.X25519)
 					default:
-						log.Panicf("hime: unknown tls curve '%s'", c)
+						panicf("unknown tls curve '%s'", c)
 					}
 				}
 			}
@@ -165,7 +174,7 @@ func (app *App) Config(config AppConfig) *App {
 			if t.CertFile != "" && t.KeyFile != "" {
 				err := loadTLSCertKey(tlsConfig, t.CertFile, t.KeyFile)
 				if err != nil {
-					panic("hime: load key pair error; " + err.Error())
+					panicf("load key pair error; %v", err)
 				}
 			} else if c := t.SelfSign; c != nil {
 				generateSelfSign(tlsConfig, c.Key.Algo, c.Key.Size, c.CN, c.Hosts)
@@ -189,7 +198,7 @@ func (app *App) Config(config AppConfig) *App {
 			go func() {
 				err := StartHTTPSRedirectServer(rd.Addr)
 				if err != nil {
-					log.Panicf("hime: start https redirect server error; %v", err)
+					panicf("start https redirect server error; %v", err)
 				}
 			}()
 		}
@@ -203,7 +212,7 @@ func (app *App) ParseConfig(data []byte) *App {
 	var config AppConfig
 	err := yaml.Unmarshal(data, &config)
 	if err != nil {
-		panic(err)
+		panicf("can not parse config; %v", err)
 	}
 	return app.Config(config)
 }
@@ -212,7 +221,11 @@ func (app *App) ParseConfig(data []byte) *App {
 func (app *App) ParseConfigFile(filename string) *App {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		panicf("can not read config from file; %v", err)
 	}
 	return app.ParseConfig(data)
+}
+
+func panicf(format string, a ...interface{}) {
+	panic(fmt.Sprintf("hime: "+format, a...))
 }
