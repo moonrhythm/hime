@@ -94,7 +94,7 @@ func (ctx *Context) statusCode() int {
 }
 
 func (ctx *Context) statusCodeRedirect() int {
-	if ctx.code == 0 {
+	if ctx.code == 0 || ctx.code < 300 || ctx.code >= 400 {
 		if ctx.Request.Method == http.MethodPost {
 			return http.StatusSeeOther
 		}
@@ -104,7 +104,7 @@ func (ctx *Context) statusCodeRedirect() int {
 }
 
 func (ctx *Context) statusCodeError() int {
-	if ctx.code == 0 {
+	if ctx.code < 400 {
 		return http.StatusInternalServerError
 	}
 	return ctx.code
