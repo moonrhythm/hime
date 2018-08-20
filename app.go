@@ -158,17 +158,33 @@ func (app *App) ListenAndServe() error {
 	return app.listenAndServe()
 }
 
+func (app *App) ensureTLSConfig() {
+	if app.TLSConfig == nil {
+		app.TLSConfig = &tls.Config{}
+	}
+}
+
 // TLS sets cert and key file
 func (app *App) TLS(certFile, keyFile string) *App {
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	app.ensureTLSConfig()
+
+	err := loadTLSCertKey(app.TLSConfig, certFile, keyFile)
 	if err != nil {
 		panic("hime: load key pair error; " + err.Error())
 	}
 
-	if app.TLSConfig == nil {
-		app.TLSConfig = &tls.Config{}
+	return app
+}
+
+// SelfSign generates self sign cert
+func (app *App) SelfSign() *App {
+	app.ensureTLSConfig()
+
+	err := generateSelfSign(app.TLSConfig, "", 0, "", nil)
+	if err != nil {
+		panic("hime: generate self sign error; " + err.Error())
 	}
-	app.TLSConfig.Certificates = append(app.TLSConfig.Certificates, cert)
+
 	return app
 }
 
