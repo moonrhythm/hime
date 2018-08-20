@@ -29,7 +29,7 @@ func home(ctx *hime.Context) error {
 }
 
 func about(ctx *hime.Context) error {
-	vars := mux.Vars(ctx.Request())
+	vars := mux.Vars(ctx.Request)
 	name := vars["name"]
 	return ctx.HTML([]byte(`
 		<!doctype html>

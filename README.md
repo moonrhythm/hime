@@ -67,7 +67,7 @@ func router() http.Handler {
 
 func logRequestURI(h http.Handler) http.Handler {
     return hime.Handler(func(ctx *hime.Context) error {
-        log.Println(ctx.Request().RequestURI)
+        log.Println(ctx.RequestURI)
         return h
     })
 }
@@ -80,7 +80,7 @@ func logRequestMethod(h http.Handler) http.Handler {
 }
 
 func indexHandler(ctx *hime.Context) error {
-    if ctx.Request().URL.Path != "/" {
+    if ctx.URL.Path != "/" {
         return ctx.RedirectTo("index")
     }
     return ctx.View("index", map[string]interface{}{
@@ -120,7 +120,7 @@ You can also use hime's handler with middleware
 ```go
 func logRequestURI(h http.Handler) http.Handler {
     return hime.Handler(func(ctx *hime.Context) error {
-        log.Println(ctx.Request().RequestURI)
+        log.Println(ctx.RequestURI)
         return ctx.Handle(h)
     })
 }

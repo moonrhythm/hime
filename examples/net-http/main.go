@@ -69,7 +69,7 @@ func router(app *hime.App) http.Handler {
 
 func logRequestURI(h http.Handler) http.Handler {
 	return hime.Handler(func(ctx *hime.Context) error {
-		log.Println(ctx.Request().RequestURI)
+		log.Println(ctx.RequestURI)
 		return ctx.Handle(h)
 	})
 }
@@ -82,7 +82,7 @@ func logRequestMethod(h http.Handler) http.Handler {
 }
 
 func indexHandler(ctx *hime.Context) error {
-	if ctx.Request().URL.Path != "/" {
+	if ctx.URL.Path != "/" {
 		return ctx.RedirectTo("index")
 	}
 

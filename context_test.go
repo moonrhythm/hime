@@ -41,7 +41,7 @@ var _ = Describe("Context", func() {
 			})
 
 			Specify("an Request() is given request", func() {
-				Expect(ctx.Request()).To(Equal(r))
+				Expect(ctx.Request).To(Equal(r))
 			})
 
 			Specify("an ResponseWriter() is given response writer", func() {
@@ -59,22 +59,6 @@ var _ = Describe("Context", func() {
 
 				It("should be able to retrieve that value", func() {
 					Expect(ctx.Value("data")).To(Equal("text"))
-				})
-			})
-
-			When("override request", func() {
-				var (
-					nr *http.Request
-				)
-
-				BeforeEach(func() {
-					nr = httptest.NewRequest(http.MethodPost, "/test", nil)
-					ctx.WithRequest(nr)
-				})
-
-				Specify("an Request() is new request", func() {
-					Expect(ctx.Request()).To(BeIdenticalTo(nr))
-					Expect(ctx.Request()).NotTo(BeIdenticalTo(r))
 				})
 			})
 
@@ -405,7 +389,7 @@ var _ = Describe("Context", func() {
 
 				When("calling Redirect with request POST method", func() {
 					BeforeEach(func() {
-						ctx.Request().Method = "POST"
+						ctx.Request.Method = "POST"
 						ctx.Redirect("/signin")
 					})
 
