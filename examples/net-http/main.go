@@ -25,8 +25,8 @@ func main() {
 		Root("layout").
 		Funcs(tmplFunc).
 		Component("_navbar.component.tmpl").
-		ParseFile("index", "index.tmpl", "_layout.tmpl").
-		ParseFile("about", "about.tmpl", "_layout.tmpl").
+		ParseFiles("index", "index.tmpl", "_layout.tmpl").
+		ParseFiles("about", "about.tmpl", "_layout.tmpl").
 		Minify()
 
 	err := app.

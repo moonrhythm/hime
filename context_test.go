@@ -720,7 +720,7 @@ var _ = Describe("Context", func() {
 
 				Context("given a view to the app", func() {
 					BeforeEach(func() {
-						app.Template().Dir("testdata").Root("root").ParseFile("index", "hello.tmpl")
+						app.Template().Dir("testdata").Root("root").ParseFiles("index", "hello.tmpl")
 					})
 
 					When("calling View with valid template", func() {
@@ -770,7 +770,7 @@ var _ = Describe("Context", func() {
 
 					Context("given a template that invoke wrong template func argument", func() {
 						BeforeEach(func() {
-							app.Template().Dir("testdata").Root("root").ParseFile("index", "call_fn.tmpl")
+							app.Template().Dir("testdata").Root("root").ParseFiles("index", "call_fn.tmpl")
 						})
 
 						Specify("an error to be return calling View", func() {
@@ -780,7 +780,7 @@ var _ = Describe("Context", func() {
 
 					Context("given a template that invoke panic template func", func() {
 						BeforeEach(func() {
-							app.Template().Dir("testdata").Root("root").ParseFile("index", "panic.tmpl")
+							app.Template().Dir("testdata").Root("root").ParseFiles("index", "panic.tmpl")
 						})
 
 						It("should panic when calling View", func() {
