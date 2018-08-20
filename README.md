@@ -9,16 +9,16 @@ Hime is a Go Web Framework.
 
 ## Why Framework
 
-I like net/http but... there are many duplicated code when working on multiple projects,
+I ❤️ net/http but... there are many duplicated code when working on multiple projects,
 plus no standard. Framework creates a standard for developers.
 
 ### Why Another Framework
 
-There're many Go framework out there. But I want a framework that works with any net/http compatible libraries seamlessly.
+There're many Go frameworks out there. But I want a framework that works with any net/http compatible libraries seamlessly.
 
 For example, you can choose any router, any middlewares, or handlers that work with standard library.
 
-Other framework don't allow this. They have built-in router, framework-specific middlewares.
+That why hime won't ship with any handler exclude router 🙈
 
 ## Core focus
 
@@ -306,14 +306,14 @@ if err != nil {
 ## Useful handlers and middlewares
 
 - [acoshift/middleware](https://github.com/acoshift/middleware)
-- [acoshift/header](https://github.com/acoshift/header)
 - [acoshift/session](https://github.com/acoshift/session)
-- [acoshift/flash](https://github.com/acoshift/flash)
+- [acoshift/gcshandler](https://github.com/acoshift/gcshandler)
 - [acoshift/webstatic](https://github.com/acoshift/webstatic)
 - [acoshift/httprouter](https://github.com/acoshift/httprouter)
 - [acoshift/redirecthttps](https://github.com/acoshift/redirecthttps)
-- [acoshift/cachestatic](https://github.com/acoshift/cachestatic)
 - [acoshift/methodmux](https://github.com/acoshift/methodmux)
+- [acoshift/prefixhandler](https://github.com/acoshift/prefixhandler)
+- [acoshift/hrpc](https://github.com/acoshift/hrpc)
 
 ## FAQ
 
