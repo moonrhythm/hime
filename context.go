@@ -75,11 +75,6 @@ func (ctx *Context) WithValue(key interface{}, val interface{}) {
 	ctx.WithContext(context.WithValue(ctx.Context(), key, val))
 }
 
-// ResponseWriter returns response writer
-func (ctx *Context) ResponseWriter() http.ResponseWriter {
-	return ctx.w
-}
-
 // Status sets response status code
 func (ctx *Context) Status(code int) *Context {
 	ctx.code = code
@@ -277,4 +272,31 @@ func (ctx *Context) Bytes(b []byte) error {
 func (ctx *Context) File(name string) error {
 	http.ServeFile(ctx.w, ctx.Request, name)
 	return nil
+}
+
+// ResponseWriter returns response writer
+func (ctx *Context) ResponseWriter() http.ResponseWriter {
+	return ctx.w
+}
+
+// AddHeader adds a header to response
+func (ctx *Context) AddHeader(key, value string) {
+	ctx.w.Header().Add(key, value)
+}
+
+// AddHeaderIfNotExists adds a header to response if not exists
+func (ctx *Context) AddHeaderIfNotExists(key, value string) {
+	if v := ctx.w.Header().Get(key); v == "" {
+		ctx.w.Header().Add(key, value)
+	}
+}
+
+// SetHeader sets a header to response
+func (ctx *Context) SetHeader(key, value string) {
+	ctx.w.Header().Set(key, value)
+}
+
+// DelHeader deletes a header from response
+func (ctx *Context) DelHeader(key string) {
+	ctx.w.Header().Del(key)
 }
