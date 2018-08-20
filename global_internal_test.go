@@ -1,39 +1,31 @@
 package hime
 
 import (
-	g "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-var _ = g.Describe("Global internal", func() {
-	g.Specify("clone nil return nil", func() {
-		Expect(cloneGlobals(nil)).To(BeNil())
+func TestGlobal(t *testing.T) {
+	t.Run("clone nil", func(t *testing.T) {
+		assert.Nil(t, cloneGlobals(nil))
 	})
 
-	g.Context("given globals with data", func() {
-		var (
-			t Globals
-		)
-
-		g.BeforeEach(func() {
-			t = Globals{
-				"a": 1,
-				"b": 2,
-			}
-		})
-
-		g.When("clone that globals", func() {
-			var (
-				p Globals
-			)
-
-			g.BeforeEach(func() {
-				p = cloneGlobals(t)
-			})
-
-			g.Specify("cloned not identical to original", func() {
-				Expect(p).NotTo(BeIdenticalTo(t))
-			})
-		})
+	t.Run("clone empty", func(t *testing.T) {
+		r := Globals{}
+		assert.Equal(t, Globals{}, cloneGlobals(r))
 	})
-})
+
+	t.Run("clone data", func(t *testing.T) {
+		r := Globals{
+			"a": 1,
+			"b": 2,
+		}
+
+		p := cloneGlobals(r)
+		assert.Equal(t, r, p)
+
+		p["a"] = 5
+		assert.NotEqual(t, r, p)
+	})
+}
