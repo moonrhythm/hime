@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
@@ -225,6 +226,19 @@ func (tp *Template) Parse(name string, text string) *Template {
 func (tp *Template) ParseFiles(name string, filenames ...string) *Template {
 	tp.newTemplate(name, func(t *template.Template) *template.Template {
 		return template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...))
+	})
+
+	return tp
+}
+
+// ParseGlob loads template from pattern
+func (tp *Template) ParseGlob(name string, pattern string) *Template {
+	tp.newTemplate(name, func(t *template.Template) *template.Template {
+		d := tp.dir
+		if !strings.HasSuffix(d, "/") {
+			d += "/"
+		}
+		return template.Must(t.ParseGlob(tp.dir + pattern))
 	})
 
 	return tp
