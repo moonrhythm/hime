@@ -176,8 +176,7 @@ func (tp *Template) Component(filename ...string) *Template {
 	return tp
 }
 
-// ParseFile loads template from file
-func (tp *Template) ParseFile(name string, filenames ...string) *Template {
+func (tp *Template) newTemplate(name string, parser func(t *template.Template) *template.Template) {
 	if _, ok := tp.list[name]; ok {
 		panic(newErrTemplateDuplicate(name))
 	}
@@ -196,12 +195,12 @@ func (tp *Template) ParseFile(name string, filenames ...string) *Template {
 		t.Funcs(fn)
 	}
 
-	// load templates and components
-	fn := make([]string, len(filenames))
-	copy(fn, filenames)
-	fn = append(fn, tp.components...)
+	// parse components
+	if len(tp.components) > 0 {
+		t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, tp.components...)...))
+	}
 
-	t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, fn...)...))
+	parser(t)
 
 	if tp.root != "" {
 		t = t.Lookup(tp.root)
@@ -211,6 +210,22 @@ func (tp *Template) ParseFile(name string, filenames ...string) *Template {
 		Template: *t,
 		m:        tp.minifier,
 	}
+}
+
+// Parse parses template from text
+func (tp *Template) Parse(name string, text string) *Template {
+	tp.newTemplate(name, func(t *template.Template) *template.Template {
+		return template.Must(t.Parse(text))
+	})
+
+	return tp
+}
+
+// ParseFile loads template from file
+func (tp *Template) ParseFile(name string, filenames ...string) *Template {
+	tp.newTemplate(name, func(t *template.Template) *template.Template {
+		return template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...))
+	})
 
 	return tp
 }
