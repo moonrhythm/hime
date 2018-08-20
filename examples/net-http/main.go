@@ -29,6 +29,14 @@ func main() {
 		ParseFiles("about", "about.tmpl", "_layout.tmpl").
 		Minify()
 
+	app.
+		GracefulShutdown().
+		Notify(func() {
+			log.Println("Received terminate signal")
+		}).
+		Wait(5 * time.Second).
+		Timeout(5 * time.Second)
+
 	err := app.
 		Routes(hime.Routes{
 			"index":          "/",
@@ -41,12 +49,6 @@ func main() {
 		}).
 		Handler(router(app)).
 		Address(":8080").
-		GracefulShutdown().
-		Notify(func() {
-			log.Println("Received terminate signal")
-		}).
-		Wait(5 * time.Second).
-		Timeout(5 * time.Second).
 		ListenAndServe()
 	if err != nil {
 		log.Fatal(err)

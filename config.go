@@ -175,12 +175,10 @@ func (app *App) Config(config AppConfig) *App {
 		}
 
 		if gs := server.GracefulShutdown; gs != nil {
-			if app.gracefulShutdown == nil {
-				app.gracefulShutdown = &gracefulShutdown{}
-			}
+			g := app.GracefulShutdown()
 
-			parseDuration(gs.Timeout, &app.gracefulShutdown.timeout)
-			parseDuration(gs.Wait, &app.gracefulShutdown.wait)
+			parseDuration(gs.Timeout, &g.timeout)
+			parseDuration(gs.Wait, &g.wait)
 		}
 
 		if rd := server.HTTPSRedirect; rd != nil {

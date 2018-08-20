@@ -45,12 +45,13 @@ func main() {
         ParseFiles("index", "index.tmpl", "_layout.tmpl").
         Minify()
 
+    app.GracefulShutdown()
+
     app.
         Routes(hime.Routes{
             "index": "/",
         }).
         Handler(router()).
-        GracefulShutdown().
         Address(":8080").
         ListenAndServe()
 }
@@ -291,10 +292,12 @@ health.Handle("/readiness", probe)
 health.Handle("/liveness", probehandler.Success())
 go http.ListenAndServe(":18080", health)
 
-err := hime.Merge(app1, app2).
-    GracefulShutdown().
-    Notify(probe.Fail).
-    ListenAndServe()
+apps := hime.Merge(app1, app2)
+
+apps.GracefulShutdown().
+    Notify(probe.Fail)
+
+err := apps.ListenAndServe()
 if err != nil {
     log.Fatal(err)
 }

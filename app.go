@@ -7,6 +7,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -50,7 +53,7 @@ type App struct {
 	template      map[string]*tmpl
 	templateFuncs []template.FuncMap
 
-	gracefulShutdown *gracefulShutdown
+	gs *GracefulShutdown
 }
 
 var (
@@ -83,8 +86,12 @@ func (app *App) Clone() *App {
 	if app.TLSConfig != nil {
 		x.TLSConfig = app.TLSConfig.Clone()
 	}
-	if app.gracefulShutdown != nil {
-		x.gracefulShutdown = &*app.gracefulShutdown
+	if app.gs != nil {
+		x.gs = &GracefulShutdown{
+			timeout: app.gs.timeout,
+			wait:    app.gs.wait,
+			notiFns: app.gs.notiFns,
+		}
 	}
 	return x
 }
@@ -151,8 +158,8 @@ func (app *App) listenAndServe() error {
 
 // ListenAndServe starts web server
 func (app *App) ListenAndServe() error {
-	if app.gracefulShutdown != nil {
-		return app.GracefulShutdown().ListenAndServe()
+	if app.gs != nil {
+		return app.startGracefulShutdown()
 	}
 
 	return app.listenAndServe()
@@ -188,14 +195,52 @@ func (app *App) SelfSign() *App {
 	return app
 }
 
-// GracefulShutdown returns graceful shutdown server
-func (app *App) GracefulShutdown() *GracefulShutdownApp {
-	if app.gracefulShutdown == nil {
-		app.gracefulShutdown = &gracefulShutdown{}
+// OnShutdown calls server.RegisterOnShutdown(fn)
+func (app *App) OnShutdown(fn func()) *App {
+	app.srv.RegisterOnShutdown(fn)
+	return app
+}
+
+// GracefulShutdown changes server to graceful shutdown mode
+func (app *App) GracefulShutdown() *GracefulShutdown {
+	if app.gs == nil {
+		app.gs = &GracefulShutdown{}
 	}
 
-	return &GracefulShutdownApp{
-		App:              app,
-		gracefulShutdown: app.gracefulShutdown,
+	return app.gs
+}
+
+func (app *App) startGracefulShutdown() error {
+	errChan := make(chan error)
+
+	go func() {
+		if err := app.listenAndServe(); err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM)
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-stop:
+		for _, fn := range app.gs.notiFns {
+			go fn()
+		}
+
+		if app.gs.wait > 0 {
+			time.Sleep(app.gs.wait)
+		}
+
+		ctx := context.Background()
+		if app.gs.timeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, app.gs.timeout)
+			defer cancel()
+		}
+
+		return app.srv.Shutdown(ctx)
 	}
 }
