@@ -3,7 +3,6 @@ package hime
 import (
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 )
@@ -129,9 +128,4 @@ func (ctx *Context) FormFileHeaderNotEmpty(key string) (*multipart.FileHeader, e
 		return nil, http.ErrMissingFile
 	}
 	return fh, nil
-}
-
-// Query returns r.URL.Query
-func (ctx *Context) Query() url.Values {
-	return ctx.URL.Query()
 }
