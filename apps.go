@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -29,14 +28,7 @@ func (apps *Apps) ListenAndServe() error {
 	eg := errgroup.Group{}
 
 	for _, app := range apps.list {
-		app := app
-		eg.Go(func() error {
-			err := app.ListenAndServe()
-			if err != http.ErrServerClosed {
-				return err
-			}
-			return nil
-		})
+		eg.Go(app.ListenAndServe)
 	}
 
 	return eg.Wait()
@@ -85,36 +77,26 @@ func (gs *GracefulShutdownApps) Notify(fn func()) *GracefulShutdownApps {
 
 // ListenAndServe starts web servers in graceful shutdown mode
 func (gs *GracefulShutdownApps) ListenAndServe() error {
-	wg := &sync.WaitGroup{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	eg := errgroup.Group{}
 
-	errChan := make(chan error)
 	for _, app := range gs.Apps.list {
-		app := app
-		wg.Add(1)
-		go func() {
-			err := app.listenAndServe()
-			if err != nil && err != http.ErrServerClosed {
-				errChan <- err
-			}
-			wg.Done()
-		}()
+		eg.Go(app.ListenAndServe)
 	}
-
-	go func() {
-		wg.Wait()
-		cancel()
-	}()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM)
 
+	errChan := make(chan error)
+	go func() {
+		err := eg.Wait()
+		if err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
 	select {
 	case err := <-errChan:
 		return err
-	case <-ctx.Done():
-		return ctx.Err()
 	case <-stop:
 		for _, fn := range gs.notiFns {
 			go fn()
@@ -126,60 +108,25 @@ func (gs *GracefulShutdownApps) ListenAndServe() error {
 				}
 			}
 		}
+
 		if gs.wait > 0 {
 			time.Sleep(gs.wait)
 		}
 
-		wg := &sync.WaitGroup{}
-		var (
-			shutdownCtx context.Context
-			cancel      context.CancelFunc
-		)
-		if gs.timeout > 0 {
-			shutdownCtx, cancel = context.WithTimeout(context.Background(), gs.timeout)
-		} else {
-			shutdownCtx, cancel = context.WithCancel(context.Background())
-		}
-		defer cancel()
+		eg := errgroup.Group{}
+		ctx := context.Background()
 
-		errChan := make(chan error)
-		doneChan := make(chan struct{})
+		if gs.timeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, gs.timeout)
+			defer cancel()
+		}
 
 		for _, app := range gs.Apps.list {
 			app := app
-			wg.Add(1)
-			go func() {
-				ctx := shutdownCtx
-				if app.gracefulShutdown != nil {
-					if app.gracefulShutdown.wait > 0 {
-						time.Sleep(app.gracefulShutdown.wait)
-					}
-					if app.gracefulShutdown.timeout > 0 {
-						var cancel context.CancelFunc
-						ctx, cancel = context.WithTimeout(shutdownCtx, app.gracefulShutdown.timeout)
-						defer cancel()
-					}
-				}
-				err := app.srv.Shutdown(ctx)
-				if err != nil {
-					errChan <- err
-				}
-				wg.Done()
-			}()
+			eg.Go(func() error { return app.srv.Shutdown(ctx) })
 		}
 
-		go func() {
-			wg.Wait()
-			doneChan <- struct{}{}
-		}()
-
-		select {
-		case err := <-errChan:
-			return err
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-doneChan:
-			return nil
-		}
+		return eg.Wait()
 	}
 }
