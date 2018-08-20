@@ -63,12 +63,12 @@ func (gs *GracefulShutdownApp) OnShutdown(fn func()) *GracefulShutdownApp {
 	return gs
 }
 
-func (gs *GracefulShutdownApp) start(listenAndServe func() error) (err error) {
-	serverCtx, cancelServer := context.WithCancel(context.Background())
-	defer cancelServer()
+func (gs *GracefulShutdownApp) start(listenAndServe func() error) error {
+	errChan := make(chan error)
+
 	go func() {
-		if err = listenAndServe(); err != http.ErrServerClosed {
-			cancelServer()
+		if err := listenAndServe(); err != http.ErrServerClosed {
+			errChan <- err
 		}
 	}()
 
@@ -76,25 +76,26 @@ func (gs *GracefulShutdownApp) start(listenAndServe func() error) (err error) {
 	signal.Notify(stop, syscall.SIGTERM)
 
 	select {
-	case <-serverCtx.Done():
-		return
+	case err := <-errChan:
+		return err
 	case <-stop:
 		for _, fn := range gs.notiFns {
 			go fn()
 		}
+
 		if gs.wait > 0 {
 			time.Sleep(gs.wait)
 		}
 
+		ctx := context.Background()
 		if gs.timeout > 0 {
-			ctx, cancel := context.WithTimeout(context.Background(), gs.timeout)
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, gs.timeout)
 			defer cancel()
-			err = gs.App.srv.Shutdown(ctx)
-		} else {
-			err = gs.App.srv.Shutdown(context.Background())
 		}
+
+		return gs.App.srv.Shutdown(ctx)
 	}
-	return
 }
 
 // ListenAndServe starts web server in graceful shutdown mode
