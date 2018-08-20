@@ -8,6 +8,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // Apps is the collection of App to start together
@@ -24,32 +26,20 @@ func Merge(apps ...*App) *Apps {
 
 // ListenAndServe starts web servers
 func (apps *Apps) ListenAndServe() error {
-	wg := &sync.WaitGroup{}
-	doneChan := make(chan struct{})
-	errChan := make(chan error)
+	eg := errgroup.Group{}
+
 	for _, app := range apps.list {
 		app := app
-		wg.Add(1)
-		go func() {
+		eg.Go(func() error {
 			err := app.ListenAndServe()
-			if err != nil && err != http.ErrServerClosed {
-				errChan <- err
+			if err != http.ErrServerClosed {
+				return err
 			}
-			wg.Done()
-		}()
+			return nil
+		})
 	}
 
-	go func() {
-		wg.Wait()
-		doneChan <- struct{}{}
-	}()
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-doneChan:
-		return nil
-	}
+	return eg.Wait()
 }
 
 // GracefulShutdownApps is the apps in graceful shutdown mode
