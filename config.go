@@ -16,16 +16,13 @@ type AppConfig struct {
 	Routes    map[string]string           `yaml:"routes" json:"routes"`
 	Templates []TemplateConfig            `yaml:"templates" json:"templates"`
 	Server    struct {
-		Addr              string `yaml:"addr" json:"addr"`
-		ReadTimeout       string `yaml:"readTimeout" json:"readTimeout"`
-		ReadHeaderTimeout string `yaml:"readHeaderTimeout" json:"readHeaderTimeout"`
-		WriteTimeout      string `yaml:"writeTimeout" json:"writeTimeout"`
-		IdleTimeout       string `yaml:"idleTimeout" json:"idleTimeout"`
-		GracefulShutdown  *struct {
-			Timeout string `yaml:"timeout" json:"timeout"`
-			Wait    string `yaml:"wait" json:"wait"`
-		} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
-		TLS *struct {
+		Addr              string            `yaml:"addr" json:"addr"`
+		ReadTimeout       string            `yaml:"readTimeout" json:"readTimeout"`
+		ReadHeaderTimeout string            `yaml:"readHeaderTimeout" json:"readHeaderTimeout"`
+		WriteTimeout      string            `yaml:"writeTimeout" json:"writeTimeout"`
+		IdleTimeout       string            `yaml:"idleTimeout" json:"idleTimeout"`
+		GracefulShutdown  *GracefulShutdown `yaml:"gracefulShutdown" json:"gracefulShutdown"`
+		TLS               *struct {
 			SelfSign *struct {
 				Key struct {
 					Algo string `yaml:"algo" json:"algo"`
@@ -49,11 +46,8 @@ type AppConfig struct {
 
 // AppsConfig is the hime multiple apps config
 type AppsConfig struct {
-	GracefulShutdown *struct {
-		Timeout string `yaml:"timeout" json:"timeout"`
-		Wait    string `yaml:"wait" json:"wait"`
-	} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
-	HTTPSRedirect *struct {
+	GracefulShutdown *GracefulShutdown `yaml:"gracefulShutdown" json:"gracefulShutdown"`
+	HTTPSRedirect    *struct {
 		Addr string `json:"addr"`
 	} `yaml:"httpsRedirect" json:"httpsRedirect"`
 }
@@ -194,11 +188,8 @@ func (app *App) Config(config AppConfig) *App {
 			app.TLSConfig = tlsConfig
 		}
 
-		if gs := server.GracefulShutdown; gs != nil {
-			g := app.GracefulShutdown()
-
-			parseDuration(gs.Timeout, &g.timeout)
-			parseDuration(gs.Wait, &g.wait)
+		if server.GracefulShutdown != nil {
+			app.gs = server.GracefulShutdown
 		}
 
 		if rd := server.HTTPSRedirect; rd != nil {

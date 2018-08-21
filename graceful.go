@@ -1,6 +1,7 @@
 package hime
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -32,4 +33,38 @@ func (gs *GracefulShutdown) Notify(fn func()) *GracefulShutdown {
 		gs.notiFns = append(gs.notiFns, fn)
 	}
 	return gs
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler
+func (gs *GracefulShutdown) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var x struct {
+		Timeout string `yaml:"timeout"`
+		Wait    string `yaml:"wait"`
+	}
+	err := unmarshal(&x)
+	if err != nil {
+		return err
+	}
+
+	parseDuration(x.Timeout, &gs.timeout)
+	parseDuration(x.Wait, &gs.wait)
+
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (gs *GracefulShutdown) UnmarshalJSON(b []byte) error {
+	var x struct {
+		Timeout string `json:"timeout"`
+		Wait    string `json:"wait"`
+	}
+	err := json.Unmarshal(b, &x)
+	if err != nil {
+		return err
+	}
+
+	parseDuration(x.Timeout, &gs.timeout)
+	parseDuration(x.Wait, &gs.wait)
+
+	return nil
 }

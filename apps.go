@@ -26,11 +26,8 @@ func Merge(apps ...*App) *Apps {
 
 // Config merges config into apps config
 func (apps *Apps) Config(config AppsConfig) *Apps {
-	if gs := config.GracefulShutdown; gs != nil {
-		g := apps.GracefulShutdown()
-
-		parseDuration(gs.Timeout, &g.timeout)
-		parseDuration(gs.Wait, &g.wait)
+	if config.GracefulShutdown != nil {
+		apps.gs = config.GracefulShutdown
 	}
 
 	if rd := config.HTTPSRedirect; rd != nil {
