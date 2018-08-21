@@ -7,6 +7,8 @@
 
 Hime is a Go Web Framework.
 
+See [Wiki](https://github.com/acoshift/hime/wiki) for guide more information.
+
 ## Why Framework
 
 I ❤️ net/http but... there are many duplicated code when working on multiple projects,
