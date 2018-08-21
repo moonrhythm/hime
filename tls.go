@@ -103,6 +103,7 @@ type TLS struct {
 func parseTLSVersion(s string) uint16 {
 	switch strings.ToLower(s) {
 	case "":
+		return 0
 	case "ssl3.0":
 		return tls.VersionSSL30
 	case "tls1.0":
