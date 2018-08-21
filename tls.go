@@ -100,6 +100,24 @@ type TLS struct {
 	Curves     []string  `yaml:"curves" json:"curves"`
 }
 
+func parseTLSVersion(s string) uint16 {
+	switch strings.ToLower(s) {
+	case "":
+	case "ssl3.0":
+		return tls.VersionSSL30
+	case "tls1.0":
+		return tls.VersionTLS10
+	case "tls1.1":
+		return tls.VersionTLS11
+	case "tls1.2":
+		return tls.VersionTLS12
+	default:
+		panicf("unknown tls version '%s'", s)
+	}
+
+	panic("unreachable")
+}
+
 func (t *TLS) config() *tls.Config {
 	var tlsConfig *tls.Config
 
@@ -116,33 +134,8 @@ func (t *TLS) config() *tls.Config {
 		panicf("unknown tls profile '%s'", t.Profile)
 	}
 
-	switch strings.ToLower(t.MinVersion) {
-	case "":
-	case "ssl3.0":
-		tlsConfig.MinVersion = tls.VersionSSL30
-	case "tls1.0":
-		tlsConfig.MinVersion = tls.VersionTLS10
-	case "tls1.1":
-		tlsConfig.MinVersion = tls.VersionTLS11
-	case "tls1.2":
-		tlsConfig.MinVersion = tls.VersionTLS12
-	default:
-		panicf("unknown tls min version '%s'", t.MinVersion)
-	}
-
-	switch strings.ToLower(t.MaxVersion) {
-	case "":
-	case "ssl3.0":
-		tlsConfig.MaxVersion = tls.VersionSSL30
-	case "tls1.0":
-		tlsConfig.MaxVersion = tls.VersionTLS10
-	case "tls1.1":
-		tlsConfig.MaxVersion = tls.VersionTLS11
-	case "tls1.2":
-		tlsConfig.MaxVersion = tls.VersionTLS12
-	default:
-		panicf("unknown tls max version '%s'", t.MaxVersion)
-	}
+	tlsConfig.MinVersion = parseTLSVersion(t.MinVersion)
+	tlsConfig.MaxVersion = parseTLSVersion(t.MaxVersion)
 
 	if t.Curves != nil {
 		tlsConfig.CurvePreferences = []tls.CurveID{}
