@@ -317,14 +317,6 @@ if err != nil {
 - [acoshift/prefixhandler](https://github.com/acoshift/prefixhandler)
 - [acoshift/hrpc](https://github.com/acoshift/hrpc)
 
-## FAQ
-
-- Will hime support automated let's encrypt ?
-  > No, you can use hime as normal handler and use other lib to do this.
-
-- Do you use hime in production ?
-  > Yes, why not ? :D
-
 ## License
 
 MIT
