@@ -15,10 +15,6 @@ import (
 
 // Apps is the collection of App to start together
 type Apps struct {
-	timeout time.Duration
-	wait    time.Duration
-	notiFns []func()
-
 	list []*App
 	gs   *GracefulShutdown
 }
