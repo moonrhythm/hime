@@ -2,6 +2,7 @@ package hime
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -9,21 +10,65 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v2"
 )
 
 // Apps is the collection of App to start together
 type Apps struct {
-	timeout time.Duration
-	wait    time.Duration
-	notiFns []func()
-
 	list []*App
 	gs   *GracefulShutdown
+}
+
+// AppsConfig is the hime multiple apps config
+type AppsConfig struct {
+	GracefulShutdown *GracefulShutdown `yaml:"gracefulShutdown" json:"gracefulShutdown"`
+	HTTPSRedirect    *HTTPSRedirect    `yaml:"httpsRedirect" json:"httpsRedirect"`
 }
 
 // Merge merges multiple *App into *Apps
 func Merge(apps ...*App) *Apps {
 	return &Apps{list: apps}
+}
+
+// Config merges config into apps config
+func (apps *Apps) Config(config AppsConfig) *Apps {
+	if config.GracefulShutdown != nil {
+		apps.gs = config.GracefulShutdown
+	}
+
+	if rd := config.HTTPSRedirect; rd != nil {
+		if rd.Addr == "" {
+			rd.Addr = ":80"
+		}
+
+		go func() {
+			err := StartHTTPSRedirectServer(rd.Addr)
+			if err != nil {
+				panicf("start https redirect server error; %v", err)
+			}
+		}()
+	}
+
+	return nil
+}
+
+// ParseConfig parses config data
+func (apps *Apps) ParseConfig(data []byte) *Apps {
+	var config AppsConfig
+	err := yaml.Unmarshal(data, &config)
+	if err != nil {
+		panicf("can not parse config; %v", err)
+	}
+	return apps.Config(config)
+}
+
+// ParseConfigFile parses config from file
+func (apps *Apps) ParseConfigFile(filename string) *Apps {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panicf("can not read config from file; %v", err)
+	}
+	return apps.ParseConfig(data)
 }
 
 func (apps *Apps) listenAndServe() error {
