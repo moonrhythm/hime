@@ -12,9 +12,9 @@ import (
 
 // AppConfig is hime app's config
 type AppConfig struct {
-	Globals   map[interface{}]interface{} `yaml:"globals" json:"globals"`
-	Routes    map[string]string           `yaml:"routes" json:"routes"`
-	Templates []TemplateConfig            `yaml:"templates" json:"templates"`
+	Globals   Globals          `yaml:"globals" json:"globals"`
+	Routes    Routes           `yaml:"routes" json:"routes"`
+	Templates []TemplateConfig `yaml:"templates" json:"templates"`
 	Server    struct {
 		Addr              string            `yaml:"addr" json:"addr"`
 		ReadTimeout       string            `yaml:"readTimeout" json:"readTimeout"`
