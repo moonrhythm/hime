@@ -96,10 +96,6 @@ func (app *App) Config(config AppConfig) *App {
 		}
 
 		if rd := server.HTTPSRedirect; rd != nil {
-			if rd.Addr == "" {
-				rd.Addr = ":80"
-			}
-
 			go func() {
 				err := StartHTTPSRedirectServer(rd.Addr)
 				if err != nil {
