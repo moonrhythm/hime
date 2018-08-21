@@ -47,6 +47,17 @@ type AppConfig struct {
 	} `yaml:"server" json:"server"`
 }
 
+// AppsConfig is the hime multiple apps config
+type AppsConfig struct {
+	GracefulShutdown *struct {
+		Timeout string `yaml:"timeout" json:"timeout"`
+		Wait    string `yaml:"wait" json:"wait"`
+	} `yaml:"gracefulShutdown" json:"gracefulShutdown"`
+	HTTPSRedirect *struct {
+		Addr string `json:"addr"`
+	} `yaml:"httpsRedirect" json:"httpsRedirect"`
+}
+
 func parseDuration(s string, t *time.Duration) {
 	if s == "" {
 		return
