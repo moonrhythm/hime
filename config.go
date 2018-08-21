@@ -1,10 +1,8 @@
 package hime
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -22,34 +20,9 @@ type AppConfig struct {
 		WriteTimeout      string            `yaml:"writeTimeout" json:"writeTimeout"`
 		IdleTimeout       string            `yaml:"idleTimeout" json:"idleTimeout"`
 		GracefulShutdown  *GracefulShutdown `yaml:"gracefulShutdown" json:"gracefulShutdown"`
-		TLS               *struct {
-			SelfSign *struct {
-				Key struct {
-					Algo string `yaml:"algo" json:"algo"`
-					Size int    `yaml:"size" json:"size"`
-				} `yaml:"key" json:"key"`
-				CN    string   `yaml:"cn" json:"cn"`
-				Hosts []string `yaml:"host" json:"host"`
-			} `yaml:"selfSign" json:"selfSign"`
-			CertFile   string   `yaml:"certFile" json:"certFile"`
-			KeyFile    string   `yaml:"keyFile" json:"keyFile"`
-			Profile    string   `yaml:"profile" json:"profile"`
-			MinVersion string   `yaml:"minVersion" json:"minVersion"`
-			MaxVersion string   `yaml:"maxVersion" json:"maxVersion"`
-			Curves     []string `yaml:"curves" json:"curves"`
-		} `yaml:"tls" json:"tls"`
-		HTTPSRedirect *struct {
-			Addr string `json:"addr"`
-		} `yaml:"httpsRedirect" json:"httpsRedirect"`
+		TLS               *TLS              `yaml:"tls" json:"tls"`
+		HTTPSRedirect     *HTTPSRedirect    `yaml:"httpsRedirect" json:"httpsRedirect"`
 	} `yaml:"server" json:"server"`
-}
-
-// AppsConfig is the hime multiple apps config
-type AppsConfig struct {
-	GracefulShutdown *GracefulShutdown `yaml:"gracefulShutdown" json:"gracefulShutdown"`
-	HTTPSRedirect    *struct {
-		Addr string `json:"addr"`
-	} `yaml:"httpsRedirect" json:"httpsRedirect"`
 }
 
 func parseDuration(s string, t *time.Duration) {
@@ -115,77 +88,7 @@ func (app *App) Config(config AppConfig) *App {
 		parseDuration(server.IdleTimeout, &app.IdleTimeout)
 
 		if t := server.TLS; t != nil {
-			var tlsConfig *tls.Config
-
-			switch strings.ToLower(t.Profile) {
-			case "restricted":
-				tlsConfig = Restricted.Clone()
-			case "modern":
-				tlsConfig = Modern.Clone()
-			case "compatible":
-				tlsConfig = Compatible.Clone()
-			case "":
-				tlsConfig = &tls.Config{}
-			default:
-				panicf("unknown tls profile '%s'", t.Profile)
-			}
-
-			switch strings.ToLower(t.MinVersion) {
-			case "":
-			case "ssl3.0":
-				tlsConfig.MinVersion = tls.VersionSSL30
-			case "tls1.0":
-				tlsConfig.MinVersion = tls.VersionTLS10
-			case "tls1.1":
-				tlsConfig.MinVersion = tls.VersionTLS11
-			case "tls1.2":
-				tlsConfig.MinVersion = tls.VersionTLS12
-			default:
-				panicf("unknown tls min version '%s'", t.MinVersion)
-			}
-
-			switch strings.ToLower(t.MaxVersion) {
-			case "":
-			case "ssl3.0":
-				tlsConfig.MaxVersion = tls.VersionSSL30
-			case "tls1.0":
-				tlsConfig.MaxVersion = tls.VersionTLS10
-			case "tls1.1":
-				tlsConfig.MaxVersion = tls.VersionTLS11
-			case "tls1.2":
-				tlsConfig.MaxVersion = tls.VersionTLS12
-			default:
-				panicf("unknown tls max version '%s'", t.MaxVersion)
-			}
-
-			if t.Curves != nil {
-				tlsConfig.CurvePreferences = []tls.CurveID{}
-				for _, c := range t.Curves {
-					switch strings.ToLower(c) {
-					case "p256":
-						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.CurveP256)
-					case "p384":
-						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.CurveP384)
-					case "p521":
-						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.CurveP521)
-					case "x25519":
-						tlsConfig.CurvePreferences = append(tlsConfig.CurvePreferences, tls.X25519)
-					default:
-						panicf("unknown tls curve '%s'", c)
-					}
-				}
-			}
-
-			if t.CertFile != "" && t.KeyFile != "" {
-				err := loadTLSCertKey(tlsConfig, t.CertFile, t.KeyFile)
-				if err != nil {
-					panicf("load key pair error; %v", err)
-				}
-			} else if c := t.SelfSign; c != nil {
-				generateSelfSign(tlsConfig, c.Key.Algo, c.Key.Size, c.CN, c.Hosts)
-			}
-
-			app.TLSConfig = tlsConfig
+			app.TLSConfig = server.TLS.config()
 		}
 
 		if server.GracefulShutdown != nil {

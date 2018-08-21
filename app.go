@@ -184,10 +184,10 @@ func (app *App) TLS(certFile, keyFile string) *App {
 }
 
 // SelfSign generates self sign cert
-func (app *App) SelfSign() *App {
+func (app *App) SelfSign(s SelfSign) *App {
 	app.ensureTLSConfig()
 
-	err := generateSelfSign(app.TLSConfig, "", 0, "", nil)
+	err := s.config(app.TLSConfig)
 	if err != nil {
 		panicf("generate self sign; %v", err)
 	}

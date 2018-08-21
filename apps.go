@@ -19,6 +19,12 @@ type Apps struct {
 	gs   *GracefulShutdown
 }
 
+// AppsConfig is the hime multiple apps config
+type AppsConfig struct {
+	GracefulShutdown *GracefulShutdown `yaml:"gracefulShutdown" json:"gracefulShutdown"`
+	HTTPSRedirect    *HTTPSRedirect    `yaml:"httpsRedirect" json:"httpsRedirect"`
+}
+
 // Merge merges multiple *App into *Apps
 func Merge(apps ...*App) *Apps {
 	return &Apps{list: apps}
