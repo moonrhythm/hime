@@ -198,15 +198,23 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		t.Funcs(fn)
 	}
 
+	parser(t)
+
 	// parse components
 	if len(tp.components) > 0 {
 		t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, tp.components...)...))
 	}
 
-	parser(t)
-
 	if tp.root != "" {
 		t = t.Lookup(tp.root)
+	} else {
+		// if root not defined, lookup first not empty template
+		for _, x := range t.Templates() {
+			if x.Name() != "" {
+				t = t.Lookup(x.Name())
+				break
+			}
+		}
 	}
 
 	tp.list[name] = &tmpl{
