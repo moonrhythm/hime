@@ -128,6 +128,7 @@ func TestApp(t *testing.T) {
 		app.Address(":8081")
 
 		go app.ListenAndServe()
+		time.Sleep(time.Second)
 
 		http.Get("http://localhost:8081")
 		app.Shutdown(context.Background())
@@ -174,9 +175,11 @@ func TestApp(t *testing.T) {
 		})
 
 		go app.ListenAndServe()
+		time.Sleep(time.Second)
 
 		http.Get("http://localhost:8083")
 		app.Shutdown(context.Background())
+		time.Sleep(time.Second)
 		assert.True(t, called)
 	})
 
@@ -199,11 +202,13 @@ func TestApp(t *testing.T) {
 		})
 
 		go app.ListenAndServe()
+		time.Sleep(time.Second)
 
 		(&http.Client{Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}}).Get("https://localhost:8084")
 		app.Shutdown(context.Background())
+		time.Sleep(time.Second)
 		assert.True(t, called)
 	})
 }

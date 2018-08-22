@@ -95,6 +95,41 @@ func (apps *Apps) GracefulShutdown() *GracefulShutdown {
 	return apps.gs
 }
 
+// Shutdown shutdowns all apps
+func (apps *Apps) Shutdown(ctx context.Context) error {
+	if apps.gs != nil {
+		for _, fn := range apps.gs.notiFns {
+			go fn()
+		}
+		for _, app := range apps.list {
+			if app.gs != nil {
+				for _, fn := range app.gs.notiFns {
+					go fn()
+				}
+			}
+		}
+
+		if apps.gs.wait > 0 {
+			time.Sleep(apps.gs.wait)
+		}
+
+		if apps.gs.timeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, apps.gs.timeout)
+			defer cancel()
+		}
+	}
+
+	eg := errgroup.Group{}
+
+	for _, app := range apps.list {
+		app := app
+		eg.Go(func() error { return app.srv.Shutdown(ctx) })
+	}
+
+	return eg.Wait()
+}
+
 // ListenAndServe starts web servers in graceful shutdown mode
 func (apps *Apps) listenAndServeGracefully() error {
 	errChan := make(chan error)
@@ -113,35 +148,6 @@ func (apps *Apps) listenAndServeGracefully() error {
 	case err := <-errChan:
 		return err
 	case <-stop:
-		for _, fn := range apps.gs.notiFns {
-			go fn()
-		}
-		for _, app := range apps.list {
-			if app.gs != nil {
-				for _, fn := range app.gs.notiFns {
-					go fn()
-				}
-			}
-		}
-
-		if apps.gs.wait > 0 {
-			time.Sleep(apps.gs.wait)
-		}
-
-		eg := errgroup.Group{}
-		ctx := context.Background()
-
-		if apps.gs.timeout > 0 {
-			var cancel context.CancelFunc
-			ctx, cancel = context.WithTimeout(ctx, apps.gs.timeout)
-			defer cancel()
-		}
-
-		for _, app := range apps.list {
-			app := app
-			eg.Go(func() error { return app.srv.Shutdown(ctx) })
-		}
-
-		return eg.Wait()
+		return apps.Shutdown(context.Background())
 	}
 }
