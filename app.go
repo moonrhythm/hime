@@ -100,6 +100,27 @@ func (app *App) Server() *http.Server {
 	return &app.srv
 }
 
+// Shutdown shutdowns server
+func (app *App) Shutdown(ctx context.Context) error {
+	if app.gs != nil {
+		for _, fn := range app.gs.notiFns {
+			go fn()
+		}
+
+		if app.gs.wait > 0 {
+			time.Sleep(app.gs.wait)
+		}
+
+		if app.gs.timeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, app.gs.timeout)
+			defer cancel()
+		}
+	}
+
+	return app.srv.Shutdown(ctx)
+}
+
 func (app *App) listenAndServe() error {
 	if app.srv.TLSConfig != nil {
 		return app.srv.ListenAndServeTLS("", "")
@@ -172,21 +193,6 @@ func (app *App) startGracefulShutdown() error {
 	case err := <-errChan:
 		return err
 	case <-stop:
-		for _, fn := range app.gs.notiFns {
-			go fn()
-		}
-
-		if app.gs.wait > 0 {
-			time.Sleep(app.gs.wait)
-		}
-
-		ctx := context.Background()
-		if app.gs.timeout > 0 {
-			var cancel context.CancelFunc
-			ctx, cancel = context.WithTimeout(ctx, app.gs.timeout)
-			defer cancel()
-		}
-
-		return app.srv.Shutdown(ctx)
+		return app.Shutdown(context.Background())
 	}
 }
