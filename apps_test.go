@@ -20,4 +20,38 @@ func TestApps(t *testing.T) {
 
 		assert.Equal(t, &gs, apps.gs)
 	})
+
+	t.Run("ParseConfig YAML", func(t *testing.T) {
+		apps := Merge()
+		apps.ParseConfig([]byte(`
+gracefulShutdown:
+  timeout: 5s
+  wait: 10s`))
+		assert.NotNil(t, apps.gs)
+	})
+
+	t.Run("ParseConfig invalid YAML", func(t *testing.T) {
+		apps := Merge()
+
+		assert.Panics(t, func() {
+			apps.ParseConfig([]byte(`
+	gracefulShutdown:
+			 timeout: 5s
+		wait: 10s`))
+		})
+	})
+
+	t.Run("ParseConfig JSON", func(t *testing.T) {
+		apps := Merge()
+		apps.ParseConfig([]byte(`{"gracefulShutdown": {"timeout":"5s","wait":"10s"}}`))
+		assert.NotNil(t, apps.gs)
+	})
+
+	t.Run("GracefulShutdown", func(t *testing.T) {
+		apps := Merge()
+
+		assert.Nil(t, apps.gs)
+		apps.GracefulShutdown()
+		assert.NotNil(t, apps.gs)
+	})
 }
