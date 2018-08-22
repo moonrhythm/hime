@@ -1,7 +1,10 @@
 package hime
 
 import (
+	"context"
+	"crypto/tls"
 	"html/template"
+	"net/http"
 	"testing"
 	"time"
 
@@ -111,5 +114,96 @@ func TestApp(t *testing.T) {
 		app := New()
 
 		assert.Panics(t, func() { app.TLS("testdata/server.key", "testdata/server.crt") })
+	})
+
+	t.Run("ListenAndServe", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+		called := false
+		app.Handler(Handler(func(ctx *Context) error {
+			called = true
+			return ctx.String("Hello")
+		}))
+		app.Address(":8081")
+
+		go app.ListenAndServe()
+
+		http.Get("http://localhost:8081")
+		app.Shutdown(context.Background())
+		assert.True(t, called)
+	})
+
+	t.Run("ListenAndServe with tls", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+		app.TLS("testdata/server.crt", "testdata/server.key")
+
+		called := false
+		app.Handler(Handler(func(ctx *Context) error {
+			called = true
+			return ctx.String("Hello")
+		}))
+		app.Address(":8082")
+
+		go app.ListenAndServe()
+
+		(&http.Client{Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}}).Get("https://localhost:8082")
+		app.Shutdown(context.Background())
+		assert.True(t, called)
+	})
+
+	t.Run("ListenAndServe with graceful shutdown", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+		app.Handler(Handler(func(ctx *Context) error {
+			return ctx.String("Hello")
+		}))
+		app.Address(":8083")
+
+		gs := app.GracefulShutdown()
+		gs.Wait(time.Second)
+		gs.Timeout(time.Second)
+		called := false
+		gs.Notify(func() {
+			called = true
+		})
+
+		go app.ListenAndServe()
+
+		http.Get("http://localhost:8083")
+		app.Shutdown(context.Background())
+		assert.True(t, called)
+	})
+
+	t.Run("ListenAndServe with graceful shutdown and tls", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+		app.TLS("testdata/server.crt", "testdata/server.key")
+		app.Handler(Handler(func(ctx *Context) error {
+			return ctx.String("Hello")
+		}))
+		app.Address(":8084")
+
+		gs := app.GracefulShutdown()
+		gs.Wait(time.Second)
+		gs.Timeout(time.Second)
+		called := false
+		gs.Notify(func() {
+			called = true
+		})
+
+		go app.ListenAndServe()
+
+		(&http.Client{Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}}).Get("https://localhost:8084")
+		app.Shutdown(context.Background())
+		assert.True(t, called)
 	})
 }
