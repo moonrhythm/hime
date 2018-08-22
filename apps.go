@@ -117,8 +117,10 @@ func (apps *Apps) listenAndServeGracefully() error {
 			go fn()
 		}
 		for _, app := range apps.list {
-			for _, fn := range app.gs.notiFns {
-				go fn()
+			if app.gs != nil {
+				for _, fn := range app.gs.notiFns {
+					go fn()
+				}
 			}
 		}
 

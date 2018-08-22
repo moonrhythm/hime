@@ -30,12 +30,12 @@ func TestConfig(t *testing.T) {
 			assert.Contains(t, app.template, "main2")
 
 			// server
-			assert.Equal(t, ":8080", app.Addr)
-			assert.Equal(t, 10*time.Second, app.ReadTimeout)
-			assert.Equal(t, 5*time.Second, app.ReadHeaderTimeout)
-			assert.Equal(t, 6*time.Second, app.WriteTimeout)
-			assert.Equal(t, 30*time.Second, app.IdleTimeout)
-			assert.Len(t, app.TLSConfig.Certificates, 1)
+			assert.Equal(t, ":8080", app.srv.Addr)
+			assert.Equal(t, 10*time.Second, app.srv.ReadTimeout)
+			assert.Equal(t, 5*time.Second, app.srv.ReadHeaderTimeout)
+			assert.Equal(t, 6*time.Second, app.srv.WriteTimeout)
+			assert.Equal(t, 30*time.Second, app.srv.IdleTimeout)
+			assert.Len(t, app.srv.TLSConfig.Certificates, 1)
 
 			// graceful
 			assert.NotNil(t, app.gs)
@@ -53,10 +53,10 @@ func TestConfig(t *testing.T) {
 			assert.Len(t, app.template, 0)
 
 			// server
-			assert.Empty(t, app.ReadTimeout)
-			assert.Empty(t, app.ReadHeaderTimeout)
-			assert.Empty(t, app.WriteTimeout)
-			assert.Empty(t, app.IdleTimeout)
+			assert.Empty(t, app.srv.ReadTimeout)
+			assert.Empty(t, app.srv.ReadHeaderTimeout)
+			assert.Empty(t, app.srv.WriteTimeout)
+			assert.Empty(t, app.srv.IdleTimeout)
 
 			// graceful
 			assert.NotNil(t, app.gs)
@@ -74,10 +74,10 @@ func TestConfig(t *testing.T) {
 			assert.Len(t, app.template, 0)
 
 			// server
-			assert.Empty(t, app.ReadTimeout)
-			assert.Empty(t, app.ReadHeaderTimeout)
-			assert.Empty(t, app.WriteTimeout)
-			assert.Empty(t, app.IdleTimeout)
+			assert.Empty(t, app.srv.ReadTimeout)
+			assert.Empty(t, app.srv.ReadHeaderTimeout)
+			assert.Empty(t, app.srv.WriteTimeout)
+			assert.Empty(t, app.srv.IdleTimeout)
 
 			// graceful
 			assert.Nil(t, app.gs)

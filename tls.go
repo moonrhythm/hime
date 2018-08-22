@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -98,6 +99,18 @@ type TLS struct {
 	MinVersion string    `yaml:"minVersion" json:"minVersion"`
 	MaxVersion string    `yaml:"maxVersion" json:"maxVersion"`
 	Curves     []string  `yaml:"curves" json:"curves"`
+}
+
+func cloneTLSNextProto(xs map[string]func(*http.Server, *tls.Conn, http.Handler)) map[string]func(*http.Server, *tls.Conn, http.Handler) {
+	if xs == nil {
+		return nil
+	}
+
+	rs := make(map[string]func(*http.Server, *tls.Conn, http.Handler))
+	for k, v := range xs {
+		rs[k] = v
+	}
+	return rs
 }
 
 func parseTLSVersion(s string) uint16 {
@@ -191,7 +204,7 @@ func (s *SelfSign) config(t *tls.Config) error {
 	var priv interface{}
 	var pub interface{}
 
-	switch s.Key.Algo {
+	switch strings.ToLower(s.Key.Algo) {
 	case "ecdsa", "":
 		var curve elliptic.Curve
 		switch s.Key.Size {

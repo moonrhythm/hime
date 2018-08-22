@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"html/template"
-	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,36 +13,6 @@ import (
 
 // App is the hime app
 type App struct {
-	// Addr is server address
-	Addr string
-
-	// TLSConfig overrides http.Server TLSConfig
-	TLSConfig *tls.Config
-
-	// ReadTimeout overrides http.Server ReadTimeout
-	ReadTimeout time.Duration
-
-	// ReadHeaderTimeout overrides http.Server ReadHeaderTimeout
-	ReadHeaderTimeout time.Duration
-
-	// WriteTimeout overrides http.Server WriteTimeout
-	WriteTimeout time.Duration
-
-	// IdleTimeout overrides http.Server IdleTimeout
-	IdleTimeout time.Duration
-
-	// MaxHeaderBytes overrides http.Server MaxHeaderBytes
-	MaxHeaderBytes int
-
-	// TLSNextProto overrides http.Server TLSNextProto
-	TLSNextProto map[string]func(*http.Server, *tls.Conn, http.Handler)
-
-	// ConnState overrides http.Server ConnState
-	ConnState func(net.Conn, http.ConnState)
-
-	// ErrorLog overrides http.Server ErrorLog
-	ErrorLog *log.Logger
-
 	srv     http.Server
 	handler http.Handler
 	routes  Routes
@@ -62,30 +30,37 @@ var (
 
 // New creates new app
 func New() *App {
-	return &App{}
+	app := &App{}
+	app.srv.Handler = app
+	return app
 }
 
 // Clone clones app
 func (app *App) Clone() *App {
 	x := &App{
-		Addr:              app.Addr,
-		ReadTimeout:       app.ReadTimeout,
-		ReadHeaderTimeout: app.ReadHeaderTimeout,
-		WriteTimeout:      app.WriteTimeout,
-		IdleTimeout:       app.IdleTimeout,
-		MaxHeaderBytes:    app.MaxHeaderBytes,
-		TLSNextProto:      cloneTLSNextProto(app.TLSNextProto),
-		ConnState:         app.ConnState,
-		ErrorLog:          app.ErrorLog,
-		handler:           app.handler,
-		routes:            cloneRoutes(app.routes),
-		globals:           cloneGlobals(app.globals),
-		template:          cloneTmpl(app.template),
-		templateFuncs:     cloneFuncMaps(app.templateFuncs),
+		srv: http.Server{
+			Addr:              app.srv.Addr,
+			ReadTimeout:       app.srv.ReadTimeout,
+			ReadHeaderTimeout: app.srv.ReadHeaderTimeout,
+			WriteTimeout:      app.srv.WriteTimeout,
+			IdleTimeout:       app.srv.IdleTimeout,
+			MaxHeaderBytes:    app.srv.MaxHeaderBytes,
+			TLSNextProto:      cloneTLSNextProto(app.srv.TLSNextProto),
+			ConnState:         app.srv.ConnState,
+			ErrorLog:          app.srv.ErrorLog,
+		},
+		handler:       app.handler,
+		routes:        cloneRoutes(app.routes),
+		globals:       cloneGlobals(app.globals),
+		template:      cloneTmpl(app.template),
+		templateFuncs: cloneFuncMaps(app.templateFuncs),
 	}
-	if app.TLSConfig != nil {
-		x.TLSConfig = app.TLSConfig.Clone()
+	x.srv.Handler = x
+
+	if app.srv.TLSConfig != nil {
+		x.srv.TLSConfig = app.srv.TLSConfig.Clone()
 	}
+
 	if app.gs != nil {
 		x.gs = &GracefulShutdown{
 			timeout: app.gs.timeout,
@@ -96,21 +71,9 @@ func (app *App) Clone() *App {
 	return x
 }
 
-func cloneTLSNextProto(xs map[string]func(*http.Server, *tls.Conn, http.Handler)) map[string]func(*http.Server, *tls.Conn, http.Handler) {
-	if xs == nil {
-		return nil
-	}
-
-	rs := make(map[string]func(*http.Server, *tls.Conn, http.Handler))
-	for k, v := range xs {
-		rs[k] = v
-	}
-	return rs
-}
-
 // Address sets server address
 func (app *App) Address(addr string) *App {
-	app.Addr = addr
+	app.srv.Addr = addr
 	return app
 }
 
@@ -132,23 +95,12 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.handler.ServeHTTP(w, r)
 }
 
-func (app *App) configServer() {
-	app.srv.Addr = app.Addr
-	app.srv.TLSConfig = app.TLSConfig
-	app.srv.ReadTimeout = app.ReadTimeout
-	app.srv.ReadHeaderTimeout = app.ReadHeaderTimeout
-	app.srv.WriteTimeout = app.WriteTimeout
-	app.srv.IdleTimeout = app.IdleTimeout
-	app.srv.MaxHeaderBytes = app.MaxHeaderBytes
-	app.srv.TLSNextProto = app.TLSNextProto
-	app.srv.ConnState = app.ConnState
-	app.srv.ErrorLog = app.ErrorLog
-	app.srv.Handler = app
+// Server returns server inside app
+func (app *App) Server() *http.Server {
+	return &app.srv
 }
 
 func (app *App) listenAndServe() error {
-	app.configServer()
-
 	if app.srv.TLSConfig != nil {
 		return app.srv.ListenAndServeTLS("", "")
 	}
@@ -166,8 +118,8 @@ func (app *App) ListenAndServe() error {
 }
 
 func (app *App) ensureTLSConfig() {
-	if app.TLSConfig == nil {
-		app.TLSConfig = &tls.Config{}
+	if app.srv.TLSConfig == nil {
+		app.srv.TLSConfig = &tls.Config{}
 	}
 }
 
@@ -175,7 +127,7 @@ func (app *App) ensureTLSConfig() {
 func (app *App) TLS(certFile, keyFile string) *App {
 	app.ensureTLSConfig()
 
-	err := loadTLSCertKey(app.TLSConfig, certFile, keyFile)
+	err := loadTLSCertKey(app.srv.TLSConfig, certFile, keyFile)
 	if err != nil {
 		panicf("load key pair; %v", err)
 	}
@@ -187,17 +139,11 @@ func (app *App) TLS(certFile, keyFile string) *App {
 func (app *App) SelfSign(s SelfSign) *App {
 	app.ensureTLSConfig()
 
-	err := s.config(app.TLSConfig)
+	err := s.config(app.srv.TLSConfig)
 	if err != nil {
 		panicf("generate self sign; %v", err)
 	}
 
-	return app
-}
-
-// OnShutdown calls server.RegisterOnShutdown(fn)
-func (app *App) OnShutdown(fn func()) *App {
-	app.srv.RegisterOnShutdown(fn)
 	return app
 }
 

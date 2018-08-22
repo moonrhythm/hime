@@ -1,0 +1,15 @@
+dir: testdata/template
+root: l
+minify: true
+delims:
+- "[["
+- "]]"
+components:
+- a.tmpl
+- b.tmpl
+list:
+  p:
+  - p1.tmpl
+  - p2.tmpl
+  k:
+  - k1.tmpl

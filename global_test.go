@@ -1,69 +1,84 @@
-package hime_test
+package hime
 
 import (
-	"net/http"
 	"net/http/httptest"
+	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
-	"github.com/acoshift/hime"
+	"github.com/stretchr/testify/assert"
 )
 
-var _ = Describe("Global", func() {
-	Describe("given new app without globals data", func() {
-		var (
-			app *hime.App
-		)
-
-		BeforeEach(func() {
-			app = hime.New()
-		})
-
-		It("should return nil when retrieve any data from globals", func() {
-			Expect(app.Global("key1")).To(BeNil())
-		})
+func TestGlobal(t *testing.T) {
+	t.Run("clone nil", func(t *testing.T) {
+		assert.Nil(t, cloneGlobals(nil))
 	})
 
-	Describe("given new app with globals data", func() {
-		var (
-			app *hime.App
-		)
+	t.Run("clone empty", func(t *testing.T) {
+		r := Globals{}
+		assert.Equal(t, Globals{}, cloneGlobals(r))
+	})
 
-		BeforeEach(func() {
-			app = hime.New()
+	t.Run("clone data", func(t *testing.T) {
+		r := Globals{
+			"a": 1,
+			"b": 2,
+		}
 
-			app.Globals(hime.Globals{
+		p := cloneGlobals(r)
+		assert.Equal(t, r, p)
+
+		p["a"] = 5
+		assert.NotEqual(t, r, p)
+	})
+
+	t.Run("App", func(t *testing.T) {
+		t.Run("retrieve any data from empty global", func(t *testing.T) {
+			app := New()
+
+			assert.Nil(t, app.Global("key1"))
+		})
+
+		t.Run("retrieve data from global", func(t *testing.T) {
+			app := New()
+			app.Globals(Globals{
 				"key1": "value1",
 				"key2": "value2",
 			})
-		})
 
-		It("should be able to retrieve globals data from app", func() {
-			Expect(app.Global("key1")).To(Equal("value1"))
-			Expect(app.Global("key2")).To(Equal("value2"))
-			Expect(app.Global("key3")).To(BeNil())
-		})
-
-		When("calling app with a handler", func() {
-			var (
-				w *httptest.ResponseRecorder
-				r *http.Request
-			)
-
-			BeforeEach(func() {
-				w = httptest.NewRecorder()
-				r = httptest.NewRequest("GET", "/", nil)
-			})
-
-			It("should be able to retrieve globals data from handler", func() {
-				app.Handler(hime.Handler(func(ctx *hime.Context) error {
-					Expect(ctx.Global("key1")).To(Equal("value1"))
-					Expect(ctx.Global("key2")).To(Equal("value2"))
-					Expect(ctx.Global("key3")).To(BeNil())
-					return nil
-				})).ServeHTTP(w, r)
-			})
+			assert.Equal(t, "value1", app.Global("key1"))
+			assert.Equal(t, "value2", app.Global("key2"))
+			assert.Nil(t, app.Global("key3"))
 		})
 	})
-})
+
+	t.Run("Context", func(t *testing.T) {
+		t.Run("retrieve any data from empty global", func(t *testing.T) {
+			app := New()
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/", nil)
+
+			app.Handler(Handler(func(ctx *Context) error {
+				assert.Nil(t, app.Global("key1"))
+				return nil
+			})).ServeHTTP(w, r)
+		})
+
+		t.Run("retrieve data from global", func(t *testing.T) {
+			app := New()
+			app.Globals(Globals{
+				"key1": "value1",
+				"key2": "value2",
+			})
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/", nil)
+
+			app.Handler(Handler(func(ctx *Context) error {
+				assert.Equal(t, "value1", ctx.Global("key1"))
+				assert.Equal(t, "value2", ctx.Global("key2"))
+				assert.Nil(t, ctx.Global("key3"))
+				return nil
+			})).ServeHTTP(w, r)
+		})
+	})
+}
