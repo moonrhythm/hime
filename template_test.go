@@ -134,7 +134,7 @@ list:
 		tp.Dir("testdata/template")
 		tp.Root("b")
 		tp.Component("b.tmpl")
-		tp.ParseGlob("t", "*/**.tmpl")
+		tp.ParseGlob("t", "**.tmpl")
 
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}

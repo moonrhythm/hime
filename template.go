@@ -248,7 +248,7 @@ func (tp *Template) ParseGlob(name string, pattern string) *Template {
 		if !strings.HasSuffix(d, "/") {
 			d += "/"
 		}
-		return template.Must(t.ParseGlob(tp.dir + pattern))
+		return template.Must(t.ParseGlob(d + pattern))
 	})
 
 	return tp
