@@ -198,12 +198,12 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		t.Funcs(fn)
 	}
 
-	t = parser(t)
-
 	// parse components
 	if len(tp.components) > 0 {
 		t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, tp.components...)...))
 	}
+
+	t = parser(t)
 
 	if tp.root != "" {
 		t = t.Lookup(tp.root)
