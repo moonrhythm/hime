@@ -49,6 +49,22 @@ gracefulShutdown:
 		assert.NotNil(t, apps.gs)
 	})
 
+	t.Run("ParseConfigFile", func(t *testing.T) {
+		apps := Merge()
+
+		assert.NotPanics(t, func() {
+			apps.ParseConfigFile("testdata/apps.yaml")
+		})
+	})
+
+	t.Run("ParseConfigFile not exists", func(t *testing.T) {
+		apps := Merge()
+
+		assert.Panics(t, func() {
+			apps.ParseConfigFile("testdata/not-exists-apps.yaml")
+		})
+	})
+
 	t.Run("GracefulShutdown", func(t *testing.T) {
 		apps := Merge()
 
@@ -115,5 +131,16 @@ gracefulShutdown:
 		assert.True(t, called)
 		assert.True(t, app1Called)
 		assert.True(t, app2Called)
+	})
+
+	t.Run("ListenAndServe graceful shutdown error duplicate port", func(t *testing.T) {
+		t.Parallel()
+
+		app1 := New().Address(":9095")
+		app2 := New().Address(":9095")
+		apps := Merge(app1, app2)
+		apps.GracefulShutdown()
+
+		assert.Error(t, apps.ListenAndServe())
 	})
 }

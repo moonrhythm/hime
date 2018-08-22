@@ -68,11 +68,14 @@ func (apps *Apps) ParseConfigFile(filename string) *Apps {
 }
 
 func (apps *Apps) listenAndServe() error {
-	eg := errgroup.Group{}
+	eg, ctx := errgroup.WithContext(context.Background())
 
 	for _, app := range apps.list {
 		eg.Go(app.ListenAndServe)
 	}
+
+	<-ctx.Done()
+	go apps.Shutdown(context.Background())
 
 	return eg.Wait()
 }
