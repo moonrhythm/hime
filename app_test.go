@@ -1,12 +1,7 @@
 package hime
 
 import (
-	"crypto/tls"
 	"html/template"
-	"log"
-	"net"
-	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -51,7 +46,7 @@ func TestApp(t *testing.T) {
 	t.Run("Address", func(t *testing.T) {
 		app := New()
 		app.Address(":1234")
-		assert.Equal(t, ":1234", app.Addr)
+		assert.Equal(t, ":1234", app.srv.Addr)
 	})
 
 	t.Run("Clone", func(t *testing.T) {
@@ -64,7 +59,7 @@ func TestApp(t *testing.T) {
 			"q": "z",
 			"w": "x",
 		})
-		app.TLSConfig = Compatible()
+		app.srv.TLSConfig = Compatible()
 		app.GracefulShutdown()
 
 		app2 := app.Clone()
@@ -81,14 +76,14 @@ func TestApp(t *testing.T) {
 		assert.NotEqual(t, app.routes, app2.routes)
 		assert.NotEqual(t, app.globals, app2.globals)
 		assert.NotEqual(t, app.gs, app2.gs)
-		assert.NotNil(t, app2.TLSConfig)
+		assert.NotNil(t, app2.srv.TLSConfig)
 	})
 
 	t.Run("SelfSign empty param", func(t *testing.T) {
 		app := New()
 		app.SelfSign(SelfSign{})
 
-		assert.NotNil(t, app.TLSConfig)
+		assert.NotNil(t, app.srv.TLSConfig)
 	})
 
 	t.Run("SelfSign invalid param", func(t *testing.T) {
@@ -98,26 +93,9 @@ func TestApp(t *testing.T) {
 
 		assert.Panics(t, func() { app.SelfSign(opt) })
 	})
-}
 
-func TestConfigServer(t *testing.T) {
-	t.Parallel()
-
-	app := &App{
-		Addr:              ":8080",
-		TLSConfig:         &tls.Config{},
-		ReadTimeout:       5 * time.Second,
-		ReadHeaderTimeout: 6 * time.Second,
-		WriteTimeout:      7 * time.Second,
-		IdleTimeout:       2 * time.Minute,
-		MaxHeaderBytes:    1024,
-		TLSNextProto:      map[string]func(*http.Server, *tls.Conn, http.Handler){},
-		ConnState:         func(net.Conn, http.ConnState) {},
-		ErrorLog:          log.New(os.Stderr, "", log.LstdFlags),
-	}
-
-	assert.Empty(t, &app.srv)
-	app.configServer()
-	assert.NotEmpty(t, &app.srv)
-	assert.Equal(t, ":8080", app.srv.Addr)
+	t.Run("Server", func(t *testing.T) {
+		app := New()
+		assert.NotNil(t, app.Server())
+	})
 }

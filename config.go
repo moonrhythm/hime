@@ -80,15 +80,15 @@ func (app *App) Config(config AppConfig) *App {
 		server := config.Server
 
 		if server.Addr != "" {
-			app.Addr = server.Addr
+			app.srv.Addr = server.Addr
 		}
-		parseDuration(server.ReadTimeout, &app.ReadTimeout)
-		parseDuration(server.ReadHeaderTimeout, &app.ReadHeaderTimeout)
-		parseDuration(server.WriteTimeout, &app.WriteTimeout)
-		parseDuration(server.IdleTimeout, &app.IdleTimeout)
+		parseDuration(server.ReadTimeout, &app.srv.ReadTimeout)
+		parseDuration(server.ReadHeaderTimeout, &app.srv.ReadHeaderTimeout)
+		parseDuration(server.WriteTimeout, &app.srv.WriteTimeout)
+		parseDuration(server.IdleTimeout, &app.srv.IdleTimeout)
 
 		if t := server.TLS; t != nil {
-			app.TLSConfig = server.TLS.config()
+			app.srv.TLSConfig = server.TLS.config()
 		}
 
 		if server.GracefulShutdown != nil {
