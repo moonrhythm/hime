@@ -119,6 +119,9 @@ func (ctx *Context) FormFileHeader(key string) (*multipart.FileHeader, error) {
 
 // FormFileHeaderNotEmpty returns file header if not empty,
 // or http.ErrMissingFile if file is empty
+//
+// This function will be deprecated after drop go1.10 support, since go1.11 bring back
+// old behavior
 func (ctx *Context) FormFileHeaderNotEmpty(key string) (*multipart.FileHeader, error) {
 	fh, err := ctx.FormFileHeader(key)
 	if err != nil {
