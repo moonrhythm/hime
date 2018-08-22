@@ -207,16 +207,6 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 
 	if tp.root != "" {
 		t = t.Lookup(tp.root)
-	} else {
-		// if root not defined, lookup first not empty template
-		if t.Name() == "" {
-			for _, x := range t.Templates() {
-				if x.Name() != "" {
-					t = t.Lookup(x.Name())
-					break
-				}
-			}
-		}
 	}
 
 	if t == nil {
@@ -241,7 +231,7 @@ func (tp *Template) Parse(name string, text string) *Template {
 // ParseFiles loads template from file
 func (tp *Template) ParseFiles(name string, filenames ...string) *Template {
 	tp.newTemplate(name, func(t *template.Template) *template.Template {
-		return template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...))
+		return template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...)).Lookup(filenames[0])
 	})
 
 	return tp
