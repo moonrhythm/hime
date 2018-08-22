@@ -231,7 +231,11 @@ func (tp *Template) Parse(name string, text string) *Template {
 // ParseFiles loads template from file
 func (tp *Template) ParseFiles(name string, filenames ...string) *Template {
 	tp.newTemplate(name, func(t *template.Template) *template.Template {
-		return template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...)).Lookup(filenames[0])
+		t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...))
+		if tp.root == "" {
+			t = t.Lookup(filenames[0])
+		}
+		return t
 	})
 
 	return tp
