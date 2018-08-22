@@ -784,6 +784,36 @@ var _ = Describe("Context", func() {
 					Expect(called).To(BeTrue())
 				})
 			})
+
+			Describe("testing response", func() {
+				It("should add header when call AddHeader", func() {
+					ctx.AddHeader("Vary", "b")
+
+					Expect(w.Header().Get("Vary")).To(Equal("b"))
+				})
+
+				It("should not add duplicate header when call AddHeaderIfNotExists", func() {
+					ctx.AddHeaderIfNotExists("Vary", "b")
+					ctx.AddHeaderIfNotExists("Vary", "c")
+
+					Expect(w.Header()["Vary"]).To(HaveLen(1))
+					Expect(w.Header().Get("Vary")).To(Equal("b"))
+				})
+
+				It("should set header when call SetHeader", func() {
+					ctx.SetHeader("Vary", "b")
+					ctx.SetHeader("Vary", "c")
+
+					Expect(w.Header().Get("Vary")).To(Equal("c"))
+				})
+
+				It("should delete header when call DelHeader", func() {
+					ctx.SetHeader("Vary", "b")
+					ctx.DelHeader("Vary")
+
+					Expect(w.Header()["Vary"]).To(BeEmpty())
+				})
+			})
 		})
 	})
 })
