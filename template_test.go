@@ -2,6 +2,7 @@ package hime
 
 import (
 	"bytes"
+	"html/template"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -138,5 +139,65 @@ list:
 		tp.Component("b.tmpl")
 
 		assert.Panics(t, func() { tp.ParseGlob("t", "*/**.tmpl") })
+	})
+
+	t.Run("Minify before parse", func(t *testing.T) {
+		tp := New().Template()
+		tp.Minify()
+		tp.Parse("t", "  <h1>  Test   </h1>")
+
+		b := bytes.Buffer{}
+		tp.list["t"].Execute(&b, nil)
+		assert.Equal(t, "<h1>Test</h1>", b.String())
+	})
+
+	t.Run("Minify after parse", func(t *testing.T) {
+		tp := New().Template()
+		tp.Parse("t", "  <h1>  Test   </h1>")
+		tp.Minify()
+
+		b := bytes.Buffer{}
+		tp.list["t"].Execute(&b, nil)
+		assert.Equal(t, "<h1>Test</h1>", b.String())
+	})
+
+	t.Run("Func", func(t *testing.T) {
+		tp := New().Template()
+		tp.Func("n", func() string { return "abc" })
+		tp.Parse("t", "{{ n }}")
+
+		b := bytes.Buffer{}
+		tp.list["t"].Execute(&b, nil)
+		assert.Equal(t, "abc", b.String())
+	})
+
+	t.Run("Funcs", func(t *testing.T) {
+		tp := New().Template()
+		tp.Funcs(template.FuncMap{"n": func() string { return "abc" }})
+		tp.Parse("t", "{{ n }}")
+
+		b := bytes.Buffer{}
+		tp.list["t"].Execute(&b, nil)
+		assert.Equal(t, "abc", b.String())
+	})
+
+	t.Run("templateName", func(t *testing.T) {
+		tp := New().Template()
+		tp.Parse("t", "{{ templateName }}")
+
+		b := bytes.Buffer{}
+		tp.list["t"].Execute(&b, nil)
+		assert.Equal(t, "t", b.String())
+	})
+
+	t.Run("param", func(t *testing.T) {
+		app := New()
+		app.Routes(Routes{"p": "/p"})
+		tp := app.Template()
+		tp.Parse("t", `<a href="{{route "p" (param "id" 1)}}">go</a>`)
+
+		b := bytes.Buffer{}
+		tp.list["t"].Execute(&b, nil)
+		assert.Equal(t, `<a href="/p?id=1">go</a>`, b.String())
 	})
 }
