@@ -204,7 +204,7 @@ func (s *SelfSign) config(t *tls.Config) error {
 	var priv interface{}
 	var pub interface{}
 
-	switch s.Key.Algo {
+	switch strings.ToLower(s.Key.Algo) {
 	case "ecdsa", "":
 		var curve elliptic.Curve
 		switch s.Key.Size {

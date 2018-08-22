@@ -58,3 +58,75 @@ func TestCloneTLSNextProto(t *testing.T) {
 		assert.NotEmpty(t, p)
 	})
 }
+
+func TestSelfSign(t *testing.T) {
+	t.Run("Empty", func(t *testing.T) {
+		tc := tls.Config{}
+
+		assert.NoError(t, (&SelfSign{}).config(&tc))
+	})
+
+	t.Run("ECDSA", func(t *testing.T) {
+		tc := tls.Config{}
+		opt := &SelfSign{}
+		opt.Key.Algo = "ecdsa"
+		assert.NoError(t, opt.config(&tc))
+	})
+
+	t.Run("ECDSA/224", func(t *testing.T) {
+		tc := tls.Config{}
+		opt := &SelfSign{}
+		opt.Key.Algo = "ecdsa"
+		opt.Key.Size = 224
+		assert.NoError(t, opt.config(&tc))
+	})
+
+	t.Run("ECDSA/256", func(t *testing.T) {
+		tc := tls.Config{}
+		opt := &SelfSign{}
+		opt.Key.Algo = "ecdsa"
+		opt.Key.Size = 256
+		assert.NoError(t, opt.config(&tc))
+	})
+
+	t.Run("ECDSA/384", func(t *testing.T) {
+		tc := tls.Config{}
+		opt := &SelfSign{}
+		opt.Key.Algo = "ecdsa"
+		opt.Key.Size = 384
+		assert.NoError(t, opt.config(&tc))
+	})
+
+	t.Run("ECDSA/521", func(t *testing.T) {
+		tc := tls.Config{}
+		opt := &SelfSign{}
+		opt.Key.Algo = "ecdsa"
+		opt.Key.Size = 521
+		assert.NoError(t, opt.config(&tc))
+	})
+
+	t.Run("ECDSA/111", func(t *testing.T) {
+		tc := tls.Config{}
+		opt := &SelfSign{}
+		opt.Key.Algo = "ecdsa"
+		opt.Key.Size = 111
+		assert.Error(t, opt.config(&tc))
+	})
+
+	t.Run("RSA", func(t *testing.T) {
+		tc := tls.Config{}
+		opt := &SelfSign{}
+		opt.Key.Algo = "rsa"
+		assert.NoError(t, opt.config(&tc))
+	})
+
+	t.Run("Host", func(t *testing.T) {
+		tc := tls.Config{}
+		opt := &SelfSign{}
+		opt.Hosts = []string{
+			"192.168.0.1",
+			"localhost",
+		}
+		assert.NoError(t, opt.config(&tc))
+	})
+}
