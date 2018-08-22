@@ -96,18 +96,6 @@ func (app *App) Clone() *App {
 	return x
 }
 
-func cloneTLSNextProto(xs map[string]func(*http.Server, *tls.Conn, http.Handler)) map[string]func(*http.Server, *tls.Conn, http.Handler) {
-	if xs == nil {
-		return nil
-	}
-
-	rs := make(map[string]func(*http.Server, *tls.Conn, http.Handler))
-	for k, v := range xs {
-		rs[k] = v
-	}
-	return rs
-}
-
 // Address sets server address
 func (app *App) Address(addr string) *App {
 	app.Addr = addr
