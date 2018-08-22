@@ -239,6 +239,10 @@ func (tp *Template) ParseFiles(name string, filenames ...string) *Template {
 
 // ParseGlob loads template from pattern
 func (tp *Template) ParseGlob(name string, pattern string) *Template {
+	if tp.root == "" {
+		panicf("parse glob can not use without root")
+	}
+
 	tp.newTemplate(name, func(t *template.Template) *template.Template {
 		d := tp.dir
 		if !strings.HasSuffix(d, "/") {

@@ -121,13 +121,22 @@ list:
 	t.Run("ParseGlob", func(t *testing.T) {
 		tp := New().Template()
 		tp.Dir("testdata/template")
+		tp.Root("b")
 		tp.Component("b.tmpl")
 		tp.ParseGlob("t", "*/**.tmpl")
 
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
 			assert.NoError(t, tp.list["t"].Execute(&b, nil))
-			assert.Equal(t, "Test Data b", b.String())
+			assert.Equal(t, "b", b.String())
 		}
+	})
+
+	t.Run("ParseGlob without root", func(t *testing.T) {
+		tp := New().Template()
+		tp.Dir("testdata/template")
+		tp.Component("b.tmpl")
+
+		assert.Panics(t, func() { tp.ParseGlob("t", "*/**.tmpl") })
 	})
 }
