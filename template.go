@@ -32,7 +32,7 @@ func (app *App) Template() *Template {
 	}
 	return &Template{
 		list: app.template,
-		funcs: append([]template.FuncMap{template.FuncMap{
+		funcs: append([]template.FuncMap{{
 			"route":  app.Route,
 			"global": app.Global,
 		}}, app.templateFuncs...),

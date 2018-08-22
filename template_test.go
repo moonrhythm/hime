@@ -236,12 +236,12 @@ list:
 	t.Run("cloneFuncMaps", func(t *testing.T) {
 		assert.Nil(t, cloneFuncMaps(nil))
 		assert.NotNil(t, cloneFuncMaps([]template.FuncMap{}))
-		assert.Len(t, cloneFuncMaps([]template.FuncMap{template.FuncMap{"a": func() string { return "" }}}), 1)
+		assert.Len(t, cloneFuncMaps([]template.FuncMap{{"a": func() string { return "" }}}), 1)
 	})
 
 	t.Run("cloneTmpl", func(t *testing.T) {
 		assert.Nil(t, cloneTmpl(nil))
 		assert.NotNil(t, cloneTmpl(map[string]*tmpl{}))
-		assert.Len(t, cloneTmpl(map[string]*tmpl{"a": &tmpl{}}), 1)
+		assert.Len(t, cloneTmpl(map[string]*tmpl{"a": {}}), 1)
 	})
 }
