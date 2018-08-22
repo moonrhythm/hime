@@ -40,22 +40,6 @@ list:
 		assert.NotContains(t, tp.list, "p1.tmpl")
 	})
 
-	t.Run("ParseConfigFile", func(t *testing.T) {
-		tp := New().Template()
-		tp.ParseConfigFile("testdata/template/config.yaml")
-
-		assert.Equal(t, "testdata/template", tp.dir)
-		assert.Equal(t, "l", tp.root)
-		assert.NotNil(t, tp.minifier)
-		assert.Equal(t, "[[", tp.leftDelim)
-		assert.Equal(t, "]]", tp.rightDelim)
-		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.components)
-		assert.Contains(t, tp.list, "p")
-		assert.Contains(t, tp.list, "k")
-		assert.NotContains(t, tp.list, "a.tmpl")
-		assert.NotContains(t, tp.list, "p1.tmpl")
-	})
-
 	t.Run("ParseConfig without root", func(t *testing.T) {
 		tp := New().Template()
 		tp.ParseConfig([]byte(`
@@ -84,6 +68,32 @@ list:
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
 		assert.NotContains(t, tp.list, "p1.tmpl")
+	})
+
+	t.Run("ParseConfig invalid", func(t *testing.T) {
+		tp := New().Template()
+		assert.Panics(t, func() { tp.ParseConfig([]byte(`invalidyamlbytes`)) })
+	})
+
+	t.Run("ParseConfigFile", func(t *testing.T) {
+		tp := New().Template()
+		tp.ParseConfigFile("testdata/template/config.yaml")
+
+		assert.Equal(t, "testdata/template", tp.dir)
+		assert.Equal(t, "l", tp.root)
+		assert.NotNil(t, tp.minifier)
+		assert.Equal(t, "[[", tp.leftDelim)
+		assert.Equal(t, "]]", tp.rightDelim)
+		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.components)
+		assert.Contains(t, tp.list, "p")
+		assert.Contains(t, tp.list, "k")
+		assert.NotContains(t, tp.list, "a.tmpl")
+		assert.NotContains(t, tp.list, "p1.tmpl")
+	})
+
+	t.Run("ParseConfigFile not exists", func(t *testing.T) {
+		tp := New().Template()
+		assert.Panics(t, func() { tp.ParseConfigFile("testdata/template/not-exists-config.yaml") })
 	})
 
 	t.Run("Parse", func(t *testing.T) {
@@ -141,6 +151,18 @@ list:
 		assert.Panics(t, func() { tp.ParseGlob("t", "*/**.tmpl") })
 	})
 
+	t.Run("Root not exists", func(t *testing.T) {
+		tp := New().Template()
+		tp.Root("root")
+		assert.Panics(t, func() { tp.Parse("t", "Test Data") })
+	})
+
+	t.Run("Parse duplicate name", func(t *testing.T) {
+		tp := New().Template()
+		assert.NotPanics(t, func() { tp.Parse("t", "Test Data") })
+		assert.Panics(t, func() { tp.Parse("t", "Test Data") })
+	})
+
 	t.Run("Minify before parse", func(t *testing.T) {
 		tp := New().Template()
 		tp.Minify()
@@ -159,6 +181,16 @@ list:
 		b := bytes.Buffer{}
 		tp.list["t"].Execute(&b, nil)
 		assert.Equal(t, "<h1>Test</h1>", b.String())
+	})
+
+	t.Run("Minify execute error", func(t *testing.T) {
+		tp := New().Template()
+		tp.Minify()
+		tp.Parse("t", "  <h1>  Test {{$.A.B}}   </h1>")
+
+		b := bytes.Buffer{}
+		assert.Error(t, tp.list["t"].Execute(&b, map[string]interface{}{"A": "a"}))
+		assert.Empty(t, b.String())
 	})
 
 	t.Run("Func", func(t *testing.T) {
@@ -199,5 +231,17 @@ list:
 		b := bytes.Buffer{}
 		tp.list["t"].Execute(&b, nil)
 		assert.Equal(t, `<a href="/p?id=1">go</a>`, b.String())
+	})
+
+	t.Run("cloneFuncMaps", func(t *testing.T) {
+		assert.Nil(t, cloneFuncMaps(nil))
+		assert.NotNil(t, cloneFuncMaps([]template.FuncMap{}))
+		assert.Len(t, cloneFuncMaps([]template.FuncMap{template.FuncMap{"a": func() string { return "" }}}), 1)
+	})
+
+	t.Run("cloneTmpl", func(t *testing.T) {
+		assert.Nil(t, cloneTmpl(nil))
+		assert.NotNil(t, cloneTmpl(map[string]*tmpl{}))
+		assert.Len(t, cloneTmpl(map[string]*tmpl{"a": &tmpl{}}), 1)
 	})
 }
