@@ -98,4 +98,18 @@ func TestApp(t *testing.T) {
 		app := New()
 		assert.NotNil(t, app.Server())
 	})
+
+	t.Run("TLS", func(t *testing.T) {
+		app := New()
+
+		if assert.NotPanics(t, func() { app.TLS("testdata/server.crt", "testdata/server.key") }) {
+			assert.NotNil(t, app.srv.TLSConfig)
+		}
+	})
+
+	t.Run("TLS invalid", func(t *testing.T) {
+		app := New()
+
+		assert.Panics(t, func() { app.TLS("testdata/server.key", "testdata/server.crt") })
+	})
 }

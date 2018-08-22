@@ -130,3 +130,52 @@ func TestSelfSign(t *testing.T) {
 		assert.NoError(t, opt.config(&tc))
 	})
 }
+
+func TestTLSConfig(t *testing.T) {
+	t.Run("Load crt, key file", func(t *testing.T) {
+		tc := TLS{
+			CertFile: "testdata/server.crt",
+			KeyFile:  "testdata/server.key",
+		}
+
+		if assert.NotPanics(t, func() { tc.config() }) {
+			assert.NotNil(t, tc.config())
+		}
+	})
+
+	t.Run("Load invalid crt, key file", func(t *testing.T) {
+		tc := TLS{
+			CertFile: "testdata/server.key",
+			KeyFile:  "testdata/server.crt",
+		}
+
+		assert.Panics(t, func() { tc.config() })
+	})
+
+	t.Run("Curves", func(t *testing.T) {
+		tc := TLS{
+			Curves: []string{"p256", "p384", "p521", "x25519"},
+		}
+
+		assert.NotPanics(t, func() { tc.config() })
+	})
+
+	t.Run("Curves invalid", func(t *testing.T) {
+		tc := TLS{
+			Curves: []string{"p"},
+		}
+
+		assert.Panics(t, func() { tc.config() })
+	})
+
+	t.Run("Profile", func(t *testing.T) {
+		assert.NotPanics(t, func() { (&TLS{Profile: "restricted"}).config() })
+		assert.NotPanics(t, func() { (&TLS{Profile: "RESTRICTED"}).config() })
+		assert.NotPanics(t, func() { (&TLS{Profile: "modern"}).config() })
+		assert.NotPanics(t, func() { (&TLS{Profile: "compatible"}).config() })
+	})
+
+	t.Run("Profile invalid", func(t *testing.T) {
+		assert.Panics(t, func() { (&TLS{Profile: "super-good"}).config() })
+	})
+}
