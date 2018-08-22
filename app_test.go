@@ -149,6 +149,7 @@ func TestApp(t *testing.T) {
 		app.Address(":8082")
 
 		go app.ListenAndServe()
+		time.Sleep(time.Second)
 
 		(&http.Client{Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
