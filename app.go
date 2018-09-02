@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -16,7 +17,7 @@ type App struct {
 	srv     http.Server
 	handler http.Handler
 	routes  Routes
-	globals Globals
+	globals sync.Map
 
 	template      map[string]*tmpl
 	templateFuncs []template.FuncMap
@@ -51,7 +52,7 @@ func (app *App) Clone() *App {
 		},
 		handler:       app.handler,
 		routes:        cloneRoutes(app.routes),
-		globals:       cloneGlobals(app.globals),
+		globals:       cloneMap(app.globals),
 		template:      cloneTmpl(app.template),
 		templateFuncs: cloneFuncMaps(app.templateFuncs),
 	}

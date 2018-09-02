@@ -3,34 +3,18 @@ package hime
 // Globals is the global const map
 type Globals map[interface{}]interface{}
 
-func cloneGlobals(xs Globals) Globals {
-	if xs == nil {
-		return nil
-	}
-	rs := make(Globals)
-	for k, v := range xs {
-		rs[k] = v
-	}
-	return rs
-}
-
 // Globals registers global constants
 func (app *App) Globals(globals Globals) *App {
-	if app.globals == nil {
-		app.globals = make(Globals)
-	}
 	for key, value := range globals {
-		app.globals[key] = value
+		app.globals.Store(key, value)
 	}
 	return app
 }
 
 // Global gets value from global storage
 func (app *App) Global(key interface{}) interface{} {
-	if app.globals == nil {
-		return nil
-	}
-	return app.globals[key]
+	v, _ := app.globals.Load(key)
+	return v
 }
 
 // Global returns global value
