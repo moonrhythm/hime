@@ -18,7 +18,7 @@ minify: true
 delims:
 - "[["
 - "]]"
-components:
+preload:
 - a.tmpl
 - b.tmpl
 list:
@@ -33,7 +33,7 @@ list:
 		assert.NotNil(t, tp.minifier)
 		assert.Equal(t, "[[", tp.leftDelim)
 		assert.Equal(t, "]]", tp.rightDelim)
-		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.components)
+		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.preload)
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -48,7 +48,7 @@ minify: true
 delims:
 - "[["
 - "]]"
-components:
+preload:
 - a.tmpl
 - b.tmpl
 list:
@@ -63,7 +63,7 @@ list:
 		assert.NotNil(t, tp.minifier)
 		assert.Equal(t, "[[", tp.leftDelim)
 		assert.Equal(t, "]]", tp.rightDelim)
-		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.components)
+		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.preload)
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -84,7 +84,7 @@ list:
 		assert.NotNil(t, tp.minifier)
 		assert.Equal(t, "[[", tp.leftDelim)
 		assert.Equal(t, "]]", tp.rightDelim)
-		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.components)
+		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.preload)
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -106,7 +106,7 @@ list:
 	t.Run("Parse with component", func(t *testing.T) {
 		tp := New().Template()
 		tp.Dir("testdata/template")
-		tp.Component("b.tmpl")
+		tp.Preload("b.tmpl")
 		tp.Parse("t", `Test Data {{template "b"}}`)
 
 		if assert.Contains(t, tp.list, "t") {
@@ -119,7 +119,7 @@ list:
 	t.Run("ParseFiles", func(t *testing.T) {
 		tp := New().Template()
 		tp.Dir("testdata/template")
-		tp.Component("b.tmpl")
+		tp.Preload("b.tmpl")
 		tp.ParseFiles("t", "p1.tmpl")
 
 		if assert.Contains(t, tp.list, "t") {
@@ -133,7 +133,7 @@ list:
 		tp := New().Template()
 		tp.Dir("testdata/template")
 		tp.Root("b")
-		tp.Component("b.tmpl")
+		tp.Preload("b.tmpl")
 		tp.ParseGlob("t", "**.tmpl")
 
 		if assert.Contains(t, tp.list, "t") {
@@ -146,7 +146,7 @@ list:
 	t.Run("ParseGlob without root", func(t *testing.T) {
 		tp := New().Template()
 		tp.Dir("testdata/template")
-		tp.Component("b.tmpl")
+		tp.Preload("b.tmpl")
 
 		assert.Panics(t, func() { tp.ParseGlob("t", "*/**.tmpl") })
 	})

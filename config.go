@@ -51,7 +51,7 @@ func parseDuration(s string, t *time.Duration) {
 //   root: layout
 //   delims: ["{{", "}}"]
 //   minify: true
-//   components:
+//   preload:
 //   - comp/comp1.tmpl
 //   - comp/comp2.tmpl
 //   list:

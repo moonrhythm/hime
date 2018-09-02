@@ -6,7 +6,7 @@ routes:
 templates:
 - dir: testdata/config1
   root: layout
-  components:
+  preload:
   - comp/footer.tmpl
   list:
     main.tmpl: [main.tmpl, _layout.tmpl]

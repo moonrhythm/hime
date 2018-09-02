@@ -17,12 +17,12 @@ import (
 
 // TemplateConfig is template config
 type TemplateConfig struct {
-	Dir        string              `yaml:"dir" json:"dir"`
-	Root       string              `yaml:"root" json:"root"`
-	Minify     bool                `yaml:"minify" json:"minify"`
-	Components []string            `yaml:"components" json:"components"`
-	List       map[string][]string `yaml:"list" json:"list"`
-	Delims     []string            `yaml:"delims" json:"delims"`
+	Dir     string              `yaml:"dir" json:"dir"`
+	Root    string              `yaml:"root" json:"root"`
+	Minify  bool                `yaml:"minify" json:"minify"`
+	Preload []string            `yaml:"preload" json:"preload"`
+	List    map[string][]string `yaml:"list" json:"list"`
+	Delims  []string            `yaml:"delims" json:"delims"`
 }
 
 // Template creates new template loader
@@ -82,7 +82,7 @@ type Template struct {
 	leftDelim  string
 	rightDelim string
 	funcs      []template.FuncMap
-	components []string
+	preload    []string
 	minifier   *minify.M
 }
 
@@ -93,7 +93,7 @@ func (tp *Template) Config(cfg TemplateConfig) *Template {
 	if len(cfg.Delims) == 2 {
 		tp.Delims(cfg.Delims[0], cfg.Delims[1])
 	}
-	tp.Component(cfg.Components...)
+	tp.Preload(cfg.Preload...)
 	for name, filenames := range cfg.List {
 		tp.ParseFiles(name, filenames...)
 	}
@@ -173,9 +173,9 @@ func (tp *Template) Func(name string, f interface{}) *Template {
 	return tp.Funcs(template.FuncMap{name: f})
 }
 
-// Component adds given templates to every templates
-func (tp *Template) Component(filename ...string) *Template {
-	tp.components = append(tp.components, filename...)
+// Preload loads given templates before every templates
+func (tp *Template) Preload(filename ...string) *Template {
+	tp.preload = append(tp.preload, filename...)
 	return tp
 }
 
@@ -198,9 +198,9 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		t.Funcs(fn)
 	}
 
-	// parse components
-	if len(tp.components) > 0 {
-		t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, tp.components...)...))
+	// parse preload templates
+	if len(tp.preload) > 0 {
+		t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, tp.preload...)...))
 	}
 
 	t = parser(t)

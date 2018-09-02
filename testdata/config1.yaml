@@ -8,7 +8,7 @@ templates:
   root: layout
   delims: ["{{", "}}"]
   minify: true
-  components:
+  preload:
   - comp/footer.tmpl
   list:
     main: [main.tmpl, _layout.tmpl]
