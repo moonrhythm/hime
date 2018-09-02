@@ -33,7 +33,6 @@ list:
 		assert.NotNil(t, tp.minifier)
 		assert.Equal(t, "[[", tp.leftDelim)
 		assert.Equal(t, "]]", tp.rightDelim)
-		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.preload)
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -63,7 +62,7 @@ list:
 		assert.NotNil(t, tp.minifier)
 		assert.Equal(t, "[[", tp.leftDelim)
 		assert.Equal(t, "]]", tp.rightDelim)
-		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.preload)
+		// assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.preload)
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -84,7 +83,6 @@ list:
 		assert.NotNil(t, tp.minifier)
 		assert.Equal(t, "[[", tp.leftDelim)
 		assert.Equal(t, "]]", tp.rightDelim)
-		assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.preload)
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -103,7 +101,7 @@ list:
 		assert.Contains(t, tp.list, "t")
 	})
 
-	t.Run("Parse with component", func(t *testing.T) {
+	t.Run("Parse with template", func(t *testing.T) {
 		tp := New().Template()
 		tp.Dir("testdata/template")
 		tp.Preload("b.tmpl")
@@ -111,8 +109,9 @@ list:
 
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
-			assert.NoError(t, tp.list["t"].Execute(&b, nil))
-			assert.Equal(t, "Test Data b", b.String())
+			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
+				assert.Equal(t, "Test Data b", b.String())
+			}
 		}
 	})
 
@@ -124,8 +123,9 @@ list:
 
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
-			assert.NoError(t, tp.list["t"].Execute(&b, nil))
-			assert.Equal(t, "Test Data b", b.String())
+			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
+				assert.Equal(t, "Test Data b", b.String())
+			}
 		}
 	})
 
@@ -138,8 +138,9 @@ list:
 
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
-			assert.NoError(t, tp.list["t"].Execute(&b, nil))
-			assert.Equal(t, "b", b.String())
+			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
+				assert.Equal(t, "b", b.String())
+			}
 		}
 	})
 
@@ -149,6 +150,20 @@ list:
 		tp.Preload("b.tmpl")
 
 		assert.Panics(t, func() { tp.ParseGlob("t", "*/**.tmpl") })
+	})
+
+	t.Run("Component", func(t *testing.T) {
+		tp := New().Template()
+		tp.Dir("testdata/template")
+		tp.Component(template.Must(template.New("c").Parse(`component`)))
+		tp.Parse("t", `Test Data {{component "c"}}`)
+
+		if assert.Contains(t, tp.list, "t") {
+			b := bytes.Buffer{}
+			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
+				assert.Equal(t, "Test Data component", b.String())
+			}
+		}
 	})
 
 	t.Run("Root not exists", func(t *testing.T) {
