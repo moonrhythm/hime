@@ -11,6 +11,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/kavu/go_reuseport"
 )
 
 // App is the hime app
@@ -25,6 +27,7 @@ type App struct {
 
 	gs           *GracefulShutdown
 	tcpKeepAlive time.Duration
+	reusePort    bool
 }
 
 var (
@@ -58,6 +61,8 @@ func (app *App) Clone() *App {
 		globals:       cloneMap(&app.globals),
 		template:      cloneTmpl(app.template),
 		templateFuncs: cloneFuncMaps(app.templateFuncs),
+		tcpKeepAlive:  app.tcpKeepAlive,
+		reusePort:     app.reusePort,
 	}
 	x.srv.Handler = x
 
@@ -131,14 +136,26 @@ func (app *App) TCPKeepAlive(d time.Duration) *App {
 	return app
 }
 
-func (app *App) listenAndServe() error {
+// ReusePort uses SO_REUSEPORT when create listener using app.ListenAndServe
+func (app *App) ReusePort(enable bool) *App {
+	app.reusePort = enable
+	return app
+}
+
+func (app *App) listenAndServe() (err error) {
 	addr := app.srv.Addr
 	if addr == "" {
 		addr = ":http"
 	}
-	ln, err := net.Listen("tcp", addr)
+
+	var ln net.Listener
+	if app.reusePort {
+		ln, err = reuseport.Listen("tcp", addr)
+	} else {
+		ln, err = net.Listen("tcp", addr)
+	}
 	if err != nil {
-		return err
+		return
 	}
 
 	if d := app.tcpKeepAlive; d > 0 {

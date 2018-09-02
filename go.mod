@@ -1,6 +1,7 @@
 module github.com/acoshift/hime
 
 require (
+	github.com/kavu/go_reuseport v1.4.0
 	github.com/tdewolff/minify v2.3.5+incompatible
 	github.com/tdewolff/parse v2.3.3+incompatible // indirect
 	golang.org/x/net v0.0.0-20180816102801-aaf60122140d // indirect
