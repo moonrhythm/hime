@@ -52,7 +52,7 @@ func (app *App) Clone() *App {
 		},
 		handler:       app.handler,
 		routes:        cloneRoutes(app.routes),
-		globals:       cloneMap(app.globals),
+		globals:       cloneMap(&app.globals),
 		template:      cloneTmpl(app.template),
 		templateFuncs: cloneFuncMaps(app.templateFuncs),
 	}

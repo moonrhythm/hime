@@ -3,6 +3,7 @@ language: go
 go:
   - 1.9.x
   - 1.10.x
+  - "1.11"
 
 before_install:
   - go get github.com/mattn/goveralls
@@ -10,5 +11,6 @@ before_install:
   - go get github.com/onsi/gomega/...
 
 script:
+  - go vet .
   - go test -v -covermode=count -coverprofile=profile.cov .
   - $HOME/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci

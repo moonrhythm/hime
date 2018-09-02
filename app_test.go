@@ -77,7 +77,8 @@ func TestApp(t *testing.T) {
 
 		assert.NotEqual(t, app, app2)
 		assert.NotEqual(t, app.routes, app2.routes)
-		assert.NotEqual(t, app.globals, app2.globals)
+		assert.Equal(t, "z", app.Global("q"))
+		assert.Equal(t, "p", app2.Global("q"))
 		assert.NotEqual(t, app.gs, app2.gs)
 		assert.NotNil(t, app2.srv.TLSConfig)
 	})

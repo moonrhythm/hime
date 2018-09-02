@@ -15,7 +15,7 @@ func TestConfig(t *testing.T) {
 			app := New().ParseConfigFile("testdata/config1.yaml")
 
 			// globals
-			assert.Equal(t, mapLen(app.globals), 1)
+			assert.Equal(t, mapLen(&app.globals), 1)
 			assert.Equal(t, "test", app.Global("data1"))
 			assert.Nil(t, app.Global("invalid"))
 
@@ -48,7 +48,7 @@ func TestConfig(t *testing.T) {
 		assert.NotPanics(t, func() {
 			app := New().ParseConfigFile("testdata/config2.yaml")
 
-			assert.Equal(t, mapLen(app.globals), 0)
+			assert.Equal(t, mapLen(&app.globals), 0)
 			assert.Len(t, app.routes, 0)
 			assert.Len(t, app.template, 0)
 
@@ -69,7 +69,7 @@ func TestConfig(t *testing.T) {
 		assert.NotPanics(t, func() {
 			app := New().ParseConfigFile("testdata/config3.yaml")
 
-			assert.Equal(t, mapLen(app.globals), 0)
+			assert.Equal(t, mapLen(&app.globals), 0)
 			assert.Len(t, app.routes, 0)
 			assert.Len(t, app.template, 0)
 
