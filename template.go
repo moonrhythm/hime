@@ -77,7 +77,7 @@ func (t *tmpl) Execute(w io.Writer, data interface{}) error {
 
 // Template is template loader
 type Template struct {
-	share      *template.Template
+	parent     *template.Template
 	list       map[string]*tmpl
 	root       string
 	dir        string
@@ -89,8 +89,8 @@ type Template struct {
 }
 
 func (tp *Template) ensure() {
-	if tp.share == nil {
-		tp.share = template.New("").
+	if tp.parent == nil {
+		tp.parent = template.New("").
 			Delims(tp.leftDelim, tp.rightDelim).
 			Funcs(template.FuncMap{
 				"param":        tfParam,
@@ -100,7 +100,7 @@ func (tp *Template) ensure() {
 
 		// register funcs
 		for _, fn := range tp.funcs {
-			tp.share.Funcs(fn)
+			tp.parent.Funcs(fn)
 		}
 	}
 }
@@ -199,7 +199,7 @@ func (tp *Template) Preload(filename ...string) *Template {
 	}
 
 	tp.ensure()
-	tp.share = template.Must(tp.share.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
+	tp.parent = template.Must(tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
 
 	return tp
 }
@@ -211,7 +211,7 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 
 	tp.ensure()
 
-	t := template.Must(tp.share.Clone()).
+	t := template.Must(tp.parent.Clone()).
 		Funcs(template.FuncMap{
 			"templateName": func() string { return name },
 		})
