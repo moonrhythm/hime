@@ -4,7 +4,7 @@ minify: true
 delims:
 - "[["
 - "]]"
-components:
+preload:
 - a.tmpl
 - b.tmpl
 list:

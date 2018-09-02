@@ -17,12 +17,12 @@ import (
 
 // TemplateConfig is template config
 type TemplateConfig struct {
-	Dir        string              `yaml:"dir" json:"dir"`
-	Root       string              `yaml:"root" json:"root"`
-	Minify     bool                `yaml:"minify" json:"minify"`
-	Components []string            `yaml:"components" json:"components"`
-	List       map[string][]string `yaml:"list" json:"list"`
-	Delims     []string            `yaml:"delims" json:"delims"`
+	Dir     string              `yaml:"dir" json:"dir"`
+	Root    string              `yaml:"root" json:"root"`
+	Minify  bool                `yaml:"minify" json:"minify"`
+	Preload []string            `yaml:"preload" json:"preload"`
+	List    map[string][]string `yaml:"list" json:"list"`
+	Delims  []string            `yaml:"delims" json:"delims"`
 }
 
 // Template creates new template loader
@@ -36,6 +36,7 @@ func (app *App) Template() *Template {
 			"route":  app.Route,
 			"global": app.Global,
 		}}, app.templateFuncs...),
+		components: make(map[string]*template.Template),
 	}
 }
 
@@ -51,7 +52,7 @@ func (app *App) TemplateFunc(name string, f interface{}) *App {
 }
 
 type tmpl struct {
-	template.Template
+	*template.Template
 	m *minify.M
 }
 
@@ -76,14 +77,32 @@ func (t *tmpl) Execute(w io.Writer, data interface{}) error {
 
 // Template is template loader
 type Template struct {
+	parent     *template.Template
 	list       map[string]*tmpl
 	root       string
 	dir        string
 	leftDelim  string
 	rightDelim string
 	funcs      []template.FuncMap
-	components []string
+	components map[string]*template.Template
 	minifier   *minify.M
+}
+
+func (tp *Template) ensure() {
+	if tp.parent == nil {
+		tp.parent = template.New("").
+			Delims(tp.leftDelim, tp.rightDelim).
+			Funcs(template.FuncMap{
+				"param":        tfParam,
+				"templateName": tfTemplateName,
+				"component":    tp.renderComponent,
+			})
+
+		// register funcs
+		for _, fn := range tp.funcs {
+			tp.parent.Funcs(fn)
+		}
+	}
 }
 
 // Config loads template config
@@ -93,12 +112,12 @@ func (tp *Template) Config(cfg TemplateConfig) *Template {
 	if len(cfg.Delims) == 2 {
 		tp.Delims(cfg.Delims[0], cfg.Delims[1])
 	}
-	tp.Component(cfg.Components...)
-	for name, filenames := range cfg.List {
-		tp.ParseFiles(name, filenames...)
-	}
 	if cfg.Minify {
 		tp.Minify()
+	}
+	tp.Preload(cfg.Preload...)
+	for name, filenames := range cfg.List {
+		tp.ParseFiles(name, filenames...)
 	}
 
 	return tp
@@ -173,9 +192,15 @@ func (tp *Template) Func(name string, f interface{}) *Template {
 	return tp.Funcs(template.FuncMap{name: f})
 }
 
-// Component adds given templates to every templates
-func (tp *Template) Component(filename ...string) *Template {
-	tp.components = append(tp.components, filename...)
+// Preload loads given templates before every templates
+func (tp *Template) Preload(filename ...string) *Template {
+	if len(filename) == 0 {
+		return tp
+	}
+
+	tp.ensure()
+	tp.parent = template.Must(tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
+
 	return tp
 }
 
@@ -184,24 +209,12 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		panic(newErrTemplateDuplicate(name))
 	}
 
-	t := template.New("").
-		Delims(tp.leftDelim, tp.rightDelim).
+	tp.ensure()
+
+	t := template.Must(tp.parent.Clone()).
 		Funcs(template.FuncMap{
 			"templateName": func() string { return name },
-			"param": func(name string, value interface{}) *Param {
-				return &Param{Name: name, Value: value}
-			},
 		})
-
-	// register funcs
-	for _, fn := range tp.funcs {
-		t.Funcs(fn)
-	}
-
-	// parse components
-	if len(tp.components) > 0 {
-		t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, tp.components...)...))
-	}
 
 	t = parser(t)
 
@@ -214,7 +227,7 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 	}
 
 	tp.list[name] = &tmpl{
-		Template: *t,
+		Template: t,
 		m:        tp.minifier,
 	}
 }
@@ -258,6 +271,51 @@ func (tp *Template) ParseGlob(name string, pattern string) *Template {
 	return tp
 }
 
+// Component loads html/template
+func (tp *Template) Component(ts ...*template.Template) *Template {
+	for _, t := range ts {
+		name := t.Name()
+		if name == "" {
+			panicf("can not load empty name component")
+		}
+
+		if _, ok := tp.components[name]; ok {
+			panicf("component '%s' already exists", name)
+		}
+
+		tp.components[name] = t
+	}
+
+	return tp
+}
+
+func (tp *Template) renderComponent(name string, args ...interface{}) template.HTML {
+	t := tp.components[name]
+	if t == nil {
+		panicf("component '%s' not found", name)
+	}
+
+	var d interface{}
+	switch len(args) {
+	case 0:
+	case 1:
+		d = args[0]
+	default:
+		panicf("wrong number of data args for component want 0-1 got %d", len(args))
+	}
+
+	buf := bytesPool.Get().(*bytes.Buffer)
+	defer bytesPool.Put(buf)
+
+	buf.Reset()
+	err := t.Execute(buf, d)
+	if err != nil {
+		panic(err)
+	}
+
+	return template.HTML(buf.String())
+}
+
 func joinTemplateDir(dir string, filenames ...string) []string {
 	xs := make([]string, len(filenames))
 	for i, filename := range filenames {
@@ -288,4 +346,12 @@ func cloneTmpl(xs map[string]*tmpl) map[string]*tmpl {
 		rs[k] = v
 	}
 	return rs
+}
+
+func tfParam(name string, value interface{}) *Param {
+	return &Param{Name: name, Value: value}
+}
+
+func tfTemplateName() string {
+	return ""
 }

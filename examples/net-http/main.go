@@ -24,7 +24,7 @@ func main() {
 		Dir("view").
 		Root("layout").
 		Funcs(tmplFunc).
-		Component("_navbar.component.tmpl").
+		Preload("_navbar.component.tmpl").
 		ParseFiles("index", "index.tmpl", "_layout.tmpl").
 		ParseFiles("about", "about.tmpl", "_layout.tmpl").
 		Minify()
