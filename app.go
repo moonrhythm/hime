@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"html/template"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,7 +23,8 @@ type App struct {
 	template      map[string]*tmpl
 	templateFuncs []template.FuncMap
 
-	gs *GracefulShutdown
+	gs           *GracefulShutdown
+	tcpKeepAlive time.Duration
 }
 
 var (
@@ -33,6 +35,7 @@ var (
 func New() *App {
 	app := &App{}
 	app.srv.Handler = app
+	app.tcpKeepAlive = 3 * time.Minute
 	return app
 }
 
@@ -122,21 +125,62 @@ func (app *App) Shutdown(ctx context.Context) error {
 	return app.srv.Shutdown(ctx)
 }
 
+// TCPKeepAlive sets tcp keep-alive when using app.ListenAndServe
+func (app *App) TCPKeepAlive(d time.Duration) *App {
+	app.tcpKeepAlive = d
+	return app
+}
+
 func (app *App) listenAndServe() error {
-	if app.srv.TLSConfig != nil {
-		return app.srv.ListenAndServeTLS("", "")
+	addr := app.srv.Addr
+	if addr == "" {
+		addr = ":http"
+	}
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
 	}
 
-	return app.srv.ListenAndServe()
+	if d := app.tcpKeepAlive; d > 0 {
+		ln = tcpKeepAliveListener{ln.(*net.TCPListener), d}
+	}
+
+	return app.Serve(ln)
 }
 
 // ListenAndServe starts web server
 func (app *App) ListenAndServe() error {
 	if app.gs != nil {
-		return app.startGracefulShutdown()
+		// graceful shutdown
+		errChan := make(chan error)
+
+		go func() {
+			if err := app.listenAndServe(); err != http.ErrServerClosed {
+				errChan <- err
+			}
+		}()
+
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, syscall.SIGTERM)
+
+		select {
+		case err := <-errChan:
+			return err
+		case <-stop:
+			return app.Shutdown(context.Background())
+		}
 	}
 
 	return app.listenAndServe()
+}
+
+// Serve serves listener
+func (app *App) Serve(l net.Listener) error {
+	if app.srv.TLSConfig != nil {
+		return app.srv.ServeTLS(l, "", "")
+	}
+
+	return app.srv.Serve(l)
 }
 
 func (app *App) ensureTLSConfig() {
@@ -176,24 +220,4 @@ func (app *App) GracefulShutdown() *GracefulShutdown {
 	}
 
 	return app.gs
-}
-
-func (app *App) startGracefulShutdown() error {
-	errChan := make(chan error)
-
-	go func() {
-		if err := app.listenAndServe(); err != http.ErrServerClosed {
-			errChan <- err
-		}
-	}()
-
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGTERM)
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-stop:
-		return app.Shutdown(context.Background())
-	}
 }
