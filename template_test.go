@@ -154,7 +154,6 @@ list:
 
 	t.Run("Component", func(t *testing.T) {
 		tp := New().Template()
-		tp.Dir("testdata/template")
 		tp.Component(template.Must(template.New("c").Parse(`component`)))
 		tp.Parse("t", `Test Data {{component "c"}}`)
 
@@ -164,6 +163,52 @@ list:
 				assert.Equal(t, "Test Data component", b.String())
 			}
 		}
+	})
+
+	t.Run("Component with data", func(t *testing.T) {
+		tp := New().Template()
+		tp.Component(template.Must(template.New("c").Parse(`hello, {{.}}`)))
+		tp.Parse("t", `Test Data {{component "c" "hime"}}`)
+
+		if assert.Contains(t, tp.list, "t") {
+			b := bytes.Buffer{}
+			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
+				assert.Equal(t, "Test Data hello, hime", b.String())
+			}
+		}
+	})
+
+	t.Run("Component with invalid data args", func(t *testing.T) {
+		tp := New().Template()
+		tp.Component(template.Must(template.New("c").Parse(`hello, {{.}}`)))
+		tp.Parse("t", `Test Data {{component "c" "aaa" "bbb"}}`)
+
+		if assert.Contains(t, tp.list, "t") {
+			b := bytes.Buffer{}
+			assert.Panics(t, func() { tp.list["t"].Execute(&b, nil) })
+		}
+	})
+
+	t.Run("Component not exists", func(t *testing.T) {
+		tp := New().Template()
+		tp.Parse("t", `Test Data {{component "c"}}`)
+
+		if assert.Contains(t, tp.list, "t") {
+			b := bytes.Buffer{}
+			assert.Panics(t, func() { tp.list["t"].Execute(&b, nil) })
+		}
+	})
+
+	t.Run("Component empty name", func(t *testing.T) {
+		tp := New().Template()
+		assert.Panics(t, func() { tp.Component(template.Must(template.New("").Parse(`a`))) })
+	})
+
+	t.Run("Component duplicate name", func(t *testing.T) {
+		tp := New().Template()
+		tp.Component(template.Must(template.New("a").Parse(`a`)))
+		tp.Component(template.Must(template.New("b").Parse(`b`)))
+		assert.Panics(t, func() { tp.Component(template.Must(template.New("a").Parse(`a`))) })
 	})
 
 	t.Run("Root not exists", func(t *testing.T) {
