@@ -31,7 +31,8 @@ func (app *App) Template() *Template {
 		app.template = make(map[string]*tmpl)
 	}
 	return &Template{
-		list: app.template,
+		list:      app.template,
+		localList: make(map[string]*tmpl),
 		funcs: append([]template.FuncMap{{
 			"route":  app.Route,
 			"global": app.Global,
@@ -79,6 +80,7 @@ func (t *tmpl) Execute(w io.Writer, data interface{}) error {
 type Template struct {
 	parent     *template.Template
 	list       map[string]*tmpl
+	localList  map[string]*tmpl
 	root       string
 	dir        string
 	leftDelim  string
@@ -150,7 +152,7 @@ func (tp *Template) Minify() *Template {
 	tp.minifier.AddFunc("text/javascript", js.Minify)
 
 	// sets minify for parsed templates
-	for _, t := range tp.list {
+	for _, t := range tp.localList {
 		t.m = tp.minifier
 	}
 
@@ -230,6 +232,7 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		Template: t,
 		m:        tp.minifier,
 	}
+	tp.localList[name] = tp.list[name]
 }
 
 // Parse parses template from text
