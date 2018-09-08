@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/acoshift/hime"
+	"github.com/moonrhythm/hime"
 	"github.com/acoshift/middleware"
 )
 
@@ -45,7 +45,7 @@ func main() {
 			"api/json/error": "/api/json/error",
 		}).
 		Globals(hime.Globals{
-			"github": "https://github.com/acoshift/hime",
+			"github": "https://github.com/moonrhythm/hime",
 		}).
 		Handler(router(app)).
 		Address(":8080").

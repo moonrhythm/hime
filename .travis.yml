@@ -1,16 +1,15 @@
 language: go
-
+sudo: false
 go:
-  - 1.9.x
-  - 1.10.x
-  - "1.11"
+- 1.10.x
+- "1.11"
 
 before_install:
-  - go get github.com/mattn/goveralls
-  - go get github.com/onsi/ginkgo
-  - go get github.com/onsi/gomega/...
+- go get -t -v .
 
 script:
-  - go vet .
-  - go test -v -covermode=count -coverprofile=profile.cov .
-  - $HOME/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
+- go vet .
+- go test -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)

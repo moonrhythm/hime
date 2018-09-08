@@ -1,13 +1,13 @@
 # Hime
 
-[![Build Status](https://travis-ci.org/acoshift/hime.svg?branch=master)](https://travis-ci.org/acoshift/hime)
-[![Coverage Status](https://coveralls.io/repos/github/acoshift/hime/badge.svg?branch=master)](https://coveralls.io/github/acoshift/hime?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/acoshift/hime)](https://goreportcard.com/report/github.com/acoshift/hime)
-[![GoDoc](https://godoc.org/github.com/acoshift/hime?status.svg)](https://godoc.org/github.com/acoshift/hime)
+[![Build Status](https://travis-ci.org/moonrhythm/hime.svg?branch=master)](https://travis-ci.org/moonrhythm/hime)
+[![codecov](https://codecov.io/gh/moonrhythm/hime/branch/master/graph/badge.svg)](https://codecov.io/gh/moonrhythm/hime)
+[![Go Report Card](https://goreportcard.com/badge/github.com/moonrhythm/hime)](https://goreportcard.com/report/github.com/moonrhythm/hime)
+[![GoDoc](https://godoc.org/github.com/moonrhythm/hime?status.svg)](https://godoc.org/github.com/moonrhythm/hime)
 
 Hime is a Go Web Framework.
 
-See [Wiki](https://github.com/acoshift/hime/wiki) for guide more information.
+See [Wiki](https://github.com/moonrhythm/hime/wiki) for guide more information.
 
 ## Why Framework
 
