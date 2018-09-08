@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/acoshift/hime"
+	"github.com/moonrhythm/hime"
 )
 
 var _ = Describe("Context", func() {

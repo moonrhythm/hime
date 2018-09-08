@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/acoshift/hime"
+	"github.com/moonrhythm/hime"
 	"github.com/gorilla/mux"
 )
 
