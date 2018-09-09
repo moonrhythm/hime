@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/moonrhythm/hime"
 	"github.com/julienschmidt/httprouter"
+	"github.com/moonrhythm/hime"
 )
 
 func main() {

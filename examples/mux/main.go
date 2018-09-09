@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/moonrhythm/hime"
 	"github.com/gorilla/mux"
+	"github.com/moonrhythm/hime"
 )
 
 func main() {
