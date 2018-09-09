@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/moonrhythm/hime"
 	"github.com/acoshift/middleware"
+	"github.com/moonrhythm/hime"
 )
 
 func main() {

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moonrhythm/hime"
 	"github.com/acoshift/middleware"
+	"github.com/moonrhythm/hime"
 )
 
 var tmplFunc = template.FuncMap{
