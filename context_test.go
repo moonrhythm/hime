@@ -343,6 +343,94 @@ func TestContext(t *testing.T) {
 		assert.Equal(t, w.Code, http.StatusPermanentRedirect)
 		assert.Equal(t, w.Header().Get("Location"), "/signin")
 	})
+
+	t.Run("RedirectTo to valid route", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		app.Routes(hime.Routes{
+			"route1": "/route/1",
+		})
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectTo("route1"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/route/1")
+	})
+
+	t.Run("RedirectTo to valid route with param", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		app.Routes(hime.Routes{
+			"route1": "/route/1",
+		})
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectTo("route1", ctx.Param("id", 3)))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/route/1?id=3")
+	})
+
+	t.Run("RedirectTo to valid route with additional path", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		app.Routes(hime.Routes{
+			"route1": "/route/1",
+		})
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectTo("route1", "create"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/route/1/create")
+	})
+
+	t.Run("RedirectTo to valid route with additional path and param", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		app.Routes(hime.Routes{
+			"route1": "/route/1",
+		})
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectTo("route1", "create", ctx.Param("id", 3)))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/route/1/create?id=3")
+	})
+
+	t.Run("RedirectTo to valid route with status code", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		app.Routes(hime.Routes{
+			"route1": "/route/1",
+		})
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Status(301).RedirectTo("route1"))
+		assert.Equal(t, w.Code, http.StatusMovedPermanently)
+		assert.Equal(t, w.Header().Get("Location"), "/route/1")
+	})
+
+	t.Run("RedirectTo to invalid route", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		app.Routes(hime.Routes{
+			"route1": "/route/1",
+		})
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Panics(t, func() { ctx.RedirectTo("invalid") })
+	})
 }
 
 var _ = Describe("Context", func() {
@@ -365,90 +453,6 @@ var _ = Describe("Context", func() {
 		BeforeEach(func() {
 			app = hime.New()
 			ctx = hime.NewAppContext(app, w, r)
-		})
-
-		Describe("testing RedirectTo", func() {
-			Context("given routes to the app", func() {
-				BeforeEach(func() {
-					app.Routes(hime.Routes{
-						"route1": "/route/1",
-					})
-				})
-
-				When("calling RedirectTo with valid route", func() {
-					BeforeEach(func() {
-						ctx.RedirectTo("route1")
-					})
-
-					Specify("responsed status code to be 302", func() {
-						Expect(w.Code).To(Equal(302))
-					})
-
-					Specify("responsed location should be the redirect location", func() {
-						Expect(w.Header().Get("Location")).To(Equal("/route/1"))
-					})
-				})
-
-				When("calling RedirectTo with valid route and param", func() {
-					BeforeEach(func() {
-						ctx.RedirectTo("route1", ctx.Param("id", 3))
-					})
-
-					Specify("responsed status code to be 302", func() {
-						Expect(w.Code).To(Equal(302))
-					})
-
-					Specify("responsed location should be the redirect location", func() {
-						Expect(w.Header().Get("Location")).To(Equal("/route/1?id=3"))
-					})
-				})
-
-				When("calling RedirectTo with additional path", func() {
-					BeforeEach(func() {
-						ctx.RedirectTo("route1", "create")
-					})
-
-					Specify("responsed status code to be 302", func() {
-						Expect(w.Code).To(Equal(302))
-					})
-
-					Specify("responsed location should be the redirect location", func() {
-						Expect(w.Header().Get("Location")).To(Equal("/route/1/create"))
-					})
-				})
-
-				When("calling RedirectTo with additional path and param", func() {
-					BeforeEach(func() {
-						ctx.RedirectTo("route1", "create", ctx.Param("id", 3))
-					})
-
-					Specify("responsed status code to be 302", func() {
-						Expect(w.Code).To(Equal(302))
-					})
-
-					Specify("responsed location should be the redirect location", func() {
-						Expect(w.Header().Get("Location")).To(Equal("/route/1/create?id=3"))
-					})
-				})
-
-				When("calling RedirectTo with 301 status code", func() {
-					BeforeEach(func() {
-						ctx.Status(301).RedirectTo("route1")
-					})
-
-					Specify("responsed status code to be 301", func() {
-						Expect(w.Code).To(Equal(301))
-					})
-
-					Specify("responsed location should be the redirect location", func() {
-						Expect(w.Header().Get("Location")).To(Equal("/route/1"))
-					})
-				})
-
-				It("should panic when calling RedirectTo with invalid route", func() {
-					Expect(func() { ctx.RedirectTo("invalid") }).Should(Panic())
-				})
-			})
 		})
 
 		Describe("testing RedirectToGet", func() {
