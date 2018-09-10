@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moonrhythm/hime"
@@ -455,299 +453,244 @@ func TestContext(t *testing.T) {
 		assert.Equal(t, w.Code, http.StatusSeeOther)
 		assert.Equal(t, w.Header().Get("Location"), r.RequestURI)
 	})
+
+	t.Run("RedirectBack without fallback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectBack(""))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/path1")
+	})
+
+	t.Run("RedirectBack with fallback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectBack("/path2"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/path2")
+	})
+
+	t.Run("RedirectBack with referer and without fallback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+		r.Header.Set("Referer", "http://localhost/path1")
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectBack(""))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "http://localhost/path1")
+	})
+
+	t.Run("RedirectBack with referer and fallback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+		r.Header.Set("Referer", "http://localhost/path1")
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectBack("/path2"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "http://localhost/path1")
+	})
+
+	t.Run("SafeRedirectBack without fallback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.SafeRedirectBack(""))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/path1")
+	})
+
+	t.Run("SafeRedirectBack with safe fallback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.SafeRedirectBack("/path2"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/path2")
+	})
+
+	t.Run("SafeRedirectBack with dangerous fallback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.SafeRedirectBack("https://google.com/path2"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/path2")
+	})
+
+	t.Run("SafeRedirectBack with referer and without fallback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+		r.Header.Set("Referer", "http://localhost/path1")
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.SafeRedirectBack(""))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/path1")
+	})
+
+	t.Run("SafeRedirectBack with referer and fallback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+		r.Header.Set("Referer", "http://localhost/path1")
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.SafeRedirectBack("/path2"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/path1")
+	})
+
+	t.Run("RedirectBackToGet from get", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectBackToGet())
+		assert.Equal(t, w.Code, http.StatusSeeOther) // TODO: check RFC
+		assert.Equal(t, w.Header().Get("Location"), "/path1")
+	})
+
+	t.Run("RedirectBackToGet from get with referer", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/path1", nil)
+		r.Header.Set("Referer", "http://localhost/path2")
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectBackToGet())
+		assert.Equal(t, w.Code, http.StatusSeeOther) // TODO: check RFC
+		assert.Equal(t, w.Header().Get("Location"), "http://localhost/path2")
+	})
+
+	t.Run("RedirectBackToGet from post", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/path1", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectBackToGet())
+		assert.Equal(t, w.Code, http.StatusSeeOther)
+		assert.Equal(t, w.Header().Get("Location"), r.RequestURI)
+	})
+
+	t.Run("RedirectBackToGet from post with referer", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/path1", nil)
+		r.Header.Set("Referer", "http://localhost/path2")
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectBackToGet())
+		assert.Equal(t, w.Code, http.StatusSeeOther)
+		assert.Equal(t, w.Header().Get("Location"), "http://localhost/path2")
+	})
+
+	t.Run("SafeRedirect", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.SafeRedirect("https://google.com"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/")
+	})
+
+	t.Run("View with not exist template", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Panics(t, func() { ctx.View("invalid", nil) })
+	})
+
+	t.Run("View with valid template", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		app.Template().Dir("testdata").Root("root").ParseFiles("index", "hello.tmpl")
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.View("index", nil))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "hello")
+	})
+
+	t.Run("View with valid template and status code", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		app.Template().Dir("testdata").Root("root").ParseFiles("index", "hello.tmpl")
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Status(http.StatusInternalServerError).View("index", nil))
+		assert.Equal(t, w.Code, http.StatusInternalServerError)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "hello")
+	})
+
+	t.Run("View with valid template and funcs invoke wrong argument", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		app.TemplateFuncs(template.FuncMap{
+			"fn": func(s string) string { return s },
+		})
+		app.Template().Dir("testdata").Root("root").ParseFiles("index", "call_fn.tmpl")
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Error(t, ctx.View("index", nil))
+	})
+
+	t.Run("View with valid template and funcs invoke panic func", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		app.TemplateFuncs(template.FuncMap{
+			"panic": func() string { panic("panic") },
+		})
+		app.Template().Dir("testdata").Root("root").ParseFiles("index", "panic.tmpl")
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Panics(t, func() { ctx.View("index", nil) })
+	})
 }
-
-var _ = Describe("Context", func() {
-	var (
-		w *httptest.ResponseRecorder
-		r *http.Request
-	)
-
-	BeforeEach(func() {
-		w = httptest.NewRecorder()
-		r = httptest.NewRequest(http.MethodGet, "/", nil)
-	})
-
-	Describe("context response", func() {
-		var (
-			app *hime.App
-			ctx *hime.Context
-		)
-
-		BeforeEach(func() {
-			app = hime.New()
-			ctx = hime.NewAppContext(app, w, r)
-		})
-
-		Describe("testing RedirectBack", func() {
-			When("calling RedirectBack with empty fallback", func() {
-				BeforeEach(func() {
-					ctx.RedirectBack("")
-				})
-
-				Specify("responsed status code to be 302", func() {
-					Expect(w.Code).To(Equal(302))
-				})
-
-				Specify("responsed location should be the request uri", func() {
-					Expect(w.Header().Get("Location")).To(Equal(r.RequestURI))
-				})
-			})
-
-			When("calling RedirectBack with a fallback", func() {
-				BeforeEach(func() {
-					ctx.RedirectBack("/path2")
-				})
-
-				Specify("responsed status code to be 302", func() {
-					Expect(w.Code).To(Equal(302))
-				})
-
-				Specify("responsed location should be the fallback url", func() {
-					Expect(w.Header().Get("Location")).To(Equal("/path2"))
-				})
-			})
-
-			Context("given referer to request", func() {
-				BeforeEach(func() {
-					r.Header.Set("Referer", "http://localhost/path1")
-				})
-
-				When("calling RedirectBack with empty fallback", func() {
-					BeforeEach(func() {
-						ctx.RedirectBack("")
-					})
-
-					Specify("responsed status code to be 302", func() {
-						Expect(w.Code).To(Equal(302))
-					})
-
-					Specify("responsed location should be the referer url", func() {
-						Expect(w.Header().Get("Location")).To(Equal(r.Referer()))
-					})
-				})
-
-				When("calling RedirectBack with a fallback", func() {
-					BeforeEach(func() {
-						ctx.RedirectBack("/path2")
-					})
-
-					Specify("responsed status code to be 302", func() {
-						Expect(w.Code).To(Equal(302))
-					})
-
-					Specify("responsed location should still be the referer url", func() {
-						Expect(w.Header().Get("Location")).To(Equal(r.Referer()))
-					})
-				})
-			})
-		})
-
-		Describe("testing SafeRedirectBack", func() {
-			When("calling SafeRedirectBack with empty fallback", func() {
-				BeforeEach(func() {
-					ctx.SafeRedirectBack("")
-				})
-
-				Specify("responsed status code to be 302", func() {
-					Expect(w.Code).To(Equal(302))
-				})
-
-				Specify("responsed location should be the request uri", func() {
-					Expect(w.Header().Get("Location")).To(Equal(r.RequestURI))
-				})
-			})
-
-			When("calling SafeRedirectBack with a fallback", func() {
-				BeforeEach(func() {
-					ctx.SafeRedirectBack("/path2")
-				})
-
-				Specify("responsed status code to be 302", func() {
-					Expect(w.Code).To(Equal(302))
-				})
-
-				Specify("responsed location should be the fallback url", func() {
-					Expect(w.Header().Get("Location")).To(Equal("/path2"))
-				})
-			})
-
-			When("calling SafeRedirectBack with a dangerous fallback", func() {
-				BeforeEach(func() {
-					ctx.SafeRedirectBack("https://google.com/path2")
-				})
-
-				Specify("responsed status code to be 302", func() {
-					Expect(w.Code).To(Equal(302))
-				})
-
-				Specify("responsed location should be the safe fallback url", func() {
-					Expect(w.Header().Get("Location")).To(Equal("/path2"))
-				})
-			})
-
-			Context("given referer to request", func() {
-				BeforeEach(func() {
-					r.Header.Set("Referer", "http://localhost/path1")
-				})
-
-				When("calling SafeRedirectBack with empty fallback", func() {
-					BeforeEach(func() {
-						ctx.SafeRedirectBack("")
-					})
-
-					Specify("responsed status code to be 302", func() {
-						Expect(w.Code).To(Equal(302))
-					})
-
-					Specify("responsed location should be the safe referer url", func() {
-						Expect(w.Header().Get("Location")).To(Equal(hime.SafeRedirectPath(r.Referer())))
-					})
-				})
-
-				When("calling SafeRedirectBack with a fallback", func() {
-					BeforeEach(func() {
-						ctx.SafeRedirectBack("/path2")
-					})
-
-					Specify("responsed status code to be 302", func() {
-						Expect(w.Code).To(Equal(302))
-					})
-
-					Specify("responsed location should still be the safe referer url", func() {
-						Expect(w.Header().Get("Location")).To(Equal(hime.SafeRedirectPath(r.Referer())))
-					})
-				})
-			})
-		})
-
-		Describe("testing RedirectBackToGet", func() {
-			When("calling RedirectBackToGet", func() {
-				BeforeEach(func() {
-					ctx.RedirectBackToGet()
-				})
-
-				Specify("responsed status code to be 303", func() {
-					Expect(w.Code).To(Equal(303))
-				})
-
-				Specify("responsed location should be the request uri", func() {
-					Expect(w.Header().Get("Location")).To(Equal(r.RequestURI))
-				})
-			})
-
-			Context("given referer to request", func() {
-				BeforeEach(func() {
-					r.Header.Set("Referer", "http://localhost/path1")
-				})
-
-				When("calling RedirectBackToGet", func() {
-					BeforeEach(func() {
-						ctx.RedirectBackToGet()
-					})
-
-					Specify("responsed status code to be 303", func() {
-						Expect(w.Code).To(Equal(303))
-					})
-
-					Specify("responsed location should be the referer", func() {
-						Expect(w.Header().Get("Location")).To(Equal(r.Referer()))
-					})
-				})
-			})
-		})
-
-		Describe("testing SafeRedirect", func() {
-			When("calling SafeRedirect", func() {
-				BeforeEach(func() {
-					ctx.SafeRedirect("https://google.com")
-				})
-
-				Specify("responsed status code to be 302", func() {
-					Expect(w.Code).To(Equal(302))
-				})
-
-				Specify("responsed location should be safe path", func() {
-					Expect(w.Header().Get("Location")).To(Equal("/"))
-				})
-			})
-		})
-
-		Describe("testing View", func() {
-			It("should panic when calling View with not exist template", func() {
-				Expect(func() { ctx.View("invalid", nil) }).Should(Panic())
-			})
-
-			Context("given a view to the app", func() {
-				BeforeEach(func() {
-					app.Template().Dir("testdata").Root("root").ParseFiles("index", "hello.tmpl")
-				})
-
-				When("calling View with valid template", func() {
-					BeforeEach(func() {
-						ctx.View("index", nil)
-					})
-
-					Specify("responsed status code to be 200", func() {
-						Expect(w.Code).To(Equal(200))
-					})
-
-					Specify("responsed content type to be text/html", func() {
-						Expect(w.Header().Get("Content-Type")).To(Equal("text/html; charset=utf-8"))
-					})
-
-					Specify("responsed body to be the template data", func() {
-						Expect(w.Body.String()).To(Equal("hello"))
-					})
-				})
-
-				When("calling View with valid template and 500 status code", func() {
-					BeforeEach(func() {
-						ctx.Status(500).View("index", nil)
-					})
-
-					Specify("responsed status code to be 500", func() {
-						Expect(w.Code).To(Equal(500))
-					})
-
-					Specify("responsed content type to be text/html", func() {
-						Expect(w.Header().Get("Content-Type")).To(Equal("text/html; charset=utf-8"))
-					})
-
-					Specify("responsed body to be the template data", func() {
-						Expect(w.Body.String()).To(Equal("hello"))
-					})
-				})
-			})
-
-			Context("given template funcs to the app", func() {
-				BeforeEach(func() {
-					app.TemplateFuncs(template.FuncMap{
-						"fn":    func(s string) string { return s },
-						"panic": func() string { panic("panic") },
-					})
-				})
-
-				Context("given a template that invoke wrong template func argument", func() {
-					BeforeEach(func() {
-						app.Template().Dir("testdata").Root("root").ParseFiles("index", "call_fn.tmpl")
-					})
-
-					Specify("an error to be return calling View", func() {
-						Expect(ctx.View("index", nil)).ToNot(BeNil())
-					})
-				})
-
-				Context("given a template that invoke panic template func", func() {
-					BeforeEach(func() {
-						app.Template().Dir("testdata").Root("root").ParseFiles("index", "panic.tmpl")
-					})
-
-					It("should panic when calling View", func() {
-						Expect(func() { ctx.View("index", nil) }).Should(Panic())
-					})
-				})
-			})
-		})
-	})
-})
