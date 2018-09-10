@@ -5,13 +5,82 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/moonrhythm/hime"
 )
+
+func TestContext(t *testing.T) {
+	t.Parallel()
+
+	t.Run("panic when create context without app", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		assert.Panics(t, func() { hime.NewContext(w, r) })
+	})
+
+	t.Run("basic data", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Equal(t, r, ctx.Request, "ctx.Request must be given request")
+		assert.Equal(t, w, ctx.ResponseWriter(), "ctx.ResponseWriter() must return given response writer")
+		assert.Equal(t, &hime.Param{Name: "id", Value: 11}, ctx.Param("id", 11), "ctx.Param must returns a Param")
+	})
+
+	t.Run("value", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.WithValue("data", "text")
+		assert.Equal(t, "text", ctx.Value("data"))
+	})
+
+	t.Run("override response writer", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		nw := httptest.NewRecorder()
+		ctx.WithResponseWriter(nw)
+		assert.Equal(t, nw, ctx.ResponseWriter())
+	})
+
+	t.Run("deadline", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		nctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		ctx.WithContext(nctx)
+
+		dt, ok := ctx.Deadline()
+		ndt, nok := nctx.Deadline()
+		assert.Equal(t, dt, ndt)
+		assert.Equal(t, ok, nok)
+		assert.Equal(t, ctx.Done(), nctx.Done())
+
+		cancel()
+		assert.Error(t, ctx.Err())
+		assert.Equal(t, ctx.Err(), nctx.Err())
+	})
+}
 
 var _ = Describe("Context", func() {
 	var (
@@ -22,63 +91,6 @@ var _ = Describe("Context", func() {
 	BeforeEach(func() {
 		w = httptest.NewRecorder()
 		r = httptest.NewRequest(http.MethodGet, "/", nil)
-	})
-
-	It("should panic when create context without App", func() {
-		Expect(func() { hime.NewContext(w, r) }).Should(Panic())
-	})
-
-	Describe("context data", func() {
-		var (
-			app *hime.App
-			ctx *hime.Context
-		)
-
-		BeforeEach(func() {
-			app = hime.New()
-			ctx = hime.NewAppContext(app, w, r)
-		})
-
-		Specify("an Request() is given request", func() {
-			Expect(ctx.Request).To(Equal(r))
-		})
-
-		Specify("an ResponseWriter() is given response writer", func() {
-			Expect(ctx.ResponseWriter()).To(Equal(w))
-		})
-
-		Specify("ctx.Param is short hand for hime.Param", func() {
-			Expect(ctx.Param("id", 11)).To(Equal(&hime.Param{Name: "id", Value: 11}))
-		})
-
-		It("should be able to retrieve value from context", func() {
-			ctx.WithValue("data", "text")
-			Expect(ctx.Value("data")).To(Equal("text"))
-		})
-
-		It("should be able override response writer", func() {
-			nw := httptest.NewRecorder()
-			ctx.WithResponseWriter(nw)
-
-			Expect(ctx.ResponseWriter()).To(BeIdenticalTo(nw))
-			Expect(ctx.ResponseWriter()).NotTo(BeIdenticalTo(w))
-		})
-
-		It("should able to get deadline", func() {
-			nctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-			ctx.WithContext(nctx)
-
-			t, ok := ctx.Deadline()
-			nt, nok := nctx.Deadline()
-			Expect(t).To(Equal(nt))
-			Expect(ok).To(Equal(nok))
-			Expect(ctx.Done()).To(Equal(nctx.Done()))
-
-			cancel()
-			Expect(ctx.Err()).ToNot(BeNil())
-			Expect(ctx.Err()).To(Equal(nctx.Err()))
-		})
 	})
 
 	Describe("context response", func() {
