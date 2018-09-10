@@ -283,6 +283,66 @@ func TestContext(t *testing.T) {
 		assert.Equal(t, w.Header().Get("Content-Type"), "text/plain; charset=utf-8")
 		assert.Equal(t, w.Body.String(), "some error\n")
 	})
+
+	t.Run("Redirect to external url", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Redirect("https://google.com"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "https://google.com")
+	})
+
+	t.Run("Redirect to internal url path", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Redirect("/signin"))
+		assert.Equal(t, w.Code, http.StatusFound)
+		assert.Equal(t, w.Header().Get("Location"), "/signin")
+	})
+
+	t.Run("Redirect with status code", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Status(http.StatusMovedPermanently).Redirect("/signin"))
+		assert.Equal(t, w.Code, http.StatusMovedPermanently)
+		assert.Equal(t, w.Header().Get("Location"), "/signin")
+	})
+
+	t.Run("Redirect with PRG", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Redirect("/signin"))
+		assert.Equal(t, w.Code, http.StatusSeeOther)
+		assert.Equal(t, w.Header().Get("Location"), "/signin")
+	})
+
+	t.Run("Redirect with PRG and status code", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Status(http.StatusPermanentRedirect).Redirect("/signin"))
+		assert.Equal(t, w.Code, http.StatusPermanentRedirect)
+		assert.Equal(t, w.Header().Get("Location"), "/signin")
+	})
 }
 
 var _ = Describe("Context", func() {
@@ -305,65 +365,6 @@ var _ = Describe("Context", func() {
 		BeforeEach(func() {
 			app = hime.New()
 			ctx = hime.NewAppContext(app, w, r)
-		})
-
-		Describe("testing Redirect", func() {
-			When("calling Redirect with an external url", func() {
-				BeforeEach(func() {
-					ctx.Redirect("https://google.com")
-				})
-
-				Specify("responsed status code to be 302", func() {
-					Expect(w.Code).To(Equal(302))
-				})
-
-				Specify("responsed location should be the redirect location", func() {
-					Expect(w.Header().Get("Location")).To(Equal("https://google.com"))
-				})
-			})
-
-			When("calling Redirect with an internal url path", func() {
-				BeforeEach(func() {
-					ctx.Redirect("/signin")
-				})
-
-				Specify("responsed status code to be 302", func() {
-					Expect(w.Code).To(Equal(302))
-				})
-
-				Specify("responsed location should be the redirect location", func() {
-					Expect(w.Header().Get("Location")).To(Equal("/signin"))
-				})
-			})
-
-			When("calling Redirect with 301 status code", func() {
-				BeforeEach(func() {
-					ctx.Status(301).Redirect("/signin")
-				})
-
-				Specify("responsed status code to be 301", func() {
-					Expect(w.Code).To(Equal(301))
-				})
-
-				Specify("responsed location should be the redirect location", func() {
-					Expect(w.Header().Get("Location")).To(Equal("/signin"))
-				})
-			})
-
-			When("calling Redirect with request POST method", func() {
-				BeforeEach(func() {
-					ctx.Request.Method = "POST"
-					ctx.Redirect("/signin")
-				})
-
-				Specify("responsed status code to be 303", func() {
-					Expect(w.Code).To(Equal(303))
-				})
-
-				Specify("responsed location should be the redirect location", func() {
-					Expect(w.Header().Get("Location")).To(Equal("/signin"))
-				})
-			})
 		})
 
 		Describe("testing RedirectTo", func() {
