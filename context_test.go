@@ -144,6 +144,17 @@ func TestContext(t *testing.T) {
 		ctx.DelHeader("Vary")
 		assert.Empty(t, w.Header().Get("Vary"))
 	})
+
+	t.Run("Status", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Status(401).StatusText())
+		assert.Equal(t, w.Code, 401)
+	})
 }
 
 var _ = Describe("Context", func() {
@@ -166,38 +177,6 @@ var _ = Describe("Context", func() {
 		BeforeEach(func() {
 			app = hime.New()
 			ctx = hime.NewAppContext(app, w, r)
-		})
-
-		Describe("testing Status", func() {
-			When("set status code to 200", func() {
-				BeforeEach(func() {
-					ctx.Status(200).StatusText()
-				})
-
-				It("should response with 200 status code", func() {
-					Expect(w.Code).To(Equal(200))
-				})
-			})
-
-			When("set status code to 400", func() {
-				BeforeEach(func() {
-					ctx.Status(400).StatusText()
-				})
-
-				It("should response with 400 status code", func() {
-					Expect(w.Code).To(Equal(400))
-				})
-			})
-
-			When("set status code to 500", func() {
-				BeforeEach(func() {
-					ctx.Status(500).StatusText()
-				})
-
-				It("should response with 500 status code", func() {
-					Expect(w.Code).To(Equal(500))
-				})
-			})
 		})
 
 		Describe("testing StatusText", func() {
