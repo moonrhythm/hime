@@ -5,13 +5,259 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/moonrhythm/hime"
 )
+
+func TestContext(t *testing.T) {
+	t.Parallel()
+
+	t.Run("panic when create context without app", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		assert.Panics(t, func() { hime.NewContext(w, r) })
+	})
+
+	t.Run("basic data", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Equal(t, ctx.Request, r, "ctx.Request must be given request")
+		assert.Equal(t, ctx.ResponseWriter(), w, "ctx.ResponseWriter() must return given response writer")
+		assert.Equal(t, ctx.Param("id", 11), &hime.Param{Name: "id", Value: 11}, "ctx.Param must returns a Param")
+	})
+
+	t.Run("Value", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.WithValue("data", "text")
+		assert.Equal(t, ctx.Value("data"), "text")
+	})
+
+	t.Run("WithResponseWriter", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		nw := httptest.NewRecorder()
+		ctx.WithResponseWriter(nw)
+		assert.Equal(t, ctx.ResponseWriter(), nw)
+	})
+
+	t.Run("Deadline", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		nctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		ctx.WithContext(nctx)
+
+		dt, ok := ctx.Deadline()
+		ndt, nok := nctx.Deadline()
+		assert.Equal(t, dt, ndt)
+		assert.Equal(t, ok, nok)
+		assert.Equal(t, ctx.Done(), nctx.Done())
+
+		cancel()
+		assert.Error(t, ctx.Err())
+		assert.Equal(t, ctx.Err(), nctx.Err())
+	})
+
+	t.Run("Handle", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		called := false
+		assert.NoError(t, ctx.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			called = true
+		})))
+
+		assert.True(t, called)
+	})
+
+	t.Run("AddHeader", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.AddHeader("Vary", "b")
+		assert.Equal(t, w.Header().Get("Vary"), "b")
+	})
+
+	t.Run("AddHeaderIfNotExists", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.AddHeaderIfNotExists("Vary", "b")
+		ctx.AddHeaderIfNotExists("Vary", "c")
+		assert.Len(t, w.Header()["Vary"], 1)
+		assert.Equal(t, w.Header().Get("Vary"), "b")
+	})
+
+	t.Run("SetHeader", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.SetHeader("Vary", "b")
+		ctx.SetHeader("Vary", "c")
+		assert.Len(t, w.Header()["Vary"], 1)
+		assert.Equal(t, w.Header().Get("Vary"), "c")
+	})
+
+	t.Run("DelHeader", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.SetHeader("Vary", "b")
+		ctx.DelHeader("Vary")
+		assert.Empty(t, w.Header().Get("Vary"))
+	})
+
+	t.Run("Status", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Status(401).StatusText())
+		assert.Equal(t, w.Code, 401)
+	})
+
+	t.Run("StatusText", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Status(http.StatusTeapot).StatusText())
+		assert.Equal(t, w.Code, http.StatusTeapot)
+		assert.Equal(t, w.Body.String(), http.StatusText(http.StatusTeapot))
+	})
+
+	t.Run("NoContent", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.NoContent())
+		assert.Equal(t, w.Code, http.StatusNoContent)
+		assert.Empty(t, w.Body.String())
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.NotFound())
+		assert.Equal(t, w.Code, http.StatusNotFound)
+		assert.Equal(t, w.Body.String(), "404 page not found\n")
+	})
+
+	t.Run("Bytes", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Bytes([]byte("hello hime")))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "application/octet-stream")
+		assert.Equal(t, w.Body.String(), "hello hime")
+	})
+
+	t.Run("File", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.File("testdata/file.txt"))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/plain; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "file content")
+	})
+
+	t.Run("JSON", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.JSON(map[string]interface{}{"abc": "afg", "bbb": 123}))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "application/json; charset=utf-8")
+		assert.JSONEq(t, w.Body.String(), `{"abc":"afg","bbb":123}`)
+	})
+
+	t.Run("HTML", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.HTML([]byte(`<h1>Hello</h1>`)))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
+		assert.Equal(t, w.Body.String(), `<h1>Hello</h1>`)
+	})
+
+	t.Run("String", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.String("hello, hime"))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/plain; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "hello, hime")
+	})
+}
 
 var _ = Describe("Context", func() {
 	var (
@@ -24,63 +270,6 @@ var _ = Describe("Context", func() {
 		r = httptest.NewRequest(http.MethodGet, "/", nil)
 	})
 
-	It("should panic when create context without App", func() {
-		Expect(func() { hime.NewContext(w, r) }).Should(Panic())
-	})
-
-	Describe("context data", func() {
-		var (
-			app *hime.App
-			ctx *hime.Context
-		)
-
-		BeforeEach(func() {
-			app = hime.New()
-			ctx = hime.NewAppContext(app, w, r)
-		})
-
-		Specify("an Request() is given request", func() {
-			Expect(ctx.Request).To(Equal(r))
-		})
-
-		Specify("an ResponseWriter() is given response writer", func() {
-			Expect(ctx.ResponseWriter()).To(Equal(w))
-		})
-
-		Specify("ctx.Param is short hand for hime.Param", func() {
-			Expect(ctx.Param("id", 11)).To(Equal(&hime.Param{Name: "id", Value: 11}))
-		})
-
-		It("should be able to retrieve value from context", func() {
-			ctx.WithValue("data", "text")
-			Expect(ctx.Value("data")).To(Equal("text"))
-		})
-
-		It("should be able override response writer", func() {
-			nw := httptest.NewRecorder()
-			ctx.WithResponseWriter(nw)
-
-			Expect(ctx.ResponseWriter()).To(BeIdenticalTo(nw))
-			Expect(ctx.ResponseWriter()).NotTo(BeIdenticalTo(w))
-		})
-
-		It("should able to get deadline", func() {
-			nctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-			ctx.WithContext(nctx)
-
-			t, ok := ctx.Deadline()
-			nt, nok := nctx.Deadline()
-			Expect(t).To(Equal(nt))
-			Expect(ok).To(Equal(nok))
-			Expect(ctx.Done()).To(Equal(nctx.Done()))
-
-			cancel()
-			Expect(ctx.Err()).ToNot(BeNil())
-			Expect(ctx.Err()).To(Equal(nctx.Err()))
-		})
-	})
-
 	Describe("context response", func() {
 		var (
 			app *hime.App
@@ -90,182 +279,6 @@ var _ = Describe("Context", func() {
 		BeforeEach(func() {
 			app = hime.New()
 			ctx = hime.NewAppContext(app, w, r)
-		})
-
-		Describe("testing Status", func() {
-			When("set status code to 200", func() {
-				BeforeEach(func() {
-					ctx.Status(200).StatusText()
-				})
-
-				It("should response with 200 status code", func() {
-					Expect(w.Code).To(Equal(200))
-				})
-			})
-
-			When("set status code to 400", func() {
-				BeforeEach(func() {
-					ctx.Status(400).StatusText()
-				})
-
-				It("should response with 400 status code", func() {
-					Expect(w.Code).To(Equal(400))
-				})
-			})
-
-			When("set status code to 500", func() {
-				BeforeEach(func() {
-					ctx.Status(500).StatusText()
-				})
-
-				It("should response with 500 status code", func() {
-					Expect(w.Code).To(Equal(500))
-				})
-			})
-		})
-
-		Describe("testing StatusText", func() {
-			When("response with status text", func() {
-				BeforeEach(func() {
-					ctx.Status(http.StatusTeapot).StatusText()
-				})
-
-				Specify("responsed body to be status text", func() {
-					Expect(w.Body.String()).To(Equal(http.StatusText(http.StatusTeapot)))
-				})
-			})
-		})
-
-		Describe("testing NotFound", func() {
-			When("calling NotFound", func() {
-				BeforeEach(func() {
-					ctx.NotFound()
-				})
-
-				Specify("responsed status code to be 404", func() {
-					Expect(w.Code).To(Equal(404))
-				})
-
-				Specify("responsed body to be not found", func() {
-					Expect(w.Body.String()).To(Equal("404 page not found\n"))
-				})
-			})
-		})
-
-		Describe("testing NoContent", func() {
-			When("calling NoContent", func() {
-				BeforeEach(func() {
-					ctx.NoContent()
-				})
-
-				Specify("responsed status code to be 204", func() {
-					Expect(w.Code).To(Equal(204))
-				})
-
-				Specify("responsed body to be empty", func() {
-					Expect(w.Body.String()).To(BeEmpty())
-				})
-			})
-		})
-
-		Describe("testing Bytes", func() {
-			When("calling Bytes with a data", func() {
-				BeforeEach(func() {
-					ctx.Bytes([]byte("hello hime"))
-				})
-
-				Specify("responsed status code to be 200", func() {
-					Expect(w.Code).To(Equal(200))
-				})
-
-				Specify("responsed content type to be application/octet-stream", func() {
-					Expect(w.Header().Get("Content-Type")).To(Equal("application/octet-stream"))
-				})
-
-				Specify("responsed body to be the response data", func() {
-					Expect(w.Body.String()).To(Equal("hello hime"))
-				})
-			})
-		})
-
-		Describe("testing File", func() {
-			When("calling File with a text file", func() {
-				BeforeEach(func() {
-					ctx.File("testdata/file.txt")
-				})
-
-				Specify("responsed status code to be 200", func() {
-					Expect(w.Code).To(Equal(200))
-				})
-
-				Specify("responsed content type to be text/plain", func() {
-					Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-				})
-
-				Specify("responsed body to be the file content", func() {
-					Expect(w.Body.String()).To(Equal("file content"))
-				})
-			})
-		})
-
-		Describe("testing JSON", func() {
-			When("calling JSON with a data", func() {
-				BeforeEach(func() {
-					ctx.JSON(map[string]interface{}{"abc": "afg", "bbb": 123})
-				})
-
-				Specify("responsed status code to be 200", func() {
-					Expect(w.Code).To(Equal(200))
-				})
-
-				Specify("responsed content type to be application/json", func() {
-					Expect(w.Header().Get("Content-Type")).To(Equal("application/json; charset=utf-8"))
-				})
-
-				Specify("responsed body to be the json data", func() {
-					Expect(w.Body.String()).To(MatchJSON(`{"abc":"afg","bbb":123}`))
-				})
-			})
-		})
-
-		Describe("testing HTML", func() {
-			When("calling HTML with a data", func() {
-				BeforeEach(func() {
-					ctx.HTML([]byte(`<h1>Hello</h1>`))
-				})
-
-				Specify("responsed status code to be 200", func() {
-					Expect(w.Code).To(Equal(200))
-				})
-
-				Specify("responsed content type to be text/html", func() {
-					Expect(w.Header().Get("Content-Type")).To(Equal("text/html; charset=utf-8"))
-				})
-
-				Specify("responsed body to be the html data", func() {
-					Expect(w.Body.String()).To(Equal(`<h1>Hello</h1>`))
-				})
-			})
-		})
-
-		Describe("testing String", func() {
-			When("calling String with a data", func() {
-				BeforeEach(func() {
-					ctx.String("hello, hime")
-				})
-
-				Specify("responsed status code to be 200", func() {
-					Expect(w.Code).To(Equal(200))
-				})
-
-				Specify("responsed content type to be text/plain", func() {
-					Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-				})
-
-				Specify("responsed body to be the text data", func() {
-					Expect(w.Body.String()).To(Equal("hello, hime"))
-				})
-			})
 		})
 
 		Describe("testing Error", func() {
@@ -733,47 +746,6 @@ var _ = Describe("Context", func() {
 						Expect(func() { ctx.View("index", nil) }).Should(Panic())
 					})
 				})
-			})
-		})
-
-		Describe("testing Handle", func() {
-			It("should invoke given handler when calling Handle", func() {
-				called := false
-				ctx.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					called = true
-				}))
-
-				Expect(called).To(BeTrue())
-			})
-		})
-
-		Describe("testing response", func() {
-			It("should add header when call AddHeader", func() {
-				ctx.AddHeader("Vary", "b")
-
-				Expect(w.Header().Get("Vary")).To(Equal("b"))
-			})
-
-			It("should not add duplicate header when call AddHeaderIfNotExists", func() {
-				ctx.AddHeaderIfNotExists("Vary", "b")
-				ctx.AddHeaderIfNotExists("Vary", "c")
-
-				Expect(w.Header()["Vary"]).To(HaveLen(1))
-				Expect(w.Header().Get("Vary")).To(Equal("b"))
-			})
-
-			It("should set header when call SetHeader", func() {
-				ctx.SetHeader("Vary", "b")
-				ctx.SetHeader("Vary", "c")
-
-				Expect(w.Header().Get("Vary")).To(Equal("c"))
-			})
-
-			It("should delete header when call DelHeader", func() {
-				ctx.SetHeader("Vary", "b")
-				ctx.DelHeader("Vary")
-
-				Expect(w.Header()["Vary"]).To(BeEmpty())
 			})
 		})
 	})

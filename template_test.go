@@ -28,11 +28,11 @@ list:
   k:
   - k1.tmpl`))
 
-		assert.Equal(t, "testdata/template", tp.dir)
-		assert.Equal(t, "l", tp.root)
+		assert.Equal(t, tp.dir, "testdata/template")
+		assert.Equal(t, tp.root, "l")
 		assert.NotNil(t, tp.minifier)
-		assert.Equal(t, "[[", tp.leftDelim)
-		assert.Equal(t, "]]", tp.rightDelim)
+		assert.Equal(t, tp.leftDelim, "[[")
+		assert.Equal(t, tp.rightDelim, "]]")
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -57,12 +57,12 @@ list:
   k:
   - k1.tmpl`))
 
-		assert.Equal(t, "testdata/template", tp.dir)
+		assert.Equal(t, tp.dir, "testdata/template")
 		assert.Empty(t, tp.root)
 		assert.NotNil(t, tp.minifier)
-		assert.Equal(t, "[[", tp.leftDelim)
-		assert.Equal(t, "]]", tp.rightDelim)
-		// assert.Equal(t, []string{"a.tmpl", "b.tmpl"}, tp.preload)
+		assert.Equal(t, tp.leftDelim, "[[")
+		assert.Equal(t, tp.rightDelim, "]]")
+		// assert.Equal(t, tp.preload, []string{"a.tmpl", "b.tmpl"})
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -78,11 +78,11 @@ list:
 		tp := New().Template()
 		tp.ParseConfigFile("testdata/template/config.yaml")
 
-		assert.Equal(t, "testdata/template", tp.dir)
-		assert.Equal(t, "l", tp.root)
+		assert.Equal(t, tp.dir, "testdata/template")
+		assert.Equal(t, tp.root, "l")
 		assert.NotNil(t, tp.minifier)
-		assert.Equal(t, "[[", tp.leftDelim)
-		assert.Equal(t, "]]", tp.rightDelim)
+		assert.Equal(t, tp.leftDelim, "[[")
+		assert.Equal(t, tp.rightDelim, "]]")
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -110,7 +110,7 @@ list:
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
 			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
-				assert.Equal(t, "Test Data b", b.String())
+				assert.Equal(t, b.String(), "Test Data b")
 			}
 		}
 	})
@@ -124,7 +124,7 @@ list:
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
 			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
-				assert.Equal(t, "Test Data b", b.String())
+				assert.Equal(t, b.String(), "Test Data b")
 			}
 		}
 	})
@@ -139,7 +139,7 @@ list:
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
 			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
-				assert.Equal(t, "b", b.String())
+				assert.Equal(t, b.String(), "b")
 			}
 		}
 	})
@@ -160,7 +160,7 @@ list:
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
 			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
-				assert.Equal(t, "Test Data component", b.String())
+				assert.Equal(t, b.String(), "Test Data component")
 			}
 		}
 	})
@@ -173,7 +173,7 @@ list:
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
 			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
-				assert.Equal(t, "Test Data hello, hime", b.String())
+				assert.Equal(t, b.String(), "Test Data hello, hime")
 			}
 		}
 	})
@@ -230,7 +230,7 @@ list:
 
 		b := bytes.Buffer{}
 		tp.list["t"].Execute(&b, nil)
-		assert.Equal(t, "<h1>Test</h1>", b.String())
+		assert.Equal(t, b.String(), "<h1>Test</h1>")
 	})
 
 	t.Run("Minify after parse", func(t *testing.T) {
@@ -240,7 +240,7 @@ list:
 
 		b := bytes.Buffer{}
 		tp.list["t"].Execute(&b, nil)
-		assert.Equal(t, "<h1>Test</h1>", b.String())
+		assert.Equal(t, b.String(), "<h1>Test</h1>")
 	})
 
 	t.Run("Minify execute error", func(t *testing.T) {
@@ -260,7 +260,7 @@ list:
 
 		b := bytes.Buffer{}
 		tp.list["t"].Execute(&b, nil)
-		assert.Equal(t, "abc", b.String())
+		assert.Equal(t, b.String(), "abc")
 	})
 
 	t.Run("Funcs", func(t *testing.T) {
@@ -270,7 +270,7 @@ list:
 
 		b := bytes.Buffer{}
 		tp.list["t"].Execute(&b, nil)
-		assert.Equal(t, "abc", b.String())
+		assert.Equal(t, b.String(), "abc")
 	})
 
 	t.Run("templateName", func(t *testing.T) {
@@ -279,7 +279,7 @@ list:
 
 		b := bytes.Buffer{}
 		tp.list["t"].Execute(&b, nil)
-		assert.Equal(t, "t", b.String())
+		assert.Equal(t, b.String(), "t")
 	})
 
 	t.Run("param", func(t *testing.T) {
@@ -290,7 +290,7 @@ list:
 
 		b := bytes.Buffer{}
 		tp.list["t"].Execute(&b, nil)
-		assert.Equal(t, `<a href="/p?id=1">go</a>`, b.String())
+		assert.Equal(t, b.String(), `<a href="/p?id=1">go</a>`)
 	})
 
 	t.Run("cloneFuncMaps", func(t *testing.T) {

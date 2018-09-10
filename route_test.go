@@ -14,7 +14,7 @@ func TestRoute(t *testing.T) {
 
 	t.Run("clone empty", func(t *testing.T) {
 		r := Routes{}
-		assert.Equal(t, Routes{}, cloneRoutes(r))
+		assert.Equal(t, cloneRoutes(r), Routes{})
 	})
 
 	t.Run("clone data", func(t *testing.T) {
@@ -24,10 +24,10 @@ func TestRoute(t *testing.T) {
 		}
 
 		p := cloneRoutes(r)
-		assert.Equal(t, r, p)
+		assert.Equal(t, p, r)
 
 		p["a"] = "/a"
-		assert.NotEqual(t, r, p)
+		assert.NotEqual(t, p, r)
 	})
 
 	t.Run("App", func(t *testing.T) {
@@ -44,8 +44,8 @@ func TestRoute(t *testing.T) {
 				"b": "/cd",
 			})
 
-			assert.Equal(t, "/b", app.Route("a"))
-			assert.Equal(t, "/cd", app.Route("b"))
+			assert.Equal(t, app.Route("a"), "/b")
+			assert.Equal(t, app.Route("b"), "/cd")
 		})
 	})
 
@@ -71,8 +71,8 @@ func TestRoute(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
 
 			app.Handler(Handler(func(ctx *Context) error {
-				assert.Equal(t, "/b", ctx.Route("a"))
-				assert.Equal(t, "/cd", ctx.Route("b"))
+				assert.Equal(t, ctx.Route("a"), "/b")
+				assert.Equal(t, ctx.Route("b"), "/cd")
 				return nil
 			})).ServeHTTP(w, r)
 		})

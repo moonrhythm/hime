@@ -16,39 +16,39 @@ func TestRequest(t *testing.T) {
 		ctx := Context{Request: r}
 
 		t.Run("TrimSpace", func(t *testing.T) {
-			assert.Equal(t, "1", ctx.FormValueTrimSpace("a"))
-			assert.Equal(t, "a b", ctx.FormValueTrimSpace("b"))
-			assert.Equal(t, "1,234", ctx.FormValueTrimSpace("c"))
+			assert.Equal(t, ctx.FormValueTrimSpace("a"), "1")
+			assert.Equal(t, ctx.FormValueTrimSpace("b"), "a b")
+			assert.Equal(t, ctx.FormValueTrimSpace("c"), "1,234")
 		})
 
 		t.Run("TrimSpaceComma", func(t *testing.T) {
-			assert.Equal(t, "1", ctx.FormValueTrimSpaceComma("a"))
-			assert.Equal(t, "a b", ctx.FormValueTrimSpaceComma("b"))
-			assert.Equal(t, "1234", ctx.FormValueTrimSpaceComma("c"))
+			assert.Equal(t, ctx.FormValueTrimSpaceComma("a"), "1")
+			assert.Equal(t, ctx.FormValueTrimSpaceComma("b"), "a b")
+			assert.Equal(t, ctx.FormValueTrimSpaceComma("c"), "1234")
 		})
 
 		t.Run("Int", func(t *testing.T) {
-			assert.Equal(t, 1, ctx.FormValueInt("a"))
-			assert.Equal(t, 0, ctx.FormValueInt("b"))
-			assert.Equal(t, 1234, ctx.FormValueInt("c"))
+			assert.Equal(t, ctx.FormValueInt("a"), 1)
+			assert.Equal(t, ctx.FormValueInt("b"), 0)
+			assert.Equal(t, ctx.FormValueInt("c"), 1234)
 		})
 
 		t.Run("Int64", func(t *testing.T) {
-			assert.Equal(t, int64(1), ctx.FormValueInt64("a"))
-			assert.Equal(t, int64(0), ctx.FormValueInt64("b"))
-			assert.Equal(t, int64(1234), ctx.FormValueInt64("c"))
+			assert.Equal(t, ctx.FormValueInt64("a"), int64(1))
+			assert.Equal(t, ctx.FormValueInt64("b"), int64(0))
+			assert.Equal(t, ctx.FormValueInt64("c"), int64(1234))
 		})
 
 		t.Run("Float32", func(t *testing.T) {
-			assert.Equal(t, float32(1), ctx.FormValueFloat32("a"))
-			assert.Equal(t, float32(0), ctx.FormValueFloat32("b"))
-			assert.Equal(t, float32(1234), ctx.FormValueFloat32("c"))
+			assert.Equal(t, ctx.FormValueFloat32("a"), float32(1))
+			assert.Equal(t, ctx.FormValueFloat32("b"), float32(0))
+			assert.Equal(t, ctx.FormValueFloat32("c"), float32(1234))
 		})
 
 		t.Run("Float64", func(t *testing.T) {
-			assert.Equal(t, float64(1), ctx.FormValueFloat64("a"))
-			assert.Equal(t, float64(0), ctx.FormValueFloat64("b"))
-			assert.Equal(t, float64(1234), ctx.FormValueFloat64("c"))
+			assert.Equal(t, ctx.FormValueFloat64("a"), float64(1))
+			assert.Equal(t, ctx.FormValueFloat64("b"), float64(0))
+			assert.Equal(t, ctx.FormValueFloat64("c"), float64(1234))
 		})
 	})
 
@@ -58,39 +58,39 @@ func TestRequest(t *testing.T) {
 		ctx := Context{Request: r}
 
 		t.Run("TrimSpace", func(t *testing.T) {
-			assert.Equal(t, "1", ctx.PostFormValueTrimSpace("a"))
-			assert.Equal(t, "a b", ctx.PostFormValueTrimSpace("b"))
-			assert.Equal(t, "1,234", ctx.PostFormValueTrimSpace("c"))
+			assert.Equal(t, ctx.PostFormValueTrimSpace("a"), "1")
+			assert.Equal(t, ctx.PostFormValueTrimSpace("b"), "a b")
+			assert.Equal(t, ctx.PostFormValueTrimSpace("c"), "1,234")
 		})
 
 		t.Run("TrimSpaceComma", func(t *testing.T) {
-			assert.Equal(t, "1", ctx.PostFormValueTrimSpaceComma("a"))
-			assert.Equal(t, "a b", ctx.PostFormValueTrimSpaceComma("b"))
-			assert.Equal(t, "1234", ctx.PostFormValueTrimSpaceComma("c"))
+			assert.Equal(t, ctx.PostFormValueTrimSpaceComma("a"), "1")
+			assert.Equal(t, ctx.PostFormValueTrimSpaceComma("b"), "a b")
+			assert.Equal(t, ctx.PostFormValueTrimSpaceComma("c"), "1234")
 		})
 
 		t.Run("Int", func(t *testing.T) {
-			assert.Equal(t, 1, ctx.PostFormValueInt("a"))
-			assert.Equal(t, 0, ctx.PostFormValueInt("b"))
-			assert.Equal(t, 1234, ctx.PostFormValueInt("c"))
+			assert.Equal(t, ctx.PostFormValueInt("a"), 1)
+			assert.Equal(t, ctx.PostFormValueInt("b"), 0)
+			assert.Equal(t, ctx.PostFormValueInt("c"), 1234)
 		})
 
 		t.Run("Int64", func(t *testing.T) {
-			assert.Equal(t, int64(1), ctx.PostFormValueInt64("a"))
-			assert.Equal(t, int64(0), ctx.PostFormValueInt64("b"))
-			assert.Equal(t, int64(1234), ctx.PostFormValueInt64("c"))
+			assert.Equal(t, ctx.PostFormValueInt64("a"), int64(1))
+			assert.Equal(t, ctx.PostFormValueInt64("b"), int64(0))
+			assert.Equal(t, ctx.PostFormValueInt64("c"), int64(1234))
 		})
 
 		t.Run("Float32", func(t *testing.T) {
-			assert.Equal(t, float32(1), ctx.PostFormValueFloat32("a"))
-			assert.Equal(t, float32(0), ctx.PostFormValueFloat32("b"))
-			assert.Equal(t, float32(1234), ctx.PostFormValueFloat32("c"))
+			assert.Equal(t, ctx.PostFormValueFloat32("a"), float32(1))
+			assert.Equal(t, ctx.PostFormValueFloat32("b"), float32(0))
+			assert.Equal(t, ctx.PostFormValueFloat32("c"), float32(1234))
 		})
 
 		t.Run("Float64", func(t *testing.T) {
-			assert.Equal(t, float64(1), ctx.PostFormValueFloat64("a"))
-			assert.Equal(t, float64(0), ctx.PostFormValueFloat64("b"))
-			assert.Equal(t, float64(1234), ctx.PostFormValueFloat64("c"))
+			assert.Equal(t, ctx.PostFormValueFloat64("a"), float64(1))
+			assert.Equal(t, ctx.PostFormValueFloat64("b"), float64(0))
+			assert.Equal(t, ctx.PostFormValueFloat64("c"), float64(1234))
 		})
 	})
 
@@ -114,7 +114,7 @@ func TestRequest(t *testing.T) {
 
 			f, h, err = ctx.FormFileNotEmpty("f2")
 			assert.Error(t, err)
-			assert.Equal(t, http.ErrMissingFile, err)
+			assert.Equal(t, err, http.ErrMissingFile)
 			assert.Empty(t, f)
 			assert.Empty(t, h)
 		})
@@ -137,7 +137,7 @@ func TestRequest(t *testing.T) {
 
 			h, err = ctx.FormFileHeaderNotEmpty("f2")
 			assert.Error(t, err)
-			assert.Equal(t, http.ErrMissingFile, err)
+			assert.Equal(t, err, http.ErrMissingFile)
 			assert.Empty(t, h)
 		})
 	})

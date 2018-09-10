@@ -50,7 +50,7 @@ func TestPanicInView(t *testing.T) {
 
 		resp, err := http.Get(ts.URL)
 		assert.NoError(t, err)
-		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
 	})
 
 	t.Run("MinifyEnabled", func(t *testing.T) {
@@ -71,6 +71,6 @@ func TestPanicInView(t *testing.T) {
 
 		resp, err := http.Get(ts.URL)
 		assert.NoError(t, err)
-		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
 	})
 }

@@ -32,13 +32,13 @@ func TestApp(t *testing.T) {
 		assert.Nil(t, app.gs)
 		gs := app.GracefulShutdown()
 		assert.NotNil(t, app.gs)
-		assert.Equal(t, app.gs, gs)
+		assert.Equal(t, gs, app.gs)
 
 		gs.Timeout(10 * time.Second)
-		assert.Equal(t, 10*time.Second, gs.timeout)
+		assert.Equal(t, gs.timeout, 10*time.Second)
 
 		gs.Wait(5 * time.Second)
-		assert.Equal(t, 5*time.Second, gs.wait)
+		assert.Equal(t, gs.wait, 5*time.Second)
 
 		gs.Notify(func() {})
 		gs.Notify(func() {})
@@ -49,7 +49,7 @@ func TestApp(t *testing.T) {
 	t.Run("Address", func(t *testing.T) {
 		app := New()
 		app.Address(":1234")
-		assert.Equal(t, ":1234", app.srv.Addr)
+		assert.Equal(t, app.srv.Addr, ":1234")
 	})
 
 	t.Run("Clone", func(t *testing.T) {
@@ -77,8 +77,8 @@ func TestApp(t *testing.T) {
 
 		assert.NotEqual(t, app, app2)
 		assert.NotEqual(t, app.routes, app2.routes)
-		assert.Equal(t, "z", app.Global("q"))
-		assert.Equal(t, "p", app2.Global("q"))
+		assert.Equal(t, app.Global("q"), "z")
+		assert.Equal(t, app2.Global("q"), "p")
 		assert.NotEqual(t, app.gs, app2.gs)
 		assert.NotNil(t, app2.srv.TLSConfig)
 	})

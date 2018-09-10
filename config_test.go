@@ -16,13 +16,13 @@ func TestConfig(t *testing.T) {
 
 			// globals
 			assert.Equal(t, mapLen(&app.globals), 1)
-			assert.Equal(t, "test", app.Global("data1"))
+			assert.Equal(t, app.Global("data1"), "test")
 			assert.Nil(t, app.Global("invalid"))
 
 			// routes
 			assert.Len(t, app.routes, 2)
-			assert.Equal(t, "/", app.Route("index"))
-			assert.Equal(t, "/about", app.Route("about"))
+			assert.Equal(t, app.Route("index"), "/")
+			assert.Equal(t, app.Route("about"), "/about")
 
 			// templates
 			assert.Len(t, app.template, 2)
@@ -30,17 +30,17 @@ func TestConfig(t *testing.T) {
 			assert.Contains(t, app.template, "main2")
 
 			// server
-			assert.Equal(t, ":8080", app.srv.Addr)
-			assert.Equal(t, 10*time.Second, app.srv.ReadTimeout)
-			assert.Equal(t, 5*time.Second, app.srv.ReadHeaderTimeout)
-			assert.Equal(t, 6*time.Second, app.srv.WriteTimeout)
-			assert.Equal(t, 30*time.Second, app.srv.IdleTimeout)
+			assert.Equal(t, app.srv.Addr, ":8080")
+			assert.Equal(t, app.srv.ReadTimeout, 10*time.Second)
+			assert.Equal(t, app.srv.ReadHeaderTimeout, 5*time.Second)
+			assert.Equal(t, app.srv.WriteTimeout, 6*time.Second)
+			assert.Equal(t, app.srv.IdleTimeout, 30*time.Second)
 			assert.Len(t, app.srv.TLSConfig.Certificates, 1)
 
 			// graceful
 			assert.NotNil(t, app.gs)
-			assert.Equal(t, time.Minute, app.gs.timeout)
-			assert.Equal(t, 5*time.Second, app.gs.wait)
+			assert.Equal(t, app.gs.timeout, time.Minute)
+			assert.Equal(t, app.gs.wait, 5*time.Second)
 		})
 	})
 
