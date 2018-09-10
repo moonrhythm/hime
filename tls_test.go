@@ -26,7 +26,7 @@ func TestParseTLSVersion(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(fmt.Sprintf("parse %s", tC.in), func(t *testing.T) {
-			assert.Equal(t, tC.out, parseTLSVersion(tC.in))
+			assert.Equal(t, parseTLSVersion(tC.in), tC.out)
 		})
 	}
 }

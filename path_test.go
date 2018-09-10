@@ -27,7 +27,7 @@ func TestBuildPath(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, c.Output, buildPath(c.Input))
+		assert.Equal(t, buildPath(c.Input), c.Output)
 	}
 }
 
@@ -53,7 +53,7 @@ func TestBuildPathParams(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, c.Output, buildPath(c.Base, c.Params...))
+		assert.Equal(t, buildPath(c.Base, c.Params...), c.Output)
 	}
 }
 
@@ -79,6 +79,6 @@ func TestSafeRedirectPath(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, c.Output, SafeRedirectPath(c.Input))
+		assert.Equal(t, SafeRedirectPath(c.Input), c.Output)
 	}
 }

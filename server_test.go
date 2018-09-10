@@ -16,5 +16,5 @@ func TestHTTPSRedirect(t *testing.T) {
 	r := httptest.NewRequest("GET", "/test", nil)
 	r.Host = "localhost"
 	srv.Handler.ServeHTTP(w, r)
-	assert.Equal(t, "https://localhost/test", w.Header().Get("Location"))
+	assert.Equal(t, w.Header().Get("Location"), "https://localhost/test")
 }

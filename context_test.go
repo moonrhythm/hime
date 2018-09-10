@@ -31,12 +31,12 @@ func TestContext(t *testing.T) {
 		app := hime.New()
 		ctx := hime.NewAppContext(app, w, r)
 
-		assert.Equal(t, r, ctx.Request, "ctx.Request must be given request")
-		assert.Equal(t, w, ctx.ResponseWriter(), "ctx.ResponseWriter() must return given response writer")
-		assert.Equal(t, &hime.Param{Name: "id", Value: 11}, ctx.Param("id", 11), "ctx.Param must returns a Param")
+		assert.Equal(t, ctx.Request, r, "ctx.Request must be given request")
+		assert.Equal(t, ctx.ResponseWriter(), w, "ctx.ResponseWriter() must return given response writer")
+		assert.Equal(t, ctx.Param("id", 11), &hime.Param{Name: "id", Value: 11}, "ctx.Param must returns a Param")
 	})
 
-	t.Run("value", func(t *testing.T) {
+	t.Run("Value", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
 
@@ -44,10 +44,10 @@ func TestContext(t *testing.T) {
 		ctx := hime.NewAppContext(app, w, r)
 
 		ctx.WithValue("data", "text")
-		assert.Equal(t, "text", ctx.Value("data"))
+		assert.Equal(t, ctx.Value("data"), "text")
 	})
 
-	t.Run("override response writer", func(t *testing.T) {
+	t.Run("WithResponseWriter", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
 
@@ -56,10 +56,10 @@ func TestContext(t *testing.T) {
 
 		nw := httptest.NewRecorder()
 		ctx.WithResponseWriter(nw)
-		assert.Equal(t, nw, ctx.ResponseWriter())
+		assert.Equal(t, ctx.ResponseWriter(), nw)
 	})
 
-	t.Run("deadline", func(t *testing.T) {
+	t.Run("Deadline", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
 
@@ -79,6 +79,70 @@ func TestContext(t *testing.T) {
 		cancel()
 		assert.Error(t, ctx.Err())
 		assert.Equal(t, ctx.Err(), nctx.Err())
+	})
+
+	t.Run("Handle", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		called := false
+		ctx.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			called = true
+		}))
+
+		assert.True(t, called)
+	})
+
+	t.Run("AddHeader", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.AddHeader("Vary", "b")
+		assert.Equal(t, w.Header().Get("Vary"), "b")
+	})
+
+	t.Run("AddHeaderIfNotExists", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.AddHeaderIfNotExists("Vary", "b")
+		ctx.AddHeaderIfNotExists("Vary", "c")
+		assert.Len(t, w.Header()["Vary"], 1)
+		assert.Equal(t, w.Header().Get("Vary"), "b")
+	})
+
+	t.Run("SetHeader", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.SetHeader("Vary", "b")
+		ctx.SetHeader("Vary", "c")
+		assert.Len(t, w.Header()["Vary"], 1)
+		assert.Equal(t, w.Header().Get("Vary"), "c")
+	})
+
+	t.Run("DelHeader", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		ctx.SetHeader("Vary", "b")
+		ctx.DelHeader("Vary")
+		assert.Empty(t, w.Header().Get("Vary"))
 	})
 }
 
@@ -745,47 +809,6 @@ var _ = Describe("Context", func() {
 						Expect(func() { ctx.View("index", nil) }).Should(Panic())
 					})
 				})
-			})
-		})
-
-		Describe("testing Handle", func() {
-			It("should invoke given handler when calling Handle", func() {
-				called := false
-				ctx.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					called = true
-				}))
-
-				Expect(called).To(BeTrue())
-			})
-		})
-
-		Describe("testing response", func() {
-			It("should add header when call AddHeader", func() {
-				ctx.AddHeader("Vary", "b")
-
-				Expect(w.Header().Get("Vary")).To(Equal("b"))
-			})
-
-			It("should not add duplicate header when call AddHeaderIfNotExists", func() {
-				ctx.AddHeaderIfNotExists("Vary", "b")
-				ctx.AddHeaderIfNotExists("Vary", "c")
-
-				Expect(w.Header()["Vary"]).To(HaveLen(1))
-				Expect(w.Header().Get("Vary")).To(Equal("b"))
-			})
-
-			It("should set header when call SetHeader", func() {
-				ctx.SetHeader("Vary", "b")
-				ctx.SetHeader("Vary", "c")
-
-				Expect(w.Header().Get("Vary")).To(Equal("c"))
-			})
-
-			It("should delete header when call DelHeader", func() {
-				ctx.SetHeader("Vary", "b")
-				ctx.DelHeader("Vary")
-
-				Expect(w.Header()["Vary"]).To(BeEmpty())
 			})
 		})
 	})

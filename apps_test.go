@@ -20,7 +20,7 @@ func TestApps(t *testing.T) {
 			GracefulShutdown: &gs,
 		})
 
-		assert.Equal(t, &gs, apps.gs)
+		assert.Equal(t, apps.gs, &gs)
 	})
 
 	t.Run("ParseConfig YAML", func(t *testing.T) {
@@ -93,7 +93,7 @@ gracefulShutdown:
 		http.Get("http://localhost:9092")
 
 		apps.Shutdown(context.Background())
-		assert.Equal(t, 2, called)
+		assert.Equal(t, called, 2)
 	})
 
 	t.Run("ListenAndServe graceful shutdown", func(t *testing.T) {

@@ -22,8 +22,8 @@ func TestGlobal(t *testing.T) {
 				"key2": "value2",
 			})
 
-			assert.Equal(t, "value1", app.Global("key1"))
-			assert.Equal(t, "value2", app.Global("key2"))
+			assert.Equal(t, app.Global("key1"), "value1")
+			assert.Equal(t, app.Global("key2"), "value2")
 			assert.Nil(t, app.Global("key3"))
 		})
 	})
@@ -52,8 +52,8 @@ func TestGlobal(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
 
 			app.Handler(Handler(func(ctx *Context) error {
-				assert.Equal(t, "value1", ctx.Global("key1"))
-				assert.Equal(t, "value2", ctx.Global("key2"))
+				assert.Equal(t, ctx.Global("key1"), "value1")
+				assert.Equal(t, ctx.Global("key2"), "value2")
 				assert.Nil(t, ctx.Global("key3"))
 				return nil
 			})).ServeHTTP(w, r)
