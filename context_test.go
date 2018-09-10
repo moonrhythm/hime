@@ -257,6 +257,32 @@ func TestContext(t *testing.T) {
 		assert.Equal(t, w.Header().Get("Content-Type"), "text/plain; charset=utf-8")
 		assert.Equal(t, w.Body.String(), "hello, hime")
 	})
+
+	t.Run("Error", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Error("some error"))
+		assert.Equal(t, w.Code, http.StatusInternalServerError)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/plain; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "some error\n")
+	})
+
+	t.Run("Error with status", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Status(http.StatusNotFound).Error("some error"))
+		assert.Equal(t, w.Code, http.StatusNotFound)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/plain; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "some error\n")
+	})
 }
 
 var _ = Describe("Context", func() {
@@ -279,44 +305,6 @@ var _ = Describe("Context", func() {
 		BeforeEach(func() {
 			app = hime.New()
 			ctx = hime.NewAppContext(app, w, r)
-		})
-
-		Describe("testing Error", func() {
-			When("calling Error with an error", func() {
-				BeforeEach(func() {
-					ctx.Error("some error")
-				})
-
-				Specify("responsed status code to be 500", func() {
-					Expect(w.Code).To(Equal(500))
-				})
-
-				Specify("responsed content type to be text/plain", func() {
-					Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-				})
-
-				Specify("responsed body to be the error", func() {
-					Expect(w.Body.String()).To(Equal("some error\n"))
-				})
-			})
-
-			When("calling Error with 404 status code", func() {
-				BeforeEach(func() {
-					ctx.Status(http.StatusNotFound).Error("some error")
-				})
-
-				Specify("responsed status code to be 404", func() {
-					Expect(w.Code).To(Equal(404))
-				})
-
-				Specify("responsed content type to be text/plain", func() {
-					Expect(w.Header().Get("Content-Type")).To(Equal("text/plain; charset=utf-8"))
-				})
-
-				Specify("responsed body to be the error", func() {
-					Expect(w.Body.String()).To(Equal("some error\n"))
-				})
-			})
 		})
 
 		Describe("testing Redirect", func() {
