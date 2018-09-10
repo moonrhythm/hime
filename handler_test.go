@@ -1,8 +1,10 @@
 package hime
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,8 +14,6 @@ func TestHandler(t *testing.T) {
 	t.Parallel()
 
 	t.Run("panic on error", func(t *testing.T) {
-		t.Parallel()
-
 		app := New().
 			Handler(Handler(func(ctx *Context) error {
 				return fmt.Errorf("must panic")
@@ -25,8 +25,6 @@ func TestHandler(t *testing.T) {
 	})
 
 	t.Run("net/http", func(t *testing.T) {
-		t.Parallel()
-
 		app := New().
 			Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte("ok"))
@@ -36,8 +34,6 @@ func TestHandler(t *testing.T) {
 	})
 
 	t.Run("hime", func(t *testing.T) {
-		t.Parallel()
-
 		app := New().
 			Handler(Handler(func(ctx *Context) error {
 				return ctx.String("ok")
@@ -47,9 +43,25 @@ func TestHandler(t *testing.T) {
 	})
 
 	t.Run("default handler", func(t *testing.T) {
-		t.Parallel()
-
 		app := New()
 		assert.HTTPBodyContains(t, app.ServeHTTP, "GET", "/", nil, "404")
+	})
+
+	t.Run("cancel context", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		app := New().
+			Handler(Handler(func(ctx *Context) error {
+				return ctx.Err()
+			}))
+
+		r := httptest.NewRequest("GET", "/", nil)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		cancel()
+
+		assert.NotPanics(t, func() {
+			app.ServeHTTP(w, r)
+		})
 	})
 }
