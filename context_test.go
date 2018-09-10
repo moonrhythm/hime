@@ -431,6 +431,30 @@ func TestContext(t *testing.T) {
 
 		assert.Panics(t, func() { ctx.RedirectTo("invalid") })
 	})
+
+	t.Run("RedirectToGet from get", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/signin", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectToGet())
+		assert.Equal(t, w.Code, http.StatusSeeOther) // TODO: check RFC
+		assert.Equal(t, w.Header().Get("Location"), r.RequestURI)
+	})
+
+	t.Run("RedirectToGet from post", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/signin", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectToGet())
+		assert.Equal(t, w.Code, http.StatusSeeOther)
+		assert.Equal(t, w.Header().Get("Location"), r.RequestURI)
+	})
 }
 
 var _ = Describe("Context", func() {
@@ -453,22 +477,6 @@ var _ = Describe("Context", func() {
 		BeforeEach(func() {
 			app = hime.New()
 			ctx = hime.NewAppContext(app, w, r)
-		})
-
-		Describe("testing RedirectToGet", func() {
-			When("calling RedirectToGet", func() {
-				BeforeEach(func() {
-					ctx.RedirectToGet()
-				})
-
-				Specify("responsed status code to be 303", func() {
-					Expect(w.Code).To(Equal(303))
-				})
-
-				Specify("responsed location should be the request uri", func() {
-					Expect(w.Header().Get("Location")).To(Equal(r.RequestURI))
-				})
-			})
 		})
 
 		Describe("testing RedirectBack", func() {
