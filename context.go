@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -248,10 +249,10 @@ func (ctx *Context) JSON(data interface{}) error {
 }
 
 // HTML writes html to response writer
-func (ctx *Context) HTML(data []byte) error {
+func (ctx *Context) HTML(data string) error {
 	ctx.setContentType("text/html; charset=utf-8")
 	ctx.writeHeader()
-	_, err := io.Copy(ctx.w, bytes.NewReader(data))
+	_, err := io.Copy(ctx.w, strings.NewReader(data))
 	return filterRenderError(err)
 }
 
