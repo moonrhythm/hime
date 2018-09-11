@@ -91,7 +91,7 @@ type Template struct {
 	parsed     bool
 }
 
-func (tp *Template) ensure() {
+func (tp *Template) init() {
 	if tp.parent == nil {
 		tp.parent = template.New("").
 			Delims(tp.leftDelim, tp.rightDelim).
@@ -204,8 +204,11 @@ func (tp *Template) Preload(filename ...string) *Template {
 		return tp
 	}
 
-	tp.ensure()
-	tp.parent = template.Must(tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
+	tp.init()
+	_, err := tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...)
+	if err != nil {
+		panicf("preload template; %v", err)
+	}
 
 	return tp
 }
@@ -215,7 +218,7 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		panic(newErrTemplateDuplicate(name))
 	}
 
-	tp.ensure()
+	tp.init()
 
 	t := template.Must(tp.parent.Clone()).
 		Funcs(template.FuncMap{
