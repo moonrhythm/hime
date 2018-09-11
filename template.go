@@ -205,10 +205,7 @@ func (tp *Template) Preload(filename ...string) *Template {
 	}
 
 	tp.init()
-	_, err := tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...)
-	if err != nil {
-		panicf("preload template; %v", err)
-	}
+	template.Must(tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
 
 	return tp
 }
