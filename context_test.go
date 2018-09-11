@@ -42,8 +42,21 @@ func TestContext(t *testing.T) {
 		app := hime.New()
 		ctx := hime.NewAppContext(app, w, r)
 
-		ctx.WithValue("data", "text")
+		ctx = ctx.WithValue("data", "text")
 		assert.Equal(t, ctx.Value("data"), "text")
+	})
+
+	t.Run("WithRequest", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		nr := httptest.NewRequest(http.MethodPost, "/path1", nil)
+		nctx := ctx.WithRequest(nr)
+		assert.Equal(t, nctx.Request, nr)
+		assert.Equal(t, ctx.Request, r)
 	})
 
 	t.Run("WithResponseWriter", func(t *testing.T) {
@@ -54,8 +67,9 @@ func TestContext(t *testing.T) {
 		ctx := hime.NewAppContext(app, w, r)
 
 		nw := httptest.NewRecorder()
-		ctx.WithResponseWriter(nw)
-		assert.Equal(t, ctx.ResponseWriter(), nw)
+		nctx := ctx.WithResponseWriter(nw)
+		assert.Equal(t, nctx.ResponseWriter(), nw)
+		assert.Equal(t, ctx.ResponseWriter(), w)
 	})
 
 	t.Run("Deadline", func(t *testing.T) {
@@ -67,7 +81,7 @@ func TestContext(t *testing.T) {
 
 		nctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		ctx.WithContext(nctx)
+		ctx = ctx.WithContext(nctx)
 
 		dt, ok := ctx.Deadline()
 		ndt, nok := nctx.Deadline()
