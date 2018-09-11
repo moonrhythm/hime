@@ -251,7 +251,7 @@ func TestContext(t *testing.T) {
 		app := hime.New()
 		ctx := hime.NewAppContext(app, w, r)
 
-		assert.NoError(t, ctx.HTML([]byte(`<h1>Hello</h1>`)))
+		assert.NoError(t, ctx.HTML(`<h1>Hello</h1>`))
 		assert.Equal(t, w.Code, http.StatusOK)
 		assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
 		assert.Equal(t, w.Body.String(), `<h1>Hello</h1>`)
