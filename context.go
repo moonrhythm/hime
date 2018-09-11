@@ -60,19 +60,26 @@ func (ctx *Context) Value(key interface{}) interface{} {
 	return ctx.Request.Context().Value(key)
 }
 
-// WithContext sets r to r.WithContext with given context
-func (ctx *Context) WithContext(nctx context.Context) {
-	ctx.Request = ctx.Request.WithContext(nctx)
+// WithRequest returns new context with given request
+func (ctx Context) WithRequest(r *http.Request) *Context {
+	ctx.Request = r
+	return &ctx
 }
 
-// WithResponseWriter overrides response writer
-func (ctx *Context) WithResponseWriter(w http.ResponseWriter) {
+// WithResponseWriter returns new context with given response writer
+func (ctx Context) WithResponseWriter(w http.ResponseWriter) *Context {
 	ctx.w = w
+	return &ctx
+}
+
+// WithContext returns new context with new request with given context
+func (ctx *Context) WithContext(nctx context.Context) *Context {
+	return ctx.WithRequest(ctx.Request.WithContext(nctx))
 }
 
 // WithValue calls WithContext with value context
-func (ctx *Context) WithValue(key interface{}, val interface{}) {
-	ctx.WithContext(context.WithValue(ctx.Context(), key, val))
+func (ctx *Context) WithValue(key interface{}, val interface{}) *Context {
+	return ctx.WithContext(context.WithValue(ctx.Context(), key, val))
 }
 
 // Status sets response status code
