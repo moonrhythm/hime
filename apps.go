@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/moonrhythm/yaml"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v2"
 )
 
 // Apps is the collection of App to start together

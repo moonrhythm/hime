@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	"github.com/moonrhythm/yaml"
 )
 
 // AppConfig is hime app's config
