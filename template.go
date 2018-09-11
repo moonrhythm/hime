@@ -88,9 +88,10 @@ type Template struct {
 	funcs      []template.FuncMap
 	components map[string]*template.Template
 	minifier   *minify.M
+	parsed     bool
 }
 
-func (tp *Template) ensure() {
+func (tp *Template) init() {
 	if tp.parent == nil {
 		tp.parent = template.New("").
 			Delims(tp.leftDelim, tp.rightDelim).
@@ -196,12 +197,15 @@ func (tp *Template) Func(name string, f interface{}) *Template {
 
 // Preload loads given templates before every templates
 func (tp *Template) Preload(filename ...string) *Template {
+	if tp.parsed {
+		panicf("preload must call before parse")
+	}
 	if len(filename) == 0 {
 		return tp
 	}
 
-	tp.ensure()
-	tp.parent = template.Must(tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
+	tp.init()
+	template.Must(tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
 
 	return tp
 }
@@ -211,7 +215,7 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		panic(newErrTemplateDuplicate(name))
 	}
 
-	tp.ensure()
+	tp.init()
 
 	t := template.Must(tp.parent.Clone()).
 		Funcs(template.FuncMap{
@@ -233,6 +237,7 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		m:        tp.minifier,
 	}
 	tp.localList[name] = tp.list[name]
+	tp.parsed = true
 }
 
 // Parse parses template from text

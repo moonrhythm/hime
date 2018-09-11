@@ -1,7 +1,6 @@
 package hime
 
 import (
-	"fmt"
 	"io/ioutil"
 	"time"
 
@@ -125,8 +124,4 @@ func (app *App) ParseConfigFile(filename string) *App {
 		panicf("can not read config from file; %v", err)
 	}
 	return app.ParseConfig(data)
-}
-
-func panicf(format string, a ...interface{}) {
-	panic(fmt.Sprintf("hime: "+format, a...))
 }

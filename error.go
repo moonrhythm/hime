@@ -48,3 +48,7 @@ func (err *ErrTemplateDuplicate) Error() string {
 func newErrTemplateDuplicate(name string) error {
 	return &ErrTemplateDuplicate{name}
 }
+
+func panicf(format string, a ...interface{}) {
+	panic(fmt.Sprintf("hime: "+format, a...))
+}
