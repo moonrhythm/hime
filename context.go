@@ -215,7 +215,10 @@ func (ctx *Context) View(name string, data interface{}) error {
 		return err
 	}
 
-	return ctx.HTML(buf.Bytes())
+	ctx.setContentType("text/html; charset=utf-8")
+	ctx.writeHeader()
+	_, err = io.Copy(ctx.w, buf)
+	return filterRenderError(err)
 }
 
 func (ctx *Context) setContentType(value string) {
