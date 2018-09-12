@@ -452,7 +452,7 @@ func TestContext(t *testing.T) {
 		ctx := hime.NewAppContext(app, w, r)
 
 		assert.NoError(t, ctx.RedirectToGet())
-		assert.Equal(t, w.Code, http.StatusSeeOther) // TODO: check RFC
+		assert.Equal(t, w.Code, http.StatusFound)
 		assert.Equal(t, w.Header().Get("Location"), r.RequestURI)
 	})
 
@@ -588,7 +588,7 @@ func TestContext(t *testing.T) {
 		ctx := hime.NewAppContext(app, w, r)
 
 		assert.NoError(t, ctx.RedirectBackToGet())
-		assert.Equal(t, w.Code, http.StatusSeeOther) // TODO: check RFC
+		assert.Equal(t, w.Code, http.StatusFound)
 		assert.Equal(t, w.Header().Get("Location"), "/path1")
 	})
 
@@ -601,7 +601,7 @@ func TestContext(t *testing.T) {
 		ctx := hime.NewAppContext(app, w, r)
 
 		assert.NoError(t, ctx.RedirectBackToGet())
-		assert.Equal(t, w.Code, http.StatusSeeOther) // TODO: check RFC
+		assert.Equal(t, w.Code, http.StatusFound)
 		assert.Equal(t, w.Header().Get("Location"), "http://localhost/path2")
 	})
 

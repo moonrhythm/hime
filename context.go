@@ -103,7 +103,7 @@ func (ctx *Context) statusCode() int {
 
 func (ctx *Context) statusCodeRedirect() int {
 	if ctx.code == 0 || ctx.code < 300 || ctx.code >= 400 {
-		if ctx.Request.Method == http.MethodPost {
+		if ctx.Request.Method != http.MethodGet {
 			return http.StatusSeeOther
 		}
 		return http.StatusFound
@@ -147,9 +147,9 @@ func (ctx *Context) RedirectTo(name string, params ...interface{}) error {
 	return ctx.Redirect(p)
 }
 
-// RedirectToGet redirects to same url with status SeeOther
+// RedirectToGet redirects to same url back to Get
 func (ctx *Context) RedirectToGet() error {
-	return ctx.Status(http.StatusSeeOther).Redirect(ctx.RequestURI)
+	return ctx.Redirect(ctx.RequestURI)
 }
 
 // RedirectBack redirects to referer or fallback if referer not exists
@@ -164,10 +164,9 @@ func (ctx *Context) RedirectBack(fallback string) error {
 	return ctx.Redirect(u)
 }
 
-// RedirectBackToGet redirects to referer with status SeeOther or fallback
-// with same url
+// RedirectBackToGet redirects to referer or fallback with same url
 func (ctx *Context) RedirectBackToGet() error {
-	return ctx.Status(http.StatusSeeOther).RedirectBack("")
+	return ctx.RedirectBack("")
 }
 
 // SafeRedirectBack safe redirects to referer
