@@ -22,6 +22,7 @@ server:
   readHeaderTimeout: 5s
   writeTimeout: 6s
   idleTimeout: 30s
+  reusePort: true
   gracefulShutdown:
     timeout: 1m
     wait: 5s

@@ -18,6 +18,7 @@ type AppConfig struct {
 		ReadHeaderTimeout string            `yaml:"readHeaderTimeout" json:"readHeaderTimeout"`
 		WriteTimeout      string            `yaml:"writeTimeout" json:"writeTimeout"`
 		IdleTimeout       string            `yaml:"idleTimeout" json:"idleTimeout"`
+		ReusePort         bool              `yaml:"reusePort" json:"reusePort"`
 		GracefulShutdown  *GracefulShutdown `yaml:"gracefulShutdown" json:"gracefulShutdown"`
 		TLS               *TLS              `yaml:"tls" json:"tls"`
 		HTTPSRedirect     *HTTPSRedirect    `yaml:"httpsRedirect" json:"httpsRedirect"`
@@ -85,6 +86,10 @@ func (app *App) Config(config AppConfig) *App {
 		parseDuration(server.ReadHeaderTimeout, &app.srv.ReadHeaderTimeout)
 		parseDuration(server.WriteTimeout, &app.srv.WriteTimeout)
 		parseDuration(server.IdleTimeout, &app.srv.IdleTimeout)
+
+		if server.ReusePort {
+			app.ReusePort(true)
+		}
 
 		if t := server.TLS; t != nil {
 			app.srv.TLSConfig = server.TLS.config()
