@@ -150,7 +150,7 @@ func (app *App) listenAndServe() (err error) {
 
 	var ln net.Listener
 	if app.reusePort {
-		ln, err = reuseport.Listen("tcp", addr)
+		ln, err = reuseport.NewReusablePortListener("tcp", addr)
 	} else {
 		ln, err = net.Listen("tcp", addr)
 	}
