@@ -1,7 +1,6 @@
 package hime
 
 import (
-	"bytes"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -64,10 +63,9 @@ func (t *tmpl) Execute(w io.Writer, data interface{}) error {
 		return t.Template.Execute(w, data)
 	}
 
-	buf := bytesPool.Get().(*bytes.Buffer)
-	defer bytesPool.Put(buf)
+	buf := getBytes()
+	defer putBytes(buf)
 
-	buf.Reset()
 	err := t.Template.Execute(buf, data)
 	if err != nil {
 		return err
@@ -312,10 +310,9 @@ func (tp *Template) renderComponent(name string, args ...interface{}) template.H
 		panicf("wrong number of data args for component want 0-1 got %d", len(args))
 	}
 
-	buf := bytesPool.Get().(*bytes.Buffer)
-	defer bytesPool.Put(buf)
+	buf := getBytes()
+	defer putBytes(buf)
 
-	buf.Reset()
 	err := t.Execute(buf, d)
 	if err != nil {
 		panic(err)

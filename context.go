@@ -206,10 +206,9 @@ func (ctx *Context) View(name string, data interface{}) error {
 		panic(newErrTemplateNotFound(name))
 	}
 
-	buf := bytesPool.Get().(*bytes.Buffer)
-	defer bytesPool.Put(buf)
+	buf := getBytes()
+	defer putBytes(buf)
 
-	buf.Reset()
 	err := t.Execute(buf, data)
 	if err != nil {
 		return err
