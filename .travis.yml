@@ -1,15 +1,11 @@
 language: go
 sudo: false
 go:
-- 1.10.x
-- "1.11"
-
-before_install:
-- go get -t -v .
+- 1.11.x
 
 script:
 - go vet .
-- go test -coverprofile=coverage.txt -covermode=atomic
+- env GO111MODULE=on go test -coverprofile=coverage.txt -covermode=atomic
 
 after_success:
 - bash <(curl -s https://codecov.io/bash)
