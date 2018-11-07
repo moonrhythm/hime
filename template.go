@@ -148,7 +148,7 @@ func (tp *Template) Minify() *Template {
 	tp.minifier = minify.New()
 	tp.minifier.AddFunc("text/html", html.Minify)
 	tp.minifier.AddFunc("text/css", css.Minify)
-	tp.minifier.AddFunc("text/javascript", js.Minify)
+	tp.minifier.AddFunc("application/javascript", js.Minify)
 
 	// sets minify for parsed templates
 	for _, t := range tp.localList {
