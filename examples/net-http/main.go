@@ -1,4 +1,4 @@
-package main
+package main // import "github.com/moonrhythm/hime/example/net-http"
 
 import (
 	"html/template"
