@@ -1,5 +1,7 @@
 package hime
 
+import "context"
+
 // Routes is the map for route name => path
 type Routes map[string]string
 
@@ -40,4 +42,9 @@ func (app *App) Route(name string, params ...interface{}) string {
 // Route gets route path from name
 func (ctx *Context) Route(name string, params ...interface{}) string {
 	return ctx.app.Route(name, params...)
+}
+
+// Route returns route value from context
+func Route(ctx context.Context, name string, params ...interface{}) interface{} {
+	return getApp(ctx).Route(name, params...)
 }

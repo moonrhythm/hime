@@ -54,6 +54,8 @@ func TestGlobal(t *testing.T) {
 			app.Handler(Handler(func(ctx *Context) error {
 				assert.Equal(t, ctx.Global("key1"), "value1")
 				assert.Equal(t, ctx.Global("key2"), "value2")
+				assert.Equal(t, Global(ctx, "key1"), "value1")
+				assert.Equal(t, Global(ctx, "key2"), "value2")
 				assert.Nil(t, ctx.Global("key3"))
 				return nil
 			})).ServeHTTP(w, r)

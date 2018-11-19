@@ -73,6 +73,8 @@ func TestRoute(t *testing.T) {
 			app.Handler(Handler(func(ctx *Context) error {
 				assert.Equal(t, ctx.Route("a"), "/b")
 				assert.Equal(t, ctx.Route("b"), "/cd")
+				assert.Equal(t, Route(ctx, "a"), "/b")
+				assert.Equal(t, Route(ctx, "b"), "/cd")
 				return nil
 			})).ServeHTTP(w, r)
 		})

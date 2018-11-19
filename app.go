@@ -30,9 +30,7 @@ type App struct {
 	reusePort    bool
 }
 
-var (
-	ctxKeyApp = struct{}{}
-)
+type ctxKeyApp struct{}
 
 // New creates new app
 func New() *App {
@@ -94,7 +92,7 @@ func (app *App) Handler(h http.Handler) *App {
 
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ctx = context.WithValue(ctx, ctxKeyApp, app)
+	ctx = context.WithValue(ctx, ctxKeyApp{}, app)
 	r = r.WithContext(ctx)
 
 	if app.handler == nil {
@@ -237,4 +235,12 @@ func (app *App) GracefulShutdown() *GracefulShutdown {
 	}
 
 	return app.gs
+}
+
+func getApp(ctx context.Context) *App {
+	app, ok := ctx.Value(ctxKeyApp{}).(*App)
+	if !ok {
+		panic(ErrAppNotFound)
+	}
+	return app
 }
