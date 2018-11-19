@@ -45,6 +45,6 @@ func (ctx *Context) Route(name string, params ...interface{}) string {
 }
 
 // Route returns route value from context
-func Route(ctx context.Context, name string, params ...interface{}) interface{} {
+func Route(ctx context.Context, name string, params ...interface{}) string {
 	return getApp(ctx).Route(name, params...)
 }
