@@ -15,10 +15,7 @@ import (
 
 // NewContext creates new hime's context
 func NewContext(w http.ResponseWriter, r *http.Request) *Context {
-	app, ok := r.Context().Value(ctxKeyApp).(*App)
-	if !ok {
-		panic(ErrAppNotFound)
-	}
+	app := getApp(r.Context())
 	return NewAppContext(app, w, r)
 }
 
