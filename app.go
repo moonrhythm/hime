@@ -128,7 +128,7 @@ func (app *App) Shutdown(ctx context.Context) error {
 	return app.srv.Shutdown(ctx)
 }
 
-// TCPKeepAlive sets tcp keep-alive when using app.ListenAndServe
+// TCPKeepAlive sets tcp keep-alive interval when using app.ListenAndServe
 func (app *App) TCPKeepAlive(d time.Duration) *App {
 	app.tcpKeepAlive = d
 	return app
