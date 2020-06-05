@@ -143,23 +143,23 @@ func (tp *Template) ParseConfigFile(filename string) *Template {
 	return tp.ParseConfig(data)
 }
 
-type TemplateMinifyOptions struct {
+type TemplateMinifyConfig struct {
 	HTML minify.Minifier
 	CSS  minify.Minifier
 	JS   minify.Minifier
 }
 
 // MinifyWith enables minify with custom options
-func (tp *Template) MinifyWith(opt TemplateMinifyOptions) *Template {
+func (tp *Template) MinifyWith(cfg TemplateMinifyConfig) *Template {
 	tp.minifier = minify.New()
-	if opt.HTML != nil {
-		tp.minifier.Add("text/html", opt.HTML)
+	if cfg.HTML != nil {
+		tp.minifier.Add("text/html", cfg.HTML)
 	}
-	if opt.CSS != nil {
-		tp.minifier.Add("text/css", opt.CSS)
+	if cfg.CSS != nil {
+		tp.minifier.Add("text/css", cfg.CSS)
 	}
-	if opt.JS != nil {
-		tp.minifier.Add("application/javascript", opt.JS)
+	if cfg.JS != nil {
+		tp.minifier.Add("application/javascript", cfg.JS)
 	}
 
 	// sets minify for parsed templates
@@ -172,7 +172,7 @@ func (tp *Template) MinifyWith(opt TemplateMinifyOptions) *Template {
 
 // Minify enables minify when render html, css, js
 func (tp *Template) Minify() *Template {
-	return tp.MinifyWith(TemplateMinifyOptions{
+	return tp.MinifyWith(TemplateMinifyConfig{
 		HTML: html.DefaultMinifier,
 		CSS:  &css.Minifier{},
 		JS:   js.DefaultMinifier,
