@@ -705,6 +705,6 @@ func TestContext(t *testing.T) {
 		app.Template().Dir("testdata").Root("root").ParseFiles("index", "panic.tmpl")
 		ctx := hime.NewAppContext(app, w, r)
 
-		assert.Panics(t, func() { ctx.View("index", nil) })
+		assert.Error(t, ctx.View("index", nil))
 	})
 }
