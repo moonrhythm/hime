@@ -143,12 +143,24 @@ func (tp *Template) ParseConfigFile(filename string) *Template {
 	return tp.ParseConfig(data)
 }
 
-// Minify enables minify when render html, css, js
-func (tp *Template) Minify() *Template {
+type TemplateMinifyConfig struct {
+	HTML minify.Minifier
+	CSS  minify.Minifier
+	JS   minify.Minifier
+}
+
+// MinifyWith enables minify with custom options
+func (tp *Template) MinifyWith(cfg TemplateMinifyConfig) *Template {
 	tp.minifier = minify.New()
-	tp.minifier.AddFunc("text/html", html.Minify)
-	tp.minifier.AddFunc("text/css", css.Minify)
-	tp.minifier.AddFunc("application/javascript", js.Minify)
+	if cfg.HTML != nil {
+		tp.minifier.Add("text/html", cfg.HTML)
+	}
+	if cfg.CSS != nil {
+		tp.minifier.Add("text/css", cfg.CSS)
+	}
+	if cfg.JS != nil {
+		tp.minifier.Add("application/javascript", cfg.JS)
+	}
 
 	// sets minify for parsed templates
 	for _, t := range tp.localList {
@@ -156,6 +168,15 @@ func (tp *Template) Minify() *Template {
 	}
 
 	return tp
+}
+
+// Minify enables minify when render html, css, js
+func (tp *Template) Minify() *Template {
+	return tp.MinifyWith(TemplateMinifyConfig{
+		HTML: html.DefaultMinifier,
+		CSS:  &css.Minifier{},
+		JS:   js.DefaultMinifier,
+	})
 }
 
 // Delims sets left and right delims

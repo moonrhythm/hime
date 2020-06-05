@@ -192,7 +192,7 @@ list:
 
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
-			assert.Panics(t, func() { tp.list["t"].Execute(&b, nil) })
+			assert.Error(t, tp.list["t"].Execute(&b, nil))
 		}
 	})
 
@@ -202,7 +202,7 @@ list:
 
 		if assert.Contains(t, tp.list, "t") {
 			b := bytes.Buffer{}
-			assert.Panics(t, func() { tp.list["t"].Execute(&b, nil) })
+			assert.Error(t, tp.list["t"].Execute(&b, nil))
 		}
 	})
 
