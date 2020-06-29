@@ -206,6 +206,20 @@ func (ctx *Context) NoContent() error {
 	return nil
 }
 
+func (ctx *Context) setETag(b []byte) bool {
+	if ctx.etag && ctx.statusCode() == http.StatusOK {
+		et := etag(b)
+		ctx.w.Header().Set("ETag", et)
+
+		if matchETag(ctx.Request, et) {
+			ctx.Status(http.StatusNotModified)
+			ctx.writeHeader()
+			return true
+		}
+	}
+	return false
+}
+
 // View renders view
 func (ctx *Context) View(name string, data interface{}) error {
 	t, ok := ctx.app.template[name]
@@ -221,26 +235,12 @@ func (ctx *Context) View(name string, data interface{}) error {
 		return err
 	}
 
-	if ctx.etag && ctx.statusCode() == http.StatusOK {
-		et := etag(buf.Bytes())
-		ctx.w.Header().Set("ETag", et)
-
-		reqETags := strings.Split(ctx.Request.Header.Get("If-None-Match"), ",")
-		for _, reqETag := range reqETags {
-			reqETag = strings.TrimSpace(reqETag)
-			if reqETag == et {
-				ctx.Status(http.StatusNotModified)
-				ctx.writeHeader()
-				return nil
-			}
-		}
+	if ctx.setETag(buf.Bytes()) {
+		return nil
 	}
 
 	ctx.setContentType("text/html; charset=utf-8")
-
-	ctx.writeHeader()
-	_, err = io.Copy(ctx.w, buf)
-	return filterRenderError(err)
+	return ctx.CopyFrom(buf)
 }
 
 func (ctx *Context) setContentType(value string) {
@@ -264,13 +264,28 @@ func filterRenderError(err error) error {
 
 // JSON encodes given data into json then writes to response writer
 func (ctx *Context) JSON(data interface{}) error {
+	buf := getBytes()
+	defer putBytes(buf)
+
+	err := json.NewEncoder(buf).Encode(data)
+	if err != nil {
+		return err
+	}
+
+	if ctx.setETag(buf.Bytes()) {
+		return nil
+	}
+
 	ctx.setContentType("application/json; charset=utf-8")
-	ctx.writeHeader()
-	return json.NewEncoder(ctx.w).Encode(data)
+	return ctx.CopyFrom(buf)
 }
 
 // HTML writes html to response writer
 func (ctx *Context) HTML(data string) error {
+	if ctx.setETag([]byte(data)) {
+		return nil
+	}
+
 	ctx.setContentType("text/html; charset=utf-8")
 	ctx.writeHeader()
 	_, err := io.Copy(ctx.w, strings.NewReader(data))
@@ -340,4 +355,15 @@ func etag(b []byte) string {
 	hash := sha1.Sum(b)
 	l := len(b)
 	return fmt.Sprintf("W/\"%d-%s\"", l, hex.EncodeToString(hash[:]))
+}
+
+func matchETag(r *http.Request, etag string) bool {
+	reqETags := strings.Split(r.Header.Get("If-None-Match"), ",")
+	for _, reqETag := range reqETags {
+		reqETag = strings.TrimSpace(reqETag)
+		if reqETag == etag {
+			return true
+		}
+	}
+	return false
 }
