@@ -3,6 +3,8 @@ package hime
 import (
 	"bytes"
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,6 +27,7 @@ func NewAppContext(app *App, w http.ResponseWriter, r *http.Request) *Context {
 		Request: r,
 		app:     app,
 		w:       w,
+		etag:    app.ETag,
 	}
 }
 
@@ -36,6 +39,7 @@ type Context struct {
 	w   http.ResponseWriter
 
 	code int
+	etag bool
 }
 
 // Deadline implements context.Context
@@ -117,6 +121,12 @@ func (ctx *Context) statusCodeError() int {
 
 func (ctx *Context) writeHeader() {
 	ctx.w.WriteHeader(ctx.statusCode())
+}
+
+// ETag overrides etag setting
+func (ctx *Context) ETag(enable bool) *Context {
+	ctx.etag = enable
+	return ctx
 }
 
 // Handle calls h.ServeHTTP
@@ -211,7 +221,23 @@ func (ctx *Context) View(name string, data interface{}) error {
 		return err
 	}
 
+	if ctx.etag && ctx.statusCode() == http.StatusOK {
+		et := etag(buf.Bytes())
+		ctx.w.Header().Set("ETag", et)
+
+		reqETags := strings.Split(ctx.Request.Header.Get("If-None-Match"), ",")
+		for _, reqETag := range reqETags {
+			reqETag = strings.TrimSpace(reqETag)
+			if reqETag == et {
+				ctx.Status(http.StatusNotModified)
+				ctx.writeHeader()
+				return nil
+			}
+		}
+	}
+
 	ctx.setContentType("text/html; charset=utf-8")
+
 	ctx.writeHeader()
 	_, err = io.Copy(ctx.w, buf)
 	return filterRenderError(err)
@@ -308,4 +334,10 @@ func (ctx *Context) SetHeader(key, value string) {
 // DelHeader deletes a header from response
 func (ctx *Context) DelHeader(key string) {
 	ctx.w.Header().Del(key)
+}
+
+func etag(b []byte) string {
+	hash := sha1.Sum(b)
+	l := len(b)
+	return fmt.Sprintf("W/\"%d-%s\"", l, hex.EncodeToString(hash[:]))
 }
