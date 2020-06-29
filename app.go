@@ -28,6 +28,8 @@ type App struct {
 	gs           *GracefulShutdown
 	tcpKeepAlive time.Duration
 	reusePort    bool
+
+	ETag bool
 }
 
 type ctxKeyApp struct{}

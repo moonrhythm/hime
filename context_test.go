@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -664,6 +665,34 @@ func TestContext(t *testing.T) {
 		assert.Equal(t, w.Code, http.StatusOK)
 		assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
 		assert.Equal(t, w.Body.String(), "hello")
+	})
+
+	t.Run("View with etag", func(t *testing.T) {
+		app := hime.New()
+		app.ETag = true
+		app.Template().Dir("testdata").Root("root").ParseFiles("index", "hello.tmpl")
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+		ctx := hime.NewAppContext(app, w, r)
+		assert.NoError(t, ctx.View("index", nil))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "hello")
+
+		etag := w.Header().Get("ETag")
+		assert.True(t, strings.HasPrefix(etag, "W/\""))
+		assert.True(t, strings.HasSuffix(etag, "\""))
+
+		// second request
+		w = httptest.NewRecorder()
+		r = httptest.NewRequest(http.MethodPost, "/", nil)
+		r.Header.Set("If-None-Match", etag)
+		ctx = hime.NewAppContext(app, w, r)
+		assert.NoError(t, ctx.View("index", nil))
+		assert.Equal(t, w.Code, http.StatusNotModified)
+		assert.Empty(t, w.Header().Get("Content-Type"))
+		assert.Empty(t, w.Body.String())
 	})
 
 	t.Run("View with valid template and status code", func(t *testing.T) {

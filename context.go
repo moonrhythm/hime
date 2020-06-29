@@ -3,6 +3,8 @@ package hime
 import (
 	"bytes"
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,6 +27,7 @@ func NewAppContext(app *App, w http.ResponseWriter, r *http.Request) *Context {
 		Request: r,
 		app:     app,
 		w:       w,
+		etag:    app.ETag,
 	}
 }
 
@@ -36,6 +39,7 @@ type Context struct {
 	w   http.ResponseWriter
 
 	code int
+	etag bool
 }
 
 // Deadline implements context.Context
@@ -119,6 +123,12 @@ func (ctx *Context) writeHeader() {
 	ctx.w.WriteHeader(ctx.statusCode())
 }
 
+// ETag overrides etag setting
+func (ctx *Context) ETag(enable bool) *Context {
+	ctx.etag = enable
+	return ctx
+}
+
 // Handle calls h.ServeHTTP
 func (ctx *Context) Handle(h http.Handler) error {
 	h.ServeHTTP(ctx.w, ctx.Request)
@@ -196,6 +206,20 @@ func (ctx *Context) NoContent() error {
 	return nil
 }
 
+func (ctx *Context) setETag(b []byte) bool {
+	if ctx.etag && ctx.statusCode() == http.StatusOK {
+		et := etag(b)
+		ctx.w.Header().Set("ETag", et)
+
+		if matchETag(ctx.Request, et) {
+			ctx.Status(http.StatusNotModified)
+			ctx.writeHeader()
+			return true
+		}
+	}
+	return false
+}
+
 // View renders view
 func (ctx *Context) View(name string, data interface{}) error {
 	t, ok := ctx.app.template[name]
@@ -211,10 +235,12 @@ func (ctx *Context) View(name string, data interface{}) error {
 		return err
 	}
 
+	if ctx.setETag(buf.Bytes()) {
+		return nil
+	}
+
 	ctx.setContentType("text/html; charset=utf-8")
-	ctx.writeHeader()
-	_, err = io.Copy(ctx.w, buf)
-	return filterRenderError(err)
+	return ctx.CopyFrom(buf)
 }
 
 func (ctx *Context) setContentType(value string) {
@@ -238,13 +264,28 @@ func filterRenderError(err error) error {
 
 // JSON encodes given data into json then writes to response writer
 func (ctx *Context) JSON(data interface{}) error {
+	buf := getBytes()
+	defer putBytes(buf)
+
+	err := json.NewEncoder(buf).Encode(data)
+	if err != nil {
+		return err
+	}
+
+	if ctx.setETag(buf.Bytes()) {
+		return nil
+	}
+
 	ctx.setContentType("application/json; charset=utf-8")
-	ctx.writeHeader()
-	return json.NewEncoder(ctx.w).Encode(data)
+	return ctx.CopyFrom(buf)
 }
 
 // HTML writes html to response writer
 func (ctx *Context) HTML(data string) error {
+	if ctx.setETag([]byte(data)) {
+		return nil
+	}
+
 	ctx.setContentType("text/html; charset=utf-8")
 	ctx.writeHeader()
 	_, err := io.Copy(ctx.w, strings.NewReader(data))
@@ -308,4 +349,21 @@ func (ctx *Context) SetHeader(key, value string) {
 // DelHeader deletes a header from response
 func (ctx *Context) DelHeader(key string) {
 	ctx.w.Header().Del(key)
+}
+
+func etag(b []byte) string {
+	hash := sha1.Sum(b)
+	l := len(b)
+	return fmt.Sprintf("W/\"%d-%s\"", l, hex.EncodeToString(hash[:]))
+}
+
+func matchETag(r *http.Request, etag string) bool {
+	reqETags := strings.Split(r.Header.Get("If-None-Match"), ",")
+	for _, reqETag := range reqETags {
+		reqETag = strings.TrimSpace(reqETag)
+		if reqETag == etag {
+			return true
+		}
+	}
+	return false
 }
