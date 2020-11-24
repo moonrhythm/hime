@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // AppConfig is hime app's config

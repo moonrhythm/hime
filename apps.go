@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // Apps is the collection of App to start together
