@@ -2,11 +2,15 @@ package hime
 
 import (
 	"bytes"
+	"embed"
 	"html/template"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+//go:embed testdata/template/*
+var testTemplateFS embed.FS
 
 func TestTemplate(t *testing.T) {
 	t.Run("ParseConfig", func(t *testing.T) {
@@ -136,6 +140,21 @@ list:
 		}
 	})
 
+	t.Run("ParseFiles using FS", func(t *testing.T) {
+		tp := New().Template()
+		tp.FS(&testTemplateFS)
+		tp.Dir("testdata/template")
+		tp.Preload("b.tmpl")
+		tp.ParseFiles("t", "p1.tmpl")
+
+		if assert.Contains(t, tp.list, "t") {
+			b := bytes.Buffer{}
+			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
+				assert.Equal(t, b.String(), "Test Data b")
+			}
+		}
+	})
+
 	t.Run("ParseGlob", func(t *testing.T) {
 		tp := New().Template()
 		tp.Dir("testdata/template")
@@ -151,8 +170,33 @@ list:
 		}
 	})
 
+	t.Run("ParseGlob using FS", func(t *testing.T) {
+		tp := New().Template()
+		tp.FS(&testTemplateFS)
+		tp.Dir("testdata/template")
+		tp.Root("b")
+		tp.Preload("b.tmpl")
+		tp.ParseGlob("t", "**.tmpl")
+
+		if assert.Contains(t, tp.list, "t") {
+			b := bytes.Buffer{}
+			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
+				assert.Equal(t, b.String(), "b")
+			}
+		}
+	})
+
 	t.Run("ParseGlob without root", func(t *testing.T) {
 		tp := New().Template()
+		tp.Dir("testdata/template")
+		tp.Preload("b.tmpl")
+
+		assert.Panics(t, func() { tp.ParseGlob("t", "*/**.tmpl") })
+	})
+
+	t.Run("ParseGlob without root using FS", func(t *testing.T) {
+		tp := New().Template()
+		tp.FS(&testTemplateFS)
 		tp.Dir("testdata/template")
 		tp.Preload("b.tmpl")
 
