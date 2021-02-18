@@ -1,6 +1,7 @@
 package hime
 
 import (
+	"embed"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -80,6 +81,7 @@ type Template struct {
 	list       map[string]*tmpl
 	localList  map[string]*tmpl
 	root       string
+	fs         *embed.FS
 	dir        string
 	leftDelim  string
 	rightDelim string
@@ -203,6 +205,12 @@ func (tp *Template) Dir(path string) *Template {
 	return tp
 }
 
+// FS uses fs when load template
+func (tp *Template) FS(fs *embed.FS) *Template {
+	tp.fs = fs
+	return tp
+}
+
 // Funcs adds template funcs while load template
 func (tp *Template) Funcs(funcs ...template.FuncMap) *Template {
 	tp.funcs = append(tp.funcs, funcs...)
@@ -224,7 +232,11 @@ func (tp *Template) Preload(filename ...string) *Template {
 	}
 
 	tp.init()
-	template.Must(tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
+	if tp.fs == nil {
+		template.Must(tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
+	} else {
+		template.Must(tp.parent.ParseFS(tp.fs, joinTemplateDir(tp.dir, filename...)...))
+	}
 
 	return tp
 }
@@ -271,7 +283,11 @@ func (tp *Template) Parse(name string, text string) *Template {
 // ParseFiles loads template from file
 func (tp *Template) ParseFiles(name string, filenames ...string) *Template {
 	tp.newTemplate(name, func(t *template.Template) *template.Template {
-		t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...))
+		if tp.fs == nil {
+			t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...))
+		} else {
+			t = template.Must(t.ParseFS(tp.fs, joinTemplateDir(tp.dir, filenames...)...))
+		}
 		if tp.root == "" {
 			t = t.Lookup(filenames[0])
 		}
@@ -292,7 +308,11 @@ func (tp *Template) ParseGlob(name string, pattern string) *Template {
 		if !strings.HasSuffix(d, "/") {
 			d += "/"
 		}
-		return template.Must(t.ParseGlob(d + pattern))
+		if tp.fs == nil {
+			return template.Must(t.ParseGlob(d + pattern))
+		} else {
+			return template.Must(t.ParseFS(tp.fs, d+pattern))
+		}
 	})
 
 	return tp
