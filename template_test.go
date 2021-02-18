@@ -142,7 +142,7 @@ list:
 
 	t.Run("ParseFiles using FS", func(t *testing.T) {
 		tp := New().Template()
-		tp.FS(&testTemplateFS)
+		tp.FS(testTemplateFS)
 		tp.Dir("testdata/template")
 		tp.Preload("b.tmpl")
 		tp.ParseFiles("t", "p1.tmpl")
@@ -172,7 +172,7 @@ list:
 
 	t.Run("ParseGlob using FS", func(t *testing.T) {
 		tp := New().Template()
-		tp.FS(&testTemplateFS)
+		tp.FS(testTemplateFS)
 		tp.Dir("testdata/template")
 		tp.Root("b")
 		tp.Preload("b.tmpl")
@@ -196,7 +196,7 @@ list:
 
 	t.Run("ParseGlob without root using FS", func(t *testing.T) {
 		tp := New().Template()
-		tp.FS(&testTemplateFS)
+		tp.FS(testTemplateFS)
 		tp.Dir("testdata/template")
 		tp.Preload("b.tmpl")
 

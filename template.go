@@ -206,8 +206,8 @@ func (tp *Template) Dir(path string) *Template {
 }
 
 // FS uses fs when load template
-func (tp *Template) FS(fs *embed.FS) *Template {
-	tp.fs = fs
+func (tp *Template) FS(fs embed.FS) *Template {
+	tp.fs = &fs
 	return tp
 }
 
