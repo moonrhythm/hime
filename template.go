@@ -1,9 +1,9 @@
 package hime
 
 import (
-	"embed"
 	"html/template"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -81,7 +81,7 @@ type Template struct {
 	list       map[string]*tmpl
 	localList  map[string]*tmpl
 	root       string
-	fs         *embed.FS
+	fs         fs.FS
 	dir        string
 	leftDelim  string
 	rightDelim string
@@ -206,8 +206,8 @@ func (tp *Template) Dir(path string) *Template {
 }
 
 // FS uses fs when load template
-func (tp *Template) FS(fs embed.FS) *Template {
-	tp.fs = &fs
+func (tp *Template) FS(fs fs.FS) *Template {
+	tp.fs = fs
 	return tp
 }
 
