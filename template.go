@@ -5,7 +5,7 @@ import (
 	"io"
 	"io/fs"
 	"io/ioutil"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/tdewolff/minify/v2"
@@ -365,7 +365,7 @@ func (tp *Template) renderComponent(name string, args ...interface{}) template.H
 func joinTemplateDir(dir string, filenames ...string) []string {
 	xs := make([]string, len(filenames))
 	for i, filename := range filenames {
-		xs[i] = filepath.Join(dir, filename)
+		xs[i] = path.Join(dir, filename)
 	}
 	return xs
 }
