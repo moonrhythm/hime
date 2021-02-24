@@ -1,6 +1,7 @@
 package hime_test
 
 import (
+	"bytes"
 	"context"
 	"html/template"
 	"net/http"
@@ -735,5 +736,18 @@ func TestContext(t *testing.T) {
 		ctx := hime.NewAppContext(app, w, r)
 
 		assert.Error(t, ctx.View("index", nil))
+	})
+
+	t.Run("BindJSON", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"a":1}`)))
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+		var body struct {
+			A int `json:"a"`
+		}
+		assert.NoError(t, ctx.BindJSON(&body))
+		assert.Equal(t, 1, body.A)
 	})
 }

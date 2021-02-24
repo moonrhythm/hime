@@ -135,7 +135,7 @@ func (ctx *Context) Handle(h http.Handler) error {
 	return nil
 }
 
-// Redirect redircets to given url
+// Redirect redirects to given url
 func (ctx *Context) Redirect(url string, params ...interface{}) error {
 	p := buildPath(url, params...)
 	http.Redirect(ctx.w, ctx.Request, p, ctx.statusCodeRedirect())
@@ -349,6 +349,11 @@ func (ctx *Context) SetHeader(key, value string) {
 // DelHeader deletes a header from response
 func (ctx *Context) DelHeader(key string) {
 	ctx.w.Header().Del(key)
+}
+
+// BindJSON binds request body using json decoder
+func (ctx *Context) BindJSON(v interface{}) error {
+	return json.NewDecoder(ctx.Body).Decode(v)
 }
 
 func etag(b []byte) string {
