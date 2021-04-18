@@ -23,6 +23,7 @@ server:
   writeTimeout: 6s
   idleTimeout: 30s
   reusePort: true
+  eTag: true
   tcpKeepAlive: 1m
   gracefulShutdown:
     timeout: 1m

@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	yaml "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 )
 
 // AppConfig is hime app's config
@@ -20,6 +20,7 @@ type AppConfig struct {
 		IdleTimeout       string            `yaml:"idleTimeout" json:"idleTimeout"`
 		ReusePort         *bool             `yaml:"reusePort" json:"reusePort"`
 		TCPKeepAlive      string            `yaml:"tcpKeepAlive" json:"tcpKeepAlive"`
+		ETag              *bool             `yaml:"eTag" json:"eTag"`
 		GracefulShutdown  *GracefulShutdown `yaml:"gracefulShutdown" json:"gracefulShutdown"`
 		TLS               *TLS              `yaml:"tls" json:"tls"`
 		HTTPSRedirect     *HTTPSRedirect    `yaml:"httpsRedirect" json:"httpsRedirect"`
@@ -65,6 +66,7 @@ func parseDuration(s string, t *time.Duration) {
 //   readHeaderTimeout: 5s
 //   writeTimeout: 5s
 //   idleTimeout: 30s
+//   eTag: true
 //   gracefulShutdown:
 //     timeout: 1m
 //     wait: 5s
@@ -91,6 +93,9 @@ func (app *App) Config(config AppConfig) *App {
 
 		if server.ReusePort != nil {
 			app.reusePort = *server.ReusePort
+		}
+		if server.ETag != nil {
+			app.ETag = *server.ETag
 		}
 
 		if t := server.TLS; t != nil {
