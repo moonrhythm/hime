@@ -63,6 +63,7 @@ func (app *App) Clone() *App {
 		templateFuncs: cloneFuncMaps(app.templateFuncs),
 		tcpKeepAlive:  app.tcpKeepAlive,
 		reusePort:     app.reusePort,
+		ETag:          app.ETag,
 	}
 	x.srv.Handler = x
 
