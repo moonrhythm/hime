@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kavu/go_reuseport"
+	reuseport "github.com/kavu/go_reuseport"
 )
 
 // App is the hime app
