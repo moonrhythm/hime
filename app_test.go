@@ -4,11 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"html/template"
+	"net"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/http2"
 )
 
 func TestApp(t *testing.T) {
@@ -129,10 +131,12 @@ func TestApp(t *testing.T) {
 		app.Address(":8081")
 
 		go app.ListenAndServe()
+		defer app.Shutdown(context.Background())
+
 		time.Sleep(time.Second)
 
-		http.Get("http://localhost:8081")
-		app.Shutdown(context.Background())
+		_, err := http.Get("http://localhost:8081")
+		assert.NoError(t, err)
 		assert.True(t, called)
 	})
 
@@ -150,12 +154,15 @@ func TestApp(t *testing.T) {
 		app.Address(":8082")
 
 		go app.ListenAndServe()
+		defer app.Shutdown(context.Background())
+
 		time.Sleep(time.Second)
 
-		(&http.Client{Transport: &http.Transport{
+		client := http.Client{Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}}).Get("https://localhost:8082")
-		app.Shutdown(context.Background())
+		}}
+		_, err := client.Get("https://localhost:8082")
+		assert.NoError(t, err)
 		assert.True(t, called)
 	})
 
@@ -212,5 +219,68 @@ func TestApp(t *testing.T) {
 		app.Shutdown(context.Background())
 		time.Sleep(time.Second)
 		assert.True(t, called)
+	})
+
+	t.Run("H2C", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+		app.H2C = true
+		called := false
+		app.Handler(Handler(func(ctx *Context) error {
+			called = true
+			assert.Equal(t, "HTTP/2.0", ctx.Request.Proto)
+			return ctx.String("Hello")
+		}))
+		app.Address(":8085")
+
+		go app.ListenAndServe()
+		defer app.Shutdown(context.Background())
+
+		time.Sleep(time.Second)
+
+		client := http.Client{
+			Transport: &http2.Transport{
+				AllowHTTP:          true,
+				DisableCompression: true,
+				DialTLS: func(network, addr string, _ *tls.Config) (net.Conn, error) {
+					return net.Dial(network, addr)
+				},
+			},
+		}
+		_, err := client.Get("http://localhost:8085")
+		assert.NoError(t, err)
+		assert.True(t, called)
+	})
+
+	t.Run("Disable H2C", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+		app.H2C = false
+		app.Handler(Handler(func(ctx *Context) error {
+			return ctx.String("Hello")
+		}))
+		app.Address(":8086")
+
+		go app.ListenAndServe()
+		defer app.Shutdown(context.Background())
+
+		time.Sleep(time.Second)
+
+		client := http.Client{
+			Transport: &http2.Transport{
+				AllowHTTP:          true,
+				DisableCompression: true,
+				DialTLS: func(network, addr string, _ *tls.Config) (net.Conn, error) {
+					return net.Dial(network, addr)
+				},
+			},
+		}
+		_, err := client.Get("http://localhost:8086")
+		assert.Error(t, err)
+
+		_, err = http.Get("http://localhost:8086")
+		assert.NoError(t, err)
 	})
 }

@@ -38,6 +38,7 @@ func TestConfig(t *testing.T) {
 			assert.Equal(t, app.tcpKeepAlive, time.Minute)
 			assert.True(t, app.reusePort)
 			assert.True(t, app.ETag)
+			assert.True(t, app.H2C)
 			assert.Len(t, app.srv.TLSConfig.Certificates, 1)
 
 			// graceful

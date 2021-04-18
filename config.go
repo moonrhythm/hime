@@ -21,6 +21,7 @@ type AppConfig struct {
 		ReusePort         *bool             `yaml:"reusePort" json:"reusePort"`
 		TCPKeepAlive      string            `yaml:"tcpKeepAlive" json:"tcpKeepAlive"`
 		ETag              *bool             `yaml:"eTag" json:"eTag"`
+		H2C               *bool             `yaml:"h2c" json:"h2c"`
 		GracefulShutdown  *GracefulShutdown `yaml:"gracefulShutdown" json:"gracefulShutdown"`
 		TLS               *TLS              `yaml:"tls" json:"tls"`
 		HTTPSRedirect     *HTTPSRedirect    `yaml:"httpsRedirect" json:"httpsRedirect"`
@@ -67,6 +68,7 @@ func parseDuration(s string, t *time.Duration) {
 //   writeTimeout: 5s
 //   idleTimeout: 30s
 //   eTag: true
+//   h2c: true
 //   gracefulShutdown:
 //     timeout: 1m
 //     wait: 5s
@@ -96,6 +98,9 @@ func (app *App) Config(config AppConfig) *App {
 		}
 		if server.ETag != nil {
 			app.ETag = *server.ETag
+		}
+		if server.H2C != nil {
+			app.H2C = *server.H2C
 		}
 
 		if t := server.TLS; t != nil {

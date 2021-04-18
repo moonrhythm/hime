@@ -24,6 +24,7 @@ server:
   idleTimeout: 30s
   reusePort: true
   eTag: true
+  h2c: true
   tcpKeepAlive: 1m
   gracefulShutdown:
     timeout: 1m

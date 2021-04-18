@@ -13,14 +13,18 @@ import (
 	"time"
 
 	reuseport "github.com/kavu/go_reuseport"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 // App is the hime app
 type App struct {
-	srv     http.Server
-	handler http.Handler
-	routes  Routes
-	globals sync.Map
+	srv           http.Server
+	handler       http.Handler
+	routes        Routes
+	globals       sync.Map
+	onceServeHTTP sync.Once
+	serveHandler  http.Handler
 
 	template      map[string]*tmpl
 	templateFuncs []template.FuncMap
@@ -30,6 +34,7 @@ type App struct {
 	reusePort    bool
 
 	ETag bool
+	H2C  bool
 }
 
 type ctxKeyApp struct{}
@@ -39,6 +44,7 @@ func New() *App {
 	app := &App{}
 	app.srv.Handler = app
 	app.tcpKeepAlive = 3 * time.Minute
+	app.H2C = true
 	return app
 }
 
@@ -64,6 +70,7 @@ func (app *App) Clone() *App {
 		tcpKeepAlive:  app.tcpKeepAlive,
 		reusePort:     app.reusePort,
 		ETag:          app.ETag,
+		H2C:           app.H2C,
 	}
 	x.srv.Handler = x
 
@@ -94,15 +101,22 @@ func (app *App) Handler(h http.Handler) *App {
 }
 
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	app.onceServeHTTP.Do(func() {
+		app.serveHandler = app.handler
+		if app.serveHandler == nil {
+			app.serveHandler = http.DefaultServeMux
+		}
+
+		if app.H2C {
+			app.serveHandler = h2c.NewHandler(app.serveHandler, &http2.Server{})
+		}
+	})
+
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, ctxKeyApp{}, app)
 	r = r.WithContext(ctx)
 
-	if app.handler == nil {
-		http.DefaultServeMux.ServeHTTP(w, r)
-		return
-	}
-	app.handler.ServeHTTP(w, r)
+	app.serveHandler.ServeHTTP(w, r)
 }
 
 // Server returns server inside app
