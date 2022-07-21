@@ -175,9 +175,9 @@ func (tp *Template) MinifyWith(cfg TemplateMinifyConfig) *Template {
 // Minify enables minify when render html, css, js
 func (tp *Template) Minify() *Template {
 	return tp.MinifyWith(TemplateMinifyConfig{
-		HTML: html.DefaultMinifier,
+		HTML: &html.Minifier{},
 		CSS:  &css.Minifier{},
-		JS:   js.DefaultMinifier,
+		JS:   &js.Minifier{},
 	})
 }
 

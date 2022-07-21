@@ -15,7 +15,7 @@ plus no standard. Framework creates a standard for developers.
 
 ### Why Another Framework
 
-There're many Go frameworks out there. But I want a framework that works with any net/http compatible libraries seamlessly.
+There is many Go frameworks out there. But I want a framework that works with any net/http compatible libraries seamlessly.
 
 For example, you can choose any router, any middlewares, or handlers that work with standard library.
 
