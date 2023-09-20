@@ -19,10 +19,10 @@ func TestParseTLSVersion(t *testing.T) {
 		out uint16
 	}{
 		{"", 0},
-		{"ssl3.0", tls.VersionSSL30},
 		{"tls1.0", tls.VersionTLS10},
 		{"tls1.1", tls.VersionTLS11},
 		{"tls1.2", tls.VersionTLS12},
+		{"tls1.3", tls.VersionTLS13},
 	}
 	for _, tC := range testCases {
 		t.Run(fmt.Sprintf("parse %s", tC.in), func(t *testing.T) {

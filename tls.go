@@ -25,7 +25,6 @@ func Restricted() *tls.Config {
 			tls.X25519,
 			tls.CurveP256,
 		},
-		PreferServerCipherSuites: true,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -45,7 +44,6 @@ func Modern() *tls.Config {
 			tls.X25519,
 			tls.CurveP256,
 		},
-		PreferServerCipherSuites: true,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -69,7 +67,6 @@ func Compatible() *tls.Config {
 			tls.X25519,
 			tls.CurveP256,
 		},
-		PreferServerCipherSuites: true,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -125,6 +122,8 @@ func parseTLSVersion(s string) uint16 {
 		return tls.VersionTLS11
 	case "tls1.2":
 		return tls.VersionTLS12
+	case "tls1.3":
+		return tls.VersionTLS13
 	default:
 		panicf("unknown tls version '%s'", s)
 	}
