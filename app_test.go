@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -282,5 +283,23 @@ func TestApp(t *testing.T) {
 
 		_, err = http.Get("http://localhost:8086")
 		assert.NoError(t, err)
+	})
+
+	t.Run("ServeHandler", func(t *testing.T) {
+		t.Parallel()
+
+		app := New()
+		called := false
+		h := app.ServeHandler(Handler(func(ctx *Context) error {
+			called = true
+			return ctx.String("Hello")
+		}))
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		h.ServeHTTP(w, r)
+
+		assert.True(t, called)
+		assert.Equal(t, "Hello", w.Body.String())
 	})
 }
