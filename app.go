@@ -110,13 +110,20 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if app.H2C {
 			app.serveHandler = h2c.NewHandler(app.serveHandler, &http2.Server{})
 		}
+
+		app.serveHandler = app.ServeHandler(app.serveHandler)
 	})
 
-	ctx := r.Context()
-	ctx = context.WithValue(ctx, ctxKeyApp{}, app)
-	r = r.WithContext(ctx)
-
 	app.serveHandler.ServeHTTP(w, r)
+}
+
+func (app *App) ServeHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, ctxKeyApp{}, app)
+		r = r.WithContext(ctx)
+		h.ServeHTTP(w, r)
+	})
 }
 
 // Server returns server inside app
