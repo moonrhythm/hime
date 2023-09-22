@@ -27,6 +27,7 @@ type App struct {
 	serveHandler  http.Handler
 
 	template      map[string]*tmpl
+	component     map[string]*template.Template
 	templateFuncs []template.FuncMap
 
 	gs           *GracefulShutdown

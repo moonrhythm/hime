@@ -52,3 +52,29 @@ func newErrTemplateDuplicate(name string) error {
 func panicf(format string, a ...any) {
 	panic(fmt.Sprintf("hime: "+format, a...))
 }
+
+// ErrComponentNotFound is the error for component not found
+type ErrComponentNotFound struct {
+	Name string
+}
+
+func (err *ErrComponentNotFound) Error() string {
+	return fmt.Sprintf("hime: component '%s' not found", err.Name)
+}
+
+func newErrComponentNotFound(name string) error {
+	return &ErrComponentNotFound{name}
+}
+
+// ErrComponentDuplicate is the error for component duplicate
+type ErrComponentDuplicate struct {
+	Name string
+}
+
+func (err *ErrComponentDuplicate) Error() string {
+	return fmt.Sprintf("hime: component '%s' already exists", err.Name)
+}
+
+func newErrComponentDuplicate(name string) error {
+	return &ErrComponentDuplicate{name}
+}

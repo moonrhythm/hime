@@ -216,6 +216,34 @@ list:
 		}
 	})
 
+	t.Run("ParseComponent", func(t *testing.T) {
+		tp := New().Template()
+		tp.Dir("testdata")
+		tp.ParseComponent("c", "component")
+		tp.Parse("t", `Test Data {{component "c"}}`)
+
+		if assert.Contains(t, tp.list, "t") {
+			b := bytes.Buffer{}
+			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
+				assert.Equal(t, b.String(), "Test Data component")
+			}
+		}
+	})
+
+	t.Run("ParseComponentFile", func(t *testing.T) {
+		tp := New().Template()
+		tp.Dir("testdata")
+		tp.ParseComponentFile("c", "component1.tmpl")
+		tp.Parse("t", `Test Data {{component "c"}}`)
+
+		if assert.Contains(t, tp.list, "t") {
+			b := bytes.Buffer{}
+			if assert.NoError(t, tp.list["t"].Execute(&b, nil)) {
+				assert.Equal(t, b.String(), "Test Data <p>component</p>")
+			}
+		}
+	})
+
 	t.Run("Component with data", func(t *testing.T) {
 		tp := New().Template()
 		tp.Component(template.Must(template.New("c").Parse(`hello, {{.}}`)))

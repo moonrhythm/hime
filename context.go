@@ -243,6 +243,29 @@ func (ctx *Context) View(name string, data any) error {
 	return ctx.CopyFrom(buf)
 }
 
+// Component renders component
+func (ctx *Context) Component(name string, data any) error {
+	t, ok := ctx.app.component[name]
+	if !ok {
+		panic(newErrComponentNotFound(name))
+	}
+
+	buf := getBytes()
+	defer putBytes(buf)
+
+	err := t.Execute(buf, data)
+	if err != nil {
+		return err
+	}
+
+	if ctx.setETag(buf.Bytes()) {
+		return nil
+	}
+
+	ctx.setContentType("text/html; charset=utf-8")
+	return ctx.CopyFrom(buf)
+}
+
 func (ctx *Context) setContentType(value string) {
 	if len(ctx.w.Header().Get("Content-Type")) == 0 {
 		ctx.w.Header().Set("Content-Type", value)
