@@ -48,7 +48,7 @@ func (app *App) TemplateFuncs(funcs ...template.FuncMap) *App {
 }
 
 // TemplateFunc registers an app's level template func
-func (app *App) TemplateFunc(name string, f interface{}) *App {
+func (app *App) TemplateFunc(name string, f any) *App {
 	return app.TemplateFuncs(template.FuncMap{name: f})
 }
 
@@ -57,7 +57,7 @@ type tmpl struct {
 	m *minify.M
 }
 
-func (t *tmpl) Execute(w io.Writer, data interface{}) error {
+func (t *tmpl) Execute(w io.Writer, data any) error {
 	// t.m.Writer is too slow for short data (html)
 
 	if t.m == nil {
@@ -218,7 +218,7 @@ func (tp *Template) Funcs(funcs ...template.FuncMap) *Template {
 }
 
 // Func adds a template func while load template
-func (tp *Template) Func(name string, f interface{}) *Template {
+func (tp *Template) Func(name string, f any) *Template {
 	return tp.Funcs(template.FuncMap{name: f})
 }
 
@@ -336,13 +336,13 @@ func (tp *Template) Component(ts ...*template.Template) *Template {
 	return tp
 }
 
-func (tp *Template) renderComponent(name string, args ...interface{}) template.HTML {
+func (tp *Template) renderComponent(name string, args ...any) template.HTML {
 	t := tp.components[name]
 	if t == nil {
 		panicf("component '%s' not found", name)
 	}
 
-	var d interface{}
+	var d any
 	switch len(args) {
 	case 0:
 	case 1:
@@ -394,7 +394,7 @@ func cloneTmpl(xs map[string]*tmpl) map[string]*tmpl {
 	return rs
 }
 
-func tfParam(name string, value interface{}) *Param {
+func tfParam(name string, value any) *Param {
 	return &Param{Name: name, Value: value}
 }
 

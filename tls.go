@@ -200,8 +200,8 @@ func loadTLSCertKey(t *tls.Config, certFile, keyFile string) error {
 }
 
 func (s *SelfSign) config(t *tls.Config) error {
-	var priv interface{}
-	var pub interface{}
+	var priv any
+	var pub any
 
 	switch strings.ToLower(s.Key.Algo) {
 	case "ecdsa", "":

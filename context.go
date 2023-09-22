@@ -58,7 +58,7 @@ func (ctx *Context) Err() error {
 }
 
 // Value implements context.Context
-func (ctx *Context) Value(key interface{}) interface{} {
+func (ctx *Context) Value(key any) any {
 	return ctx.Request.Context().Value(key)
 }
 
@@ -80,7 +80,7 @@ func (ctx *Context) WithContext(nctx context.Context) *Context {
 }
 
 // WithValue calls WithContext with value context
-func (ctx *Context) WithValue(key interface{}, val interface{}) *Context {
+func (ctx *Context) WithValue(key any, val any) *Context {
 	return ctx.WithContext(context.WithValue(ctx.Context(), key, val))
 }
 
@@ -91,7 +91,7 @@ func (ctx *Context) Status(code int) *Context {
 }
 
 // Param is the short-hand for hime.Param
-func (ctx *Context) Param(name string, value interface{}) *Param {
+func (ctx *Context) Param(name string, value any) *Param {
 	return &Param{Name: name, Value: value}
 }
 
@@ -136,20 +136,20 @@ func (ctx *Context) Handle(h http.Handler) error {
 }
 
 // Redirect redirects to given url
-func (ctx *Context) Redirect(url string, params ...interface{}) error {
+func (ctx *Context) Redirect(url string, params ...any) error {
 	p := buildPath(url, params...)
 	http.Redirect(ctx.w, ctx.Request, p, ctx.statusCodeRedirect())
 	return nil
 }
 
 // SafeRedirect extracts only path from url then redirect
-func (ctx *Context) SafeRedirect(url string, params ...interface{}) error {
+func (ctx *Context) SafeRedirect(url string, params ...any) error {
 	p := buildPath(url, params...)
 	return ctx.Redirect(SafeRedirectPath(p))
 }
 
 // RedirectTo redirects to route name
-func (ctx *Context) RedirectTo(name string, params ...interface{}) error {
+func (ctx *Context) RedirectTo(name string, params ...any) error {
 	p := buildPath(ctx.app.Route(name), params...)
 	return ctx.Redirect(p)
 }
@@ -221,7 +221,7 @@ func (ctx *Context) setETag(b []byte) bool {
 }
 
 // View renders view
-func (ctx *Context) View(name string, data interface{}) error {
+func (ctx *Context) View(name string, data any) error {
 	t, ok := ctx.app.template[name]
 	if !ok {
 		panic(newErrTemplateNotFound(name))
@@ -263,7 +263,7 @@ func filterRenderError(err error) error {
 }
 
 // JSON encodes given data into json then writes to response writer
-func (ctx *Context) JSON(data interface{}) error {
+func (ctx *Context) JSON(data any) error {
 	buf := getBytes()
 	defer putBytes(buf)
 
@@ -293,7 +293,7 @@ func (ctx *Context) HTML(data string) error {
 }
 
 // String writes string into response writer
-func (ctx *Context) String(format string, a ...interface{}) error {
+func (ctx *Context) String(format string, a ...any) error {
 	ctx.setContentType("text/plain; charset=utf-8")
 	ctx.writeHeader()
 	_, err := fmt.Fprintf(ctx.w, format, a...)
@@ -352,7 +352,7 @@ func (ctx *Context) DelHeader(key string) {
 }
 
 // BindJSON binds request body using json decoder
-func (ctx *Context) BindJSON(v interface{}) error {
+func (ctx *Context) BindJSON(v any) error {
 	return json.NewDecoder(ctx.Body).Decode(v)
 }
 

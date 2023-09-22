@@ -3,7 +3,7 @@ package hime
 import "context"
 
 // Globals is the global const map
-type Globals map[interface{}]interface{}
+type Globals map[any]any
 
 // Globals registers global constants
 func (app *App) Globals(globals Globals) *App {
@@ -14,17 +14,17 @@ func (app *App) Globals(globals Globals) *App {
 }
 
 // Global gets value from global storage
-func (app *App) Global(key interface{}) interface{} {
+func (app *App) Global(key any) any {
 	v, _ := app.globals.Load(key)
 	return v
 }
 
 // Global returns global value
-func (ctx *Context) Global(key interface{}) interface{} {
+func (ctx *Context) Global(key any) any {
 	return ctx.app.Global(key)
 }
 
 // Global returns global value from context
-func Global(ctx context.Context, key interface{}) interface{} {
+func Global(ctx context.Context, key any) any {
 	return getApp(ctx).Global(key)
 }

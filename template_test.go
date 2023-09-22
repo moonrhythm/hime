@@ -300,7 +300,7 @@ list:
 		tp.Parse("t", "  <h1>  Test {{$.A.B}}   </h1>")
 
 		b := bytes.Buffer{}
-		assert.Error(t, tp.list["t"].Execute(&b, map[string]interface{}{"A": "a"}))
+		assert.Error(t, tp.list["t"].Execute(&b, map[string]any{"A": "a"}))
 		assert.Empty(t, b.String())
 	})
 

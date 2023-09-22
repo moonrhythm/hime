@@ -46,7 +46,7 @@ func (x *gracefulConfig) store(gs *GracefulShutdown) {
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler
-func (gs *GracefulShutdown) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (gs *GracefulShutdown) UnmarshalYAML(unmarshal func(any) error) error {
 	var x gracefulConfig
 	err := unmarshal(&x)
 	if err != nil {

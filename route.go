@@ -28,7 +28,7 @@ func (app *App) Routes(routes Routes) *App {
 }
 
 // Route gets route path from given name
-func (app *App) Route(name string, params ...interface{}) string {
+func (app *App) Route(name string, params ...any) string {
 	if app.routes == nil {
 		panic(newErrRouteNotFound(name))
 	}
@@ -40,11 +40,11 @@ func (app *App) Route(name string, params ...interface{}) string {
 }
 
 // Route gets route path from name
-func (ctx *Context) Route(name string, params ...interface{}) string {
+func (ctx *Context) Route(name string, params ...any) string {
 	return ctx.app.Route(name, params...)
 }
 
 // Route returns route value from context
-func Route(ctx context.Context, name string, params ...interface{}) string {
+func Route(ctx context.Context, name string, params ...any) string {
 	return getApp(ctx).Route(name, params...)
 }

@@ -36,20 +36,20 @@ func TestBuildPathParams(t *testing.T) {
 
 	cases := []struct {
 		Base   string
-		Params []interface{}
+		Params []any
 		Output string
 	}{
-		{"", []interface{}{""}, "/"},
-		{"/", []interface{}{"/"}, "/"},
-		{"/a", []interface{}{}, "/a"},
-		{"/a", []interface{}{"/b"}, "/a/b"},
-		{"/a/", []interface{}{"/b/", "/c/"}, "/a/b/c"},
-		{"/a", []interface{}{url.Values{"id": []string{"10"}}}, "/a?id=10"},
-		{"/a", []interface{}{"/b", url.Values{"id": []string{"10"}}}, "/a/b?id=10"},
-		{"/a", []interface{}{"/b/", url.Values{"id": []string{"10"}}}, "/a/b?id=10"},
-		{"/a", []interface{}{"/b/", map[string]string{"id": "10"}}, "/a/b?id=10"},
-		{"/a", []interface{}{"/b/", map[string]interface{}{"id": 10}}, "/a/b?id=10"},
-		{"/a", []interface{}{"/b", &Param{Name: "id", Value: 3456}}, "/a/b?id=3456"},
+		{"", []any{""}, "/"},
+		{"/", []any{"/"}, "/"},
+		{"/a", []any{}, "/a"},
+		{"/a", []any{"/b"}, "/a/b"},
+		{"/a/", []any{"/b/", "/c/"}, "/a/b/c"},
+		{"/a", []any{url.Values{"id": []string{"10"}}}, "/a?id=10"},
+		{"/a", []any{"/b", url.Values{"id": []string{"10"}}}, "/a/b?id=10"},
+		{"/a", []any{"/b/", url.Values{"id": []string{"10"}}}, "/a/b?id=10"},
+		{"/a", []any{"/b/", map[string]string{"id": "10"}}, "/a/b?id=10"},
+		{"/a", []any{"/b/", map[string]any{"id": 10}}, "/a/b?id=10"},
+		{"/a", []any{"/b", &Param{Name: "id", Value: 3456}}, "/a/b?id=3456"},
 	}
 
 	for _, c := range cases {

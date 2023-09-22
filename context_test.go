@@ -240,7 +240,7 @@ func TestContext(t *testing.T) {
 		app := hime.New()
 		ctx := hime.NewAppContext(app, w, r)
 
-		assert.NoError(t, ctx.JSON(map[string]interface{}{"abc": "afg", "bbb": 123}))
+		assert.NoError(t, ctx.JSON(map[string]any{"abc": "afg", "bbb": 123}))
 		assert.Equal(t, w.Code, http.StatusOK)
 		assert.Equal(t, w.Header().Get("Content-Type"), "application/json; charset=utf-8")
 		assert.JSONEq(t, w.Body.String(), `{"abc":"afg","bbb":123}`)

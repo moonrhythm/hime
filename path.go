@@ -10,7 +10,7 @@ import (
 // Param is the query param when redirect
 type Param struct {
 	Name  string
-	Value interface{}
+	Value any
 }
 
 // SafeRedirectPath filters domain out from path
@@ -43,13 +43,13 @@ func mergeValueWithMapString(s url.Values, m map[string]string) {
 	}
 }
 
-func mergeValueWithMapInterface(s url.Values, m map[string]interface{}) {
+func mergeValueWithMapAny(s url.Values, m map[string]any) {
 	for k, v := range m {
 		s[k] = append(s[k], fmt.Sprint(v))
 	}
 }
 
-func buildPath(base string, params ...interface{}) string {
+func buildPath(base string, params ...any) string {
 	xs := make([]string, 0, len(params))
 	ps := make(url.Values)
 	for _, p := range params {
@@ -58,8 +58,8 @@ func buildPath(base string, params ...interface{}) string {
 			mergeValues(ps, v)
 		case map[string]string:
 			mergeValueWithMapString(ps, v)
-		case map[string]interface{}:
-			mergeValueWithMapInterface(ps, v)
+		case map[string]any:
+			mergeValueWithMapAny(ps, v)
 		case *Param:
 			ps[v.Name] = append(ps[v.Name], fmt.Sprint(v.Value))
 		default:
