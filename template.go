@@ -30,6 +30,9 @@ func (app *App) Template() *Template {
 	if app.template == nil {
 		app.template = make(map[string]*tmpl)
 	}
+	if app.component == nil {
+		app.component = make(map[string]*template.Template)
+	}
 	return &Template{
 		list:      app.template,
 		localList: make(map[string]*tmpl),
@@ -37,7 +40,7 @@ func (app *App) Template() *Template {
 			"route":  app.Route,
 			"global": app.Global,
 		}}, app.templateFuncs...),
-		components: make(map[string]*template.Template),
+		components: app.component,
 	}
 }
 
@@ -271,6 +274,28 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 	tp.parsed = true
 }
 
+func (tp *Template) newComponent(name string, parser func(t *template.Template) *template.Template) {
+	if _, ok := tp.list[name]; ok {
+		panic(newErrComponentDuplicate(name))
+	}
+
+	tp.init()
+
+	t := template.Must(tp.parent.Clone()).
+		Funcs(template.FuncMap{
+			"componentName": func() string { return name },
+		})
+
+	t = parser(t)
+
+	if t == nil {
+		panicf("nil component")
+	}
+
+	tp.components[name] = t
+	tp.parsed = true
+}
+
 // Parse parses template from text
 func (tp *Template) Parse(name string, text string) *Template {
 	tp.newTemplate(name, func(t *template.Template) *template.Template {
@@ -318,7 +343,7 @@ func (tp *Template) ParseGlob(name string, pattern string) *Template {
 	return tp
 }
 
-// Component loads html/template
+// Component loads html/template into component list
 func (tp *Template) Component(ts ...*template.Template) *Template {
 	for _, t := range ts {
 		name := t.Name()
@@ -332,6 +357,30 @@ func (tp *Template) Component(ts ...*template.Template) *Template {
 
 		tp.components[name] = t
 	}
+
+	return tp
+}
+
+// ParseComponent parses component from text
+func (tp *Template) ParseComponent(name string, text string) *Template {
+	tp.newComponent(name, func(t *template.Template) *template.Template {
+		return template.Must(t.New(name).Parse(text))
+	})
+
+	return tp
+}
+
+// ParseComponentFile loads component from file
+func (tp *Template) ParseComponentFile(name string, filename string) *Template {
+	tp.newComponent(name, func(t *template.Template) *template.Template {
+		if tp.fs == nil {
+			t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filename)...))
+		} else {
+			t = template.Must(t.ParseFS(tp.fs, joinTemplateDir(tp.dir, filename)...))
+		}
+		t = t.Lookup(filename)
+		return t
+	})
 
 	return tp
 }

@@ -738,6 +738,44 @@ func TestContext(t *testing.T) {
 		assert.Error(t, ctx.View("index", nil))
 	})
 
+	t.Run("Component not exists", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Panics(t, func() { ctx.Component("invalid", nil) })
+	})
+
+	t.Run("Component no data", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		app.Template().Component(template.Must(template.New("c").Parse(`component`)))
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Component("c", nil))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "component")
+	})
+
+	t.Run("Component with data", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		app.Template().Component(template.Must(template.New("c").Parse(`hello, {{.}}`)))
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Component("c", "world"))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "hello, world")
+	})
+
 	t.Run("BindJSON", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"a":1}`)))
