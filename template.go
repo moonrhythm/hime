@@ -378,7 +378,7 @@ func (tp *Template) ParseComponentFile(name string, filename string) *Template {
 		} else {
 			t = template.Must(t.ParseFS(tp.fs, joinTemplateDir(tp.dir, filename)...))
 		}
-		t = t.Lookup(filename)
+		t = t.Lookup(path.Base(filename))
 		return t
 	})
 
