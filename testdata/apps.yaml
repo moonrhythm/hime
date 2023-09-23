@@ -1,3 +1,0 @@
-gracefulShutdown:
-  wait: 5s
-  timeout: 10s

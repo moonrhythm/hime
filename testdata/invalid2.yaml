@@ -1,5 +1,6 @@
 globals:
-  data1: test
+- name: data1
+  value: test
 routes:
   index: /
   about: /about
@@ -10,7 +11,3 @@ templates:
   - comp/footer.tmpl
   list:
     main.tmpl: [main.tmpl, _layout.tmpl]
-server:
-  gracefulShutdown:
-    timeout: abc
-    wait: 5s

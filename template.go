@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
@@ -141,7 +141,7 @@ func (tp *Template) ParseConfig(data []byte) *Template {
 
 // ParseConfigFile parses template config from file
 func (tp *Template) ParseConfigFile(filename string) *Template {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		panicf("read template config file; %v", err)
 	}
