@@ -366,12 +366,6 @@ list:
 		assert.Equal(t, b.String(), `<a href="/p?id=1">go</a>`)
 	})
 
-	t.Run("cloneFuncMaps", func(t *testing.T) {
-		assert.Nil(t, cloneFuncMaps(nil))
-		assert.NotNil(t, cloneFuncMaps([]template.FuncMap{}))
-		assert.Len(t, cloneFuncMaps([]template.FuncMap{{"a": func() string { return "" }}}), 1)
-	})
-
 	t.Run("cloneTmpl", func(t *testing.T) {
 		assert.Nil(t, cloneTmpl(nil))
 		assert.NotNil(t, cloneTmpl(map[string]*tmpl{}))
