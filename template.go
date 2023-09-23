@@ -31,7 +31,7 @@ func (app *App) Template() *Template {
 		app.template = make(map[string]*tmpl)
 	}
 	if app.component == nil {
-		app.component = make(map[string]*template.Template)
+		app.component = make(map[string]*tmpl)
 	}
 	return &Template{
 		list:      app.template,
@@ -89,7 +89,7 @@ type Template struct {
 	leftDelim  string
 	rightDelim string
 	funcs      []template.FuncMap
-	components map[string]*template.Template
+	components map[string]*tmpl
 	minifier   *minify.M
 	parsed     bool
 }
@@ -292,7 +292,10 @@ func (tp *Template) newComponent(name string, parser func(t *template.Template) 
 		panicf("nil component")
 	}
 
-	tp.components[name] = t
+	tp.components[name] = &tmpl{
+		Template: t,
+		m:        tp.minifier,
+	}
 	tp.parsed = true
 }
 
@@ -355,7 +358,10 @@ func (tp *Template) Component(ts ...*template.Template) *Template {
 			panicf("component '%s' already exists", name)
 		}
 
-		tp.components[name] = t
+		tp.components[name] = &tmpl{
+			Template: t,
+			m:        tp.minifier,
+		}
 	}
 
 	return tp

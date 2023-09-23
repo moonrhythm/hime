@@ -21,7 +21,7 @@ type App struct {
 	serveHandler  http.Handler
 
 	template      map[string]*tmpl
-	component     map[string]*template.Template
+	component     map[string]*tmpl
 	templateFuncs []template.FuncMap
 
 	ETag bool
