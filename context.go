@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"net"
 	"net/http"
@@ -248,6 +249,40 @@ func (ctx *Context) Component(name string, data any) error {
 	t, ok := ctx.app.component[name]
 	if !ok {
 		panic(newErrComponentNotFound(name))
+	}
+
+	buf := getBytes()
+	defer putBytes(buf)
+
+	err := t.Execute(buf, data)
+	if err != nil {
+		return err
+	}
+
+	if ctx.setETag(buf.Bytes()) {
+		return nil
+	}
+
+	ctx.setContentType("text/html; charset=utf-8")
+	return ctx.CopyFrom(buf)
+}
+
+// Render renders html template
+func (ctx *Context) Render(tmpl string, data any) error {
+	// TODO: cache template
+	// TODO: use pre-defined template func
+	t, err := template.New("").Parse(tmpl)
+	if err != nil {
+		return err
+	}
+
+	return ctx.executeTemplate(t, data)
+}
+
+func (ctx *Context) executeTemplate(t *template.Template, data any) error {
+	if !ctx.etag {
+		ctx.setContentType("text/html; charset=utf-8")
+		return filterRenderError(t.Execute(ctx.w, data))
 	}
 
 	buf := getBytes()
