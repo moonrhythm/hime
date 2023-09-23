@@ -776,6 +776,19 @@ func TestContext(t *testing.T) {
 		assert.Equal(t, w.Body.String(), "hello, world")
 	})
 
+	t.Run("Render", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.Render(`hello, {{.}}`, "world"))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
+		assert.Equal(t, w.Body.String(), "hello, world")
+	})
+
 	t.Run("BindJSON", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(`{"a":1}`)))
