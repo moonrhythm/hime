@@ -39,32 +39,30 @@ type AppConfig struct {
 //   - main.tmpl
 //   - _layout.tmpl
 //     about.tmpl: [about.tmpl, _layout.tmpl]
-func (app *App) Config(config AppConfig) *App {
+func (app *App) Config(config AppConfig) {
 	app.Globals(config.Globals)
 	app.Routes(config.Routes)
 
 	for _, cfg := range config.Templates {
 		app.Template().Config(cfg)
 	}
-
-	return app
 }
 
 // ParseConfig parses config data
-func (app *App) ParseConfig(data []byte) *App {
+func (app *App) ParseConfig(data []byte) {
 	var config AppConfig
 	err := yaml.Unmarshal(data, &config)
 	if err != nil {
 		panicf("can not parse config; %v", err)
 	}
-	return app.Config(config)
+	app.Config(config)
 }
 
 // ParseConfigFile parses config from file
-func (app *App) ParseConfigFile(filename string) *App {
+func (app *App) ParseConfigFile(filename string) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		panicf("can not read config from file; %v", err)
 	}
-	return app.ParseConfig(data)
+	app.ParseConfig(data)
 }

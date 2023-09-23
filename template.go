@@ -45,14 +45,13 @@ func (app *App) Template() *Template {
 }
 
 // TemplateFuncs registers app's level template funcs
-func (app *App) TemplateFuncs(funcs ...template.FuncMap) *App {
+func (app *App) TemplateFuncs(funcs ...template.FuncMap) {
 	app.templateFuncs = append(app.templateFuncs, funcs...)
-	return app
 }
 
 // TemplateFunc registers an app's level template func
-func (app *App) TemplateFunc(name string, f any) *App {
-	return app.TemplateFuncs(template.FuncMap{name: f})
+func (app *App) TemplateFunc(name string, f any) {
+	app.TemplateFuncs(template.FuncMap{name: f})
 }
 
 type tmpl struct {
@@ -112,7 +111,7 @@ func (tp *Template) init() {
 }
 
 // Config loads template config
-func (tp *Template) Config(cfg TemplateConfig) *Template {
+func (tp *Template) Config(cfg TemplateConfig) {
 	tp.Dir(cfg.Dir)
 	tp.Root(cfg.Root)
 	if len(cfg.Delims) == 2 {
@@ -125,27 +124,25 @@ func (tp *Template) Config(cfg TemplateConfig) *Template {
 	for name, filenames := range cfg.List {
 		tp.ParseFiles(name, filenames...)
 	}
-
-	return tp
 }
 
 // ParseConfig parses template config data
-func (tp *Template) ParseConfig(data []byte) *Template {
+func (tp *Template) ParseConfig(data []byte) {
 	var config TemplateConfig
 	err := yaml.Unmarshal(data, &config)
 	if err != nil {
 		panicf("can not parse template config; %v", err)
 	}
-	return tp.Config(config)
+	tp.Config(config)
 }
 
 // ParseConfigFile parses template config from file
-func (tp *Template) ParseConfigFile(filename string) *Template {
+func (tp *Template) ParseConfigFile(filename string) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		panicf("read template config file; %v", err)
 	}
-	return tp.ParseConfig(data)
+	tp.ParseConfig(data)
 }
 
 type TemplateMinifyConfig struct {
@@ -155,7 +152,7 @@ type TemplateMinifyConfig struct {
 }
 
 // MinifyWith enables minify with custom options
-func (tp *Template) MinifyWith(cfg TemplateMinifyConfig) *Template {
+func (tp *Template) MinifyWith(cfg TemplateMinifyConfig) {
 	tp.minifier = minify.New()
 	if cfg.HTML != nil {
 		tp.minifier.Add("text/html", cfg.HTML)
@@ -171,13 +168,11 @@ func (tp *Template) MinifyWith(cfg TemplateMinifyConfig) *Template {
 	for _, t := range tp.localList {
 		t.m = tp.minifier
 	}
-
-	return tp
 }
 
 // Minify enables minify when render html, css, js
-func (tp *Template) Minify() *Template {
-	return tp.MinifyWith(TemplateMinifyConfig{
+func (tp *Template) Minify() {
+	tp.MinifyWith(TemplateMinifyConfig{
 		HTML: &html.Minifier{},
 		CSS:  &css.Minifier{},
 		JS:   &js.Minifier{},
@@ -185,53 +180,48 @@ func (tp *Template) Minify() *Template {
 }
 
 // Delims sets left and right delims
-func (tp *Template) Delims(left, right string) *Template {
+func (tp *Template) Delims(left, right string) {
 	tp.leftDelim = left
 	tp.rightDelim = right
-	return tp
 }
 
 // Root calls t.Lookup(name) after load template,
 // empty string won't trigger t.Lookup
 //
 // default is ""
-func (tp *Template) Root(name string) *Template {
+func (tp *Template) Root(name string) {
 	tp.root = name
-	return tp
 }
 
 // Dir sets root directory when load template
 //
 // default is ""
-func (tp *Template) Dir(path string) *Template {
+func (tp *Template) Dir(path string) {
 	tp.dir = path
-	return tp
 }
 
 // FS uses fs when load template
-func (tp *Template) FS(fs fs.FS) *Template {
+func (tp *Template) FS(fs fs.FS) {
 	tp.fs = fs
-	return tp
 }
 
 // Funcs adds template funcs while load template
-func (tp *Template) Funcs(funcs ...template.FuncMap) *Template {
+func (tp *Template) Funcs(funcs ...template.FuncMap) {
 	tp.funcs = append(tp.funcs, funcs...)
-	return tp
 }
 
 // Func adds a template func while load template
-func (tp *Template) Func(name string, f any) *Template {
-	return tp.Funcs(template.FuncMap{name: f})
+func (tp *Template) Func(name string, f any) {
+	tp.Funcs(template.FuncMap{name: f})
 }
 
 // Preload loads given templates before every templates
-func (tp *Template) Preload(filename ...string) *Template {
+func (tp *Template) Preload(filename ...string) {
 	if tp.parsed {
 		panicf("preload must call before parse")
 	}
 	if len(filename) == 0 {
-		return tp
+		return
 	}
 
 	tp.init()
@@ -240,8 +230,6 @@ func (tp *Template) Preload(filename ...string) *Template {
 	} else {
 		template.Must(tp.parent.ParseFS(tp.fs, joinTemplateDir(tp.dir, filename...)...))
 	}
-
-	return tp
 }
 
 func (tp *Template) newTemplate(name string, parser func(t *template.Template) *template.Template) {
@@ -300,16 +288,14 @@ func (tp *Template) newComponent(name string, parser func(t *template.Template) 
 }
 
 // Parse parses template from text
-func (tp *Template) Parse(name string, text string) *Template {
+func (tp *Template) Parse(name string, text string) {
 	tp.newTemplate(name, func(t *template.Template) *template.Template {
 		return template.Must(t.New(name).Parse(text))
 	})
-
-	return tp
 }
 
 // ParseFiles loads template from file
-func (tp *Template) ParseFiles(name string, filenames ...string) *Template {
+func (tp *Template) ParseFiles(name string, filenames ...string) {
 	tp.newTemplate(name, func(t *template.Template) *template.Template {
 		if tp.fs == nil {
 			t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filenames...)...))
@@ -321,12 +307,10 @@ func (tp *Template) ParseFiles(name string, filenames ...string) *Template {
 		}
 		return t
 	})
-
-	return tp
 }
 
 // ParseGlob loads template from pattern
-func (tp *Template) ParseGlob(name string, pattern string) *Template {
+func (tp *Template) ParseGlob(name string, pattern string) {
 	if tp.root == "" {
 		panicf("parse glob can not use without root")
 	}
@@ -342,12 +326,10 @@ func (tp *Template) ParseGlob(name string, pattern string) *Template {
 			return template.Must(t.ParseFS(tp.fs, d+pattern))
 		}
 	})
-
-	return tp
 }
 
 // Component loads html/template into component list
-func (tp *Template) Component(ts ...*template.Template) *Template {
+func (tp *Template) Component(ts ...*template.Template) {
 	for _, t := range ts {
 		name := t.Name()
 		if name == "" {
@@ -363,21 +345,17 @@ func (tp *Template) Component(ts ...*template.Template) *Template {
 			m:        tp.minifier,
 		}
 	}
-
-	return tp
 }
 
 // ParseComponent parses component from text
-func (tp *Template) ParseComponent(name string, text string) *Template {
+func (tp *Template) ParseComponent(name string, text string) {
 	tp.newComponent(name, func(t *template.Template) *template.Template {
 		return template.Must(t.New(name).Parse(text))
 	})
-
-	return tp
 }
 
 // ParseComponentFile loads component from file
-func (tp *Template) ParseComponentFile(name string, filename string) *Template {
+func (tp *Template) ParseComponentFile(name string, filename string) {
 	tp.newComponent(name, func(t *template.Template) *template.Template {
 		if tp.fs == nil {
 			t = template.Must(t.ParseFiles(joinTemplateDir(tp.dir, filename)...))
@@ -387,8 +365,6 @@ func (tp *Template) ParseComponentFile(name string, filename string) *Template {
 		t = t.Lookup(path.Base(filename))
 		return t
 	})
-
-	return tp
 }
 
 func (tp *Template) renderComponent(name string, args ...any) template.HTML {

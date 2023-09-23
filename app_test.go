@@ -50,7 +50,8 @@ func TestApp(t *testing.T) {
 
 		app2.Routes(Routes{
 			"a": "4",
-		}).Globals(Globals{
+		})
+		app2.Globals(Globals{
 			"q": "p",
 		})
 

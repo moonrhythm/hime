@@ -38,7 +38,8 @@ func TestGlobal(t *testing.T) {
 			app.Handler(Handler(func(ctx *Context) error {
 				assert.Nil(t, app.Global("key1"))
 				return nil
-			})).ServeHTTP(w, r)
+			}))
+			app.ServeHTTP(w, r)
 		})
 
 		t.Run("retrieve data from global", func(t *testing.T) {
@@ -58,7 +59,8 @@ func TestGlobal(t *testing.T) {
 				assert.Equal(t, Global(ctx, "key2"), "value2")
 				assert.Nil(t, ctx.Global("key3"))
 				return nil
-			})).ServeHTTP(w, r)
+			}))
+			app.ServeHTTP(w, r)
 		})
 	})
 }

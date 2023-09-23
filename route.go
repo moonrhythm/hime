@@ -17,14 +17,13 @@ func cloneRoutes(xs Routes) Routes {
 }
 
 // Routes registers route name and path
-func (app *App) Routes(routes Routes) *App {
+func (app *App) Routes(routes Routes) {
 	if app.routes == nil {
 		app.routes = make(Routes)
 	}
 	for name, path := range routes {
 		app.routes[name] = path
 	}
-	return app
 }
 
 // Route gets route path from given name

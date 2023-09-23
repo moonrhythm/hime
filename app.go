@@ -70,15 +70,13 @@ func (app *App) Clone() *App {
 }
 
 // Address sets server address
-func (app *App) Address(addr string) *App {
+func (app *App) Address(addr string) {
 	app.srv.Addr = addr
-	return app
 }
 
 // Handler sets the handler
-func (app *App) Handler(h http.Handler) *App {
+func (app *App) Handler(h http.Handler) {
 	app.handler = h
-	return app
 }
 
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -138,27 +136,23 @@ func (app *App) ensureTLSConfig() {
 }
 
 // TLS sets cert and key file
-func (app *App) TLS(certFile, keyFile string) *App {
+func (app *App) TLS(certFile, keyFile string) {
 	app.ensureTLSConfig()
 
 	err := loadTLSCertKey(app.srv.TLSConfig, certFile, keyFile)
 	if err != nil {
 		panicf("load key pair; %v", err)
 	}
-
-	return app
 }
 
 // SelfSign generates self sign cert
-func (app *App) SelfSign(s SelfSign) *App {
+func (app *App) SelfSign(s SelfSign) {
 	app.ensureTLSConfig()
 
 	err := s.config(app.srv.TLSConfig)
 	if err != nil {
 		panicf("generate self sign; %v", err)
 	}
-
-	return app
 }
 
 func getApp(ctx context.Context) *App {

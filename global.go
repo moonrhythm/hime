@@ -6,11 +6,10 @@ import "context"
 type Globals map[any]any
 
 // Globals registers global constants
-func (app *App) Globals(globals Globals) *App {
+func (app *App) Globals(globals Globals) {
 	for key, value := range globals {
 		app.globals.Store(key, value)
 	}
-	return app
 }
 
 // Global gets value from global storage

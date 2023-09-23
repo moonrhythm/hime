@@ -38,12 +38,14 @@ func TestPanicInView(t *testing.T) {
 		app := New()
 
 		app.TemplateFunc("panic", func() string { panic("panic") })
-		app.Template().Dir("testdata").Root("root").ParseFiles("index", "panic.tmpl")
+		tmpl := app.Template()
+		tmpl.Dir("testdata")
+		tmpl.Root("root")
+		tmpl.ParseFiles("index", "panic.tmpl")
 
-		app.
-			Handler(Handler(func(ctx *Context) error {
-				return ctx.View("index", nil)
-			}))
+		app.Handler(Handler(func(ctx *Context) error {
+			return ctx.View("index", nil)
+		}))
 
 		ts := httptest.NewServer(panicRecovery(app))
 		defer ts.Close()
@@ -59,7 +61,11 @@ func TestPanicInView(t *testing.T) {
 		app := New()
 
 		app.TemplateFunc("panic", func() string { panic("panic") })
-		app.Template().Dir("testdata").Root("root").ParseFiles("index", "panic.tmpl").Minify()
+		tmpl := app.Template()
+		tmpl.Dir("testdata")
+		tmpl.Root("root")
+		tmpl.ParseFiles("index", "panic.tmpl")
+		tmpl.Minify()
 
 		app.
 			Handler(Handler(func(ctx *Context) error {

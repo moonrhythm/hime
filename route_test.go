@@ -76,7 +76,8 @@ func TestRoute(t *testing.T) {
 				assert.Equal(t, Route(ctx, "a"), "/b")
 				assert.Equal(t, Route(ctx, "b"), "/cd")
 				return nil
-			})).ServeHTTP(w, r)
+			}))
+			app.ServeHTTP(w, r)
 		})
 
 		t.Run("panic when retrieve not exists route", func(t *testing.T) {
@@ -92,7 +93,8 @@ func TestRoute(t *testing.T) {
 			app.Handler(Handler(func(ctx *Context) error {
 				assert.Panics(t, func() { ctx.Route("c") })
 				return nil
-			})).ServeHTTP(w, r)
+			}))
+			app.ServeHTTP(w, r)
 		})
 	})
 }

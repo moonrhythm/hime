@@ -659,7 +659,11 @@ func TestContext(t *testing.T) {
 		r := httptest.NewRequest(http.MethodPost, "/", nil)
 
 		app := hime.New()
-		app.Template().Dir("testdata").Root("root").ParseFiles("index", "hello.tmpl")
+		tmpl := app.Template()
+		tmpl.Dir("testdata")
+		tmpl.Root("root")
+		tmpl.ParseFiles("index", "hello.tmpl")
+
 		ctx := hime.NewAppContext(app, w, r)
 
 		assert.NoError(t, ctx.View("index", nil))
@@ -671,7 +675,10 @@ func TestContext(t *testing.T) {
 	t.Run("View with etag", func(t *testing.T) {
 		app := hime.New()
 		app.ETag = true
-		app.Template().Dir("testdata").Root("root").ParseFiles("index", "hello.tmpl")
+		tmpl := app.Template()
+		tmpl.Dir("testdata")
+		tmpl.Root("root")
+		tmpl.ParseFiles("index", "hello.tmpl")
 
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodPost, "/", nil)
@@ -701,7 +708,11 @@ func TestContext(t *testing.T) {
 		r := httptest.NewRequest(http.MethodPost, "/", nil)
 
 		app := hime.New()
-		app.Template().Dir("testdata").Root("root").ParseFiles("index", "hello.tmpl")
+		tmpl := app.Template()
+		tmpl.Dir("testdata")
+		tmpl.Root("root")
+		tmpl.ParseFiles("index", "hello.tmpl")
+
 		ctx := hime.NewAppContext(app, w, r)
 
 		assert.NoError(t, ctx.Status(http.StatusInternalServerError).View("index", nil))
@@ -718,7 +729,11 @@ func TestContext(t *testing.T) {
 		app.TemplateFuncs(template.FuncMap{
 			"fn": func(s string) string { return s },
 		})
-		app.Template().Dir("testdata").Root("root").ParseFiles("index", "call_fn.tmpl")
+		tmpl := app.Template()
+		tmpl.Dir("testdata")
+		tmpl.Root("root")
+		tmpl.ParseFiles("index", "call_fn.tmpl")
+
 		ctx := hime.NewAppContext(app, w, r)
 
 		assert.Error(t, ctx.View("index", nil))
@@ -732,7 +747,11 @@ func TestContext(t *testing.T) {
 		app.TemplateFuncs(template.FuncMap{
 			"panic": func() string { panic("panic") },
 		})
-		app.Template().Dir("testdata").Root("root").ParseFiles("index", "panic.tmpl")
+		tmpl := app.Template()
+		tmpl.Dir("testdata")
+		tmpl.Root("root")
+		tmpl.ParseFiles("index", "panic.tmpl")
+
 		ctx := hime.NewAppContext(app, w, r)
 
 		assert.Error(t, ctx.View("index", nil))
