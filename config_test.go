@@ -2,7 +2,6 @@ package hime
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -28,23 +27,6 @@ func TestConfig(t *testing.T) {
 			assert.Len(t, app.template, 2)
 			assert.Contains(t, app.template, "main")
 			assert.Contains(t, app.template, "main2")
-
-			// server
-			assert.Equal(t, app.srv.Addr, ":8080")
-			assert.Equal(t, app.srv.ReadTimeout, 10*time.Second)
-			assert.Equal(t, app.srv.ReadHeaderTimeout, 5*time.Second)
-			assert.Equal(t, app.srv.WriteTimeout, 6*time.Second)
-			assert.Equal(t, app.srv.IdleTimeout, 30*time.Second)
-			assert.Equal(t, app.tcpKeepAlive, time.Minute)
-			assert.True(t, app.reusePort)
-			assert.True(t, app.ETag)
-			assert.True(t, app.H2C)
-			assert.Len(t, app.srv.TLSConfig.Certificates, 1)
-
-			// graceful
-			assert.NotNil(t, app.gs)
-			assert.Equal(t, app.gs.timeout, time.Minute)
-			assert.Equal(t, app.gs.wait, 5*time.Second)
 		})
 	})
 
@@ -55,36 +37,6 @@ func TestConfig(t *testing.T) {
 			assert.Equal(t, mapLen(&app.globals), 0)
 			assert.Len(t, app.routes, 0)
 			assert.Len(t, app.template, 0)
-
-			// server
-			assert.Empty(t, app.srv.ReadTimeout)
-			assert.Empty(t, app.srv.ReadHeaderTimeout)
-			assert.Empty(t, app.srv.WriteTimeout)
-			assert.Empty(t, app.srv.IdleTimeout)
-
-			// graceful
-			assert.NotNil(t, app.gs)
-			assert.Empty(t, app.gs.timeout)
-			assert.Empty(t, app.gs.wait)
-		})
-	})
-
-	t.Run("Config3", func(t *testing.T) {
-		assert.NotPanics(t, func() {
-			app := New().ParseConfigFile("testdata/config3.yaml")
-
-			assert.Equal(t, mapLen(&app.globals), 0)
-			assert.Len(t, app.routes, 0)
-			assert.Len(t, app.template, 0)
-
-			// server
-			assert.Empty(t, app.srv.ReadTimeout)
-			assert.Empty(t, app.srv.ReadHeaderTimeout)
-			assert.Empty(t, app.srv.WriteTimeout)
-			assert.Empty(t, app.srv.IdleTimeout)
-
-			// graceful
-			assert.Nil(t, app.gs)
 		})
 	})
 

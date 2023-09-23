@@ -16,19 +16,3 @@ templates:
   root: root
   list:
     main2: [main.tmpl, _layout.tmpl]
-server:
-  addr: :8080
-  readTimeout: 10s
-  readHeaderTimeout: 5s
-  writeTimeout: 6s
-  idleTimeout: 30s
-  reusePort: true
-  eTag: true
-  h2c: true
-  tcpKeepAlive: 1m
-  gracefulShutdown:
-    timeout: 1m
-    wait: 5s
-  tls:
-    selfSign: {}
-    profile: modern
