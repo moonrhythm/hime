@@ -376,7 +376,3 @@ func cloneTmpl(xs map[string]*tmpl) map[string]*tmpl {
 func tfParam(name string, value any) *Param {
 	return &Param{Name: name, Value: value}
 }
-
-func tfTemplateName() string {
-	return ""
-}

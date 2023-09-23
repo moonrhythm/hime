@@ -20,9 +20,10 @@ type App struct {
 	onceServeHTTP sync.Once
 	serveHandler  http.Handler
 
-	template  map[string]*tmpl
-	component map[string]*tmpl
-	parent    *template.Template
+	template        map[string]*tmpl
+	component       map[string]*tmpl
+	cachedComponent sync.Map
+	parent          *template.Template
 
 	ETag bool
 }
@@ -169,7 +170,7 @@ func (app *App) setupParent() {
 	}
 	app.parent.Funcs(template.FuncMap{
 		"param":        tfParam,
-		"templateName": tfTemplateName,
+		"templateName": func() string { return "" },
 		"component":    app.renderComponent,
 		"route":        app.Route,
 		"global":       app.Global,

@@ -11,6 +11,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -271,12 +272,24 @@ func (ctx *Context) Component(name string, data any) error {
 
 // Render renders html template
 func (ctx *Context) Render(tmpl string, data any) error {
-	// TODO: cache template
-	// TODO: use pre-defined template func
-	t, err := template.New("").Parse(tmpl)
+	hash := sha1.Sum([]byte(tmpl))
+	key := hex.EncodeToString(hash[:]) + "|" + strconv.Itoa(len(tmpl))
+
+	if t, ok := ctx.app.cachedComponent.Load(key); ok {
+		return ctx.executeTemplate(t.(*template.Template), data)
+	}
+
+	t, err := ctx.app.parent.Clone()
 	if err != nil {
 		return err
 	}
+
+	t, err = t.Parse(tmpl)
+	if err != nil {
+		return err
+	}
+
+	ctx.app.cachedComponent.Store(key, t)
 
 	return ctx.executeTemplate(t, data)
 }
@@ -419,7 +432,7 @@ func (ctx *Context) BindJSON(v any) error {
 func etag(b []byte) string {
 	hash := sha1.Sum(b)
 	l := len(b)
-	return fmt.Sprintf("W/\"%d-%s\"", l, hex.EncodeToString(hash[:]))
+	return `W/"` + strconv.Itoa(l) + "-" + hex.EncodeToString(hash[:]) + `"`
 }
 
 func matchETag(r *http.Request, etag string) bool {
