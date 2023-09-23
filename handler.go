@@ -2,6 +2,7 @@ package hime
 
 import (
 	"context"
+	"errors"
 	"net/http"
 )
 
@@ -13,7 +14,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case err == nil:
-	case err == context.Canceled:
+	case errors.Is(err, context.Canceled):
 	default:
 		panic(err)
 	}
