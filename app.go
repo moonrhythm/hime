@@ -20,9 +20,9 @@ type App struct {
 	onceServeHTTP sync.Once
 	serveHandler  http.Handler
 
-	template      map[string]*tmpl
-	component     map[string]*tmpl
-	templateFuncs []template.FuncMap
+	template  map[string]*tmpl
+	component map[string]*tmpl
+	parent    *template.Template
 
 	ETag bool
 }
@@ -33,6 +33,7 @@ type ctxKeyApp struct{}
 func New() *App {
 	app := &App{}
 	app.SetServer(&parapet.Server{})
+	app.setupParent()
 	return app
 }
 
@@ -57,14 +58,15 @@ func (app *App) Clone() *App {
 			TLSConfig:          app.srv.TLSConfig.Clone(),
 			BaseContext:        app.srv.BaseContext,
 		},
-		handler:       app.handler,
-		routes:        cloneRoutes(app.routes),
-		globals:       cloneMap(&app.globals),
-		template:      cloneTmpl(app.template),
-		templateFuncs: cloneFuncMaps(app.templateFuncs),
-		ETag:          app.ETag,
+		handler:  app.handler,
+		routes:   cloneRoutes(app.routes),
+		globals:  cloneMap(&app.globals),
+		template: cloneTmpl(app.template),
+		parent:   template.Must(app.parent.Clone()),
+		ETag:     app.ETag,
 	}
 	x.srv.Handler = x
+	x.setupParent()
 
 	return x
 }
@@ -153,6 +155,25 @@ func (app *App) SelfSign(s SelfSign) {
 	if err != nil {
 		panicf("generate self sign; %v", err)
 	}
+}
+
+func (app *App) setupParent() {
+	if app.parent == nil {
+		app.parent = template.New("")
+	}
+	if app.template == nil {
+		app.template = make(map[string]*tmpl)
+	}
+	if app.component == nil {
+		app.component = make(map[string]*tmpl)
+	}
+	app.parent.Funcs(template.FuncMap{
+		"param":        tfParam,
+		"templateName": tfTemplateName,
+		"component":    app.renderComponent,
+		"route":        app.Route,
+		"global":       app.Global,
+	})
 }
 
 func getApp(ctx context.Context) *App {

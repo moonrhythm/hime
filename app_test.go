@@ -1,6 +1,7 @@
 package hime
 
 import (
+	"bytes"
 	"crypto/tls"
 	"html/template"
 	"net/http"
@@ -16,15 +17,34 @@ func TestApp(t *testing.T) {
 
 	t.Run("TemplateFuncs", func(t *testing.T) {
 		app := New()
-		app.TemplateFunc("a", func() {})
-		assert.Len(t, app.templateFuncs, 1)
+		app.TemplateFunc("a", func() string {
+			return "a1"
+		})
+
+		var buf bytes.Buffer
+		tmpl := template.Must(app.parent.New("").Parse("{{a}}"))
+		err := tmpl.Execute(&buf, nil)
+		if !assert.NoError(t, err) {
+			return
+		}
+		if !assert.Equal(t, "a1", buf.String()) {
+			return
+		}
 
 		app.TemplateFuncs(template.FuncMap{
-			"a": func() {},
-			"b": func() {},
-			"c": func() {},
+			"a": func() string { return "a2" },
+			"b": func() string { return "b2" },
+			"c": func() string { return "c2" },
 		})
-		assert.Len(t, app.templateFuncs, 2)
+		buf.Reset()
+		tmpl = template.Must(app.parent.New("").Parse("{{a}}{{b}}{{c}}"))
+		err = tmpl.Execute(&buf, nil)
+		if !assert.NoError(t, err) {
+			return
+		}
+		if !assert.Equal(t, "a2b2c2", buf.String()) {
+			return
+		}
 	})
 
 	t.Run("Address", func(t *testing.T) {

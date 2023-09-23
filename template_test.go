@@ -35,8 +35,6 @@ list:
 		assert.Equal(t, tp.dir, "testdata/template")
 		assert.Equal(t, tp.root, "l")
 		assert.NotNil(t, tp.minifier)
-		assert.Equal(t, tp.leftDelim, "[[")
-		assert.Equal(t, tp.rightDelim, "]]")
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -64,8 +62,6 @@ list:
 		assert.Equal(t, tp.dir, "testdata/template")
 		assert.Empty(t, tp.root)
 		assert.NotNil(t, tp.minifier)
-		assert.Equal(t, tp.leftDelim, "[[")
-		assert.Equal(t, tp.rightDelim, "]]")
 		// assert.Equal(t, tp.preload, []string{"a.tmpl", "b.tmpl"})
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
@@ -85,8 +81,6 @@ list:
 		assert.Equal(t, tp.dir, "testdata/template")
 		assert.Equal(t, tp.root, "l")
 		assert.NotNil(t, tp.minifier)
-		assert.Equal(t, tp.leftDelim, "[[")
-		assert.Equal(t, tp.rightDelim, "]]")
 		assert.Contains(t, tp.list, "p")
 		assert.Contains(t, tp.list, "k")
 		assert.NotContains(t, tp.list, "a.tmpl")
@@ -312,14 +306,14 @@ list:
 		assert.Equal(t, b.String(), "<h1>Test</h1>")
 	})
 
-	t.Run("Minify after parse", func(t *testing.T) {
+	t.Run("Minify after parse should not minify", func(t *testing.T) {
 		tp := New().Template()
 		tp.Parse("t", "  <h1>  Test   </h1>")
 		tp.Minify()
 
 		b := bytes.Buffer{}
 		tp.list["t"].Execute(&b, nil)
-		assert.Equal(t, b.String(), "<h1>Test</h1>")
+		assert.Equal(t, b.String(), "  <h1>  Test   </h1>")
 	})
 
 	t.Run("Minify execute error", func(t *testing.T) {

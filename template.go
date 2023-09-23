@@ -27,26 +27,18 @@ type TemplateConfig struct {
 
 // Template creates new template loader
 func (app *App) Template() *Template {
-	if app.template == nil {
-		app.template = make(map[string]*tmpl)
-	}
-	if app.component == nil {
-		app.component = make(map[string]*tmpl)
-	}
 	return &Template{
-		list:      app.template,
-		localList: make(map[string]*tmpl),
-		funcs: append([]template.FuncMap{{
-			"route":  app.Route,
-			"global": app.Global,
-		}}, app.templateFuncs...),
+		parent:     template.Must(app.parent.Clone()),
+		list:       app.template,
 		components: app.component,
 	}
 }
 
 // TemplateFuncs registers app's level template funcs
 func (app *App) TemplateFuncs(funcs ...template.FuncMap) {
-	app.templateFuncs = append(app.templateFuncs, funcs...)
+	for _, f := range funcs {
+		app.parent.Funcs(f)
+	}
 }
 
 // TemplateFunc registers an app's level template func
@@ -81,33 +73,12 @@ func (t *tmpl) Execute(w io.Writer, data any) error {
 type Template struct {
 	parent     *template.Template
 	list       map[string]*tmpl
-	localList  map[string]*tmpl
 	root       string
 	fs         fs.FS
 	dir        string
-	leftDelim  string
-	rightDelim string
-	funcs      []template.FuncMap
 	components map[string]*tmpl
 	minifier   *minify.M
 	parsed     bool
-}
-
-func (tp *Template) init() {
-	if tp.parent == nil {
-		tp.parent = template.New("").
-			Delims(tp.leftDelim, tp.rightDelim).
-			Funcs(template.FuncMap{
-				"param":        tfParam,
-				"templateName": tfTemplateName,
-				"component":    tp.renderComponent,
-			})
-
-		// register funcs
-		for _, fn := range tp.funcs {
-			tp.parent.Funcs(fn)
-		}
-	}
 }
 
 // Config loads template config
@@ -151,7 +122,7 @@ type TemplateMinifyConfig struct {
 	JS   minify.Minifier
 }
 
-// MinifyWith enables minify with custom options
+// MinifyWith enables minify with custom options, must call before parse
 func (tp *Template) MinifyWith(cfg TemplateMinifyConfig) {
 	tp.minifier = minify.New()
 	if cfg.HTML != nil {
@@ -163,14 +134,9 @@ func (tp *Template) MinifyWith(cfg TemplateMinifyConfig) {
 	if cfg.JS != nil {
 		tp.minifier.Add("application/javascript", cfg.JS)
 	}
-
-	// sets minify for parsed templates
-	for _, t := range tp.localList {
-		t.m = tp.minifier
-	}
 }
 
-// Minify enables minify when render html, css, js
+// Minify enables minify when render html, css, js, must call before parse
 func (tp *Template) Minify() {
 	tp.MinifyWith(TemplateMinifyConfig{
 		HTML: &html.Minifier{},
@@ -181,8 +147,7 @@ func (tp *Template) Minify() {
 
 // Delims sets left and right delims
 func (tp *Template) Delims(left, right string) {
-	tp.leftDelim = left
-	tp.rightDelim = right
+	tp.parent.Delims(left, right)
 }
 
 // Root calls t.Lookup(name) after load template,
@@ -207,7 +172,9 @@ func (tp *Template) FS(fs fs.FS) {
 
 // Funcs adds template funcs while load template
 func (tp *Template) Funcs(funcs ...template.FuncMap) {
-	tp.funcs = append(tp.funcs, funcs...)
+	for _, f := range funcs {
+		tp.parent.Funcs(f)
+	}
 }
 
 // Func adds a template func while load template
@@ -224,7 +191,6 @@ func (tp *Template) Preload(filename ...string) {
 		return
 	}
 
-	tp.init()
 	if tp.fs == nil {
 		template.Must(tp.parent.ParseFiles(joinTemplateDir(tp.dir, filename...)...))
 	} else {
@@ -237,8 +203,6 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		panic(newErrTemplateDuplicate(name))
 	}
 
-	tp.init()
-
 	t := template.Must(tp.parent.Clone()).
 		Funcs(template.FuncMap{
 			"templateName": func() string { return name },
@@ -249,7 +213,6 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 	if tp.root != "" {
 		t = t.Lookup(tp.root)
 	}
-
 	if t == nil {
 		panicf("no root layout")
 	}
@@ -258,7 +221,6 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		Template: t,
 		m:        tp.minifier,
 	}
-	tp.localList[name] = tp.list[name]
 	tp.parsed = true
 }
 
@@ -266,8 +228,6 @@ func (tp *Template) newComponent(name string, parser func(t *template.Template) 
 	if _, ok := tp.list[name]; ok {
 		panic(newErrComponentDuplicate(name))
 	}
-
-	tp.init()
 
 	t := template.Must(tp.parent.Clone()).
 		Funcs(template.FuncMap{
@@ -367,8 +327,8 @@ func (tp *Template) ParseComponentFile(name string, filename string) {
 	})
 }
 
-func (tp *Template) renderComponent(name string, args ...any) template.HTML {
-	t := tp.components[name]
+func (app *App) renderComponent(name string, args ...any) template.HTML {
+	t := app.component[name]
 	if t == nil {
 		panicf("component '%s' not found", name)
 	}
@@ -379,7 +339,7 @@ func (tp *Template) renderComponent(name string, args ...any) template.HTML {
 	case 1:
 		d = args[0]
 	default:
-		panicf("wrong number of data args for component want 0-1 got %d", len(args))
+		panicf("wrong number of data args for component '%s' want 0-1 got %d", name, len(args))
 	}
 
 	buf := getBytes()
@@ -387,7 +347,7 @@ func (tp *Template) renderComponent(name string, args ...any) template.HTML {
 
 	err := t.Execute(buf, d)
 	if err != nil {
-		panic(err)
+		panicf("component '%s' execute error: %v", name, err)
 	}
 
 	return template.HTML(buf.String())
