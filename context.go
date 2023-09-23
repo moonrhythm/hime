@@ -64,15 +64,17 @@ func (ctx *Context) Value(key any) any {
 }
 
 // WithRequest returns new context with given request
-func (ctx Context) WithRequest(r *http.Request) *Context {
-	ctx.Request = r
-	return &ctx
+func (ctx *Context) WithRequest(r *http.Request) *Context {
+	nctx := *ctx
+	nctx.Request = r
+	return &nctx
 }
 
 // WithResponseWriter returns new context with given response writer
-func (ctx Context) WithResponseWriter(w http.ResponseWriter) *Context {
-	ctx.w = w
-	return &ctx
+func (ctx *Context) WithResponseWriter(w http.ResponseWriter) *Context {
+	nctx := *ctx
+	nctx.w = w
+	return &nctx
 }
 
 // WithContext returns new context with new request with given context
