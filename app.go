@@ -13,7 +13,7 @@ import (
 
 // App is the hime app
 type App struct {
-	srv           parapet.Server
+	srv           *parapet.Server
 	handler       http.Handler
 	routes        Routes
 	globals       sync.Map
@@ -32,14 +32,14 @@ type ctxKeyApp struct{}
 // New creates new app
 func New() *App {
 	app := &App{}
-	app.srv.Handler = app
+	app.SetServer(&parapet.Server{})
 	return app
 }
 
 // Clone clones app
 func (app *App) Clone() *App {
 	x := &App{
-		srv: parapet.Server{
+		srv: &parapet.Server{
 			Addr:               app.srv.Addr,
 			ReadTimeout:        app.srv.ReadTimeout,
 			ReadHeaderTimeout:  app.srv.ReadHeaderTimeout,
@@ -105,7 +105,15 @@ func (app *App) ServeHandler(h http.Handler) http.Handler {
 
 // Server returns server inside app
 func (app *App) Server() *parapet.Server {
-	return &app.srv
+	return app.srv
+}
+
+func (app *App) SetServer(srv *parapet.Server) {
+	if srv == nil {
+		panic("nil server")
+	}
+	app.srv = srv
+	srv.Handler = app
 }
 
 // Shutdown shutdowns server
