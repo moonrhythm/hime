@@ -78,7 +78,6 @@ type Template struct {
 	dir        string
 	components map[string]*tmpl
 	minifier   *minify.M
-	parsed     bool
 }
 
 // Config loads template config
@@ -182,11 +181,8 @@ func (tp *Template) Func(name string, f any) {
 	tp.Funcs(template.FuncMap{name: f})
 }
 
-// Preload loads given templates before every templates
+// Preload loads given templates before parse
 func (tp *Template) Preload(filename ...string) {
-	if tp.parsed {
-		panicf("preload must call before parse")
-	}
 	if len(filename) == 0 {
 		return
 	}
@@ -221,7 +217,6 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 		Template: t,
 		m:        tp.minifier,
 	}
-	tp.parsed = true
 }
 
 func (tp *Template) newComponent(name string, parser func(t *template.Template) *template.Template) {
@@ -244,7 +239,6 @@ func (tp *Template) newComponent(name string, parser func(t *template.Template) 
 		Template: t,
 		m:        tp.minifier,
 	}
-	tp.parsed = true
 }
 
 // Parse parses template from text

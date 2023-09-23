@@ -113,11 +113,11 @@ list:
 		}
 	})
 
-	t.Run("Preload after parsed", func(t *testing.T) {
+	t.Run("Preload after parsed allow", func(t *testing.T) {
 		tp := New().Template()
 		tp.Dir("testdata/template")
 		tp.Parse("t", `Test Data {{template "b"}}`)
-		assert.Panics(t, func() { tp.Preload("b.tmpl") })
+		tp.Preload("b.tmpl")
 	})
 
 	t.Run("ParseFiles", func(t *testing.T) {
