@@ -835,4 +835,24 @@ func TestContext(t *testing.T) {
 		assert.NoError(t, ctx.BindJSON(&body))
 		assert.Equal(t, 1, body.A)
 	})
+
+	t.Run("Cookie", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		r.AddCookie(&http.Cookie{Name: "a", Value: "1"})
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Equal(t, "1", ctx.CookieValue("a"))
+
+		ctx.AddCookie("b", "2", &hime.CookieOptions{Path: "/"})
+		ctx.DelCookie("a", nil)
+
+		if !assert.Len(t, w.Header()["Set-Cookie"], 2) {
+			return
+		}
+		assert.Equal(t, "b=2; Path=/", w.Header()["Set-Cookie"][0])
+		assert.Equal(t, "a=; Max-Age=0", w.Header()["Set-Cookie"][1])
+	})
 }

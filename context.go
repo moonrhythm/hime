@@ -429,6 +429,54 @@ func (ctx *Context) BindJSON(v any) error {
 	return json.NewDecoder(ctx.Body).Decode(v)
 }
 
+type CookieOptions struct {
+	Path     string
+	Domain   string
+	MaxAge   int
+	Secure   bool
+	HttpOnly bool
+	SameSite http.SameSite
+}
+
+func (ctx *Context) AddCookie(name string, value string, opts *CookieOptions) {
+	c := http.Cookie{
+		Name:  name,
+		Value: value,
+	}
+	if opts != nil {
+		c.Path = opts.Path
+		c.Domain = opts.Domain
+		c.MaxAge = opts.MaxAge
+		c.Secure = opts.Secure
+		c.HttpOnly = opts.HttpOnly
+		c.SameSite = opts.SameSite
+	}
+	http.SetCookie(ctx.w, &c)
+}
+
+func (ctx *Context) DelCookie(name string, opts *CookieOptions) {
+	c := http.Cookie{
+		Name:   name,
+		MaxAge: -1,
+	}
+	if opts != nil {
+		c.Path = opts.Path
+		c.Domain = opts.Domain
+		c.Secure = opts.Secure
+		c.HttpOnly = opts.HttpOnly
+		c.SameSite = opts.SameSite
+	}
+	http.SetCookie(ctx.w, &c)
+}
+
+func (ctx *Context) CookieValue(name string) string {
+	c, _ := ctx.Cookie(name)
+	if c == nil {
+		return ""
+	}
+	return c.Value
+}
+
 func etag(b []byte) string {
 	hash := sha1.Sum(b)
 	l := len(b)
