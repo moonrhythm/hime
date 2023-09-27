@@ -307,7 +307,7 @@ func TestContext(t *testing.T) {
 
 		assert.NoError(t, ctx.Redirect("https://google.com"))
 		assert.Equal(t, w.Code, http.StatusFound)
-		assert.Equal(t, w.Header().Get("Location"), "https://google.com")
+		assert.Equal(t, w.Header().Get("Location"), "https://google.com/")
 	})
 
 	t.Run("Redirect to internal url path", func(t *testing.T) {

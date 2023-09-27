@@ -50,8 +50,14 @@ func mergeValueWithMapAny(s url.Values, m map[string]any) {
 }
 
 func buildPath(base string, params ...any) string {
+	baseURL, err := url.Parse(base)
+	if err != nil {
+		panicf("parse url error; %v", err)
+	}
+
 	xs := make([]string, 0, len(params))
 	ps := make(url.Values)
+	mergeValues(ps, baseURL.Query())
 	for _, p := range params {
 		switch v := p.(type) {
 		case url.Values:
@@ -66,12 +72,10 @@ func buildPath(base string, params ...any) string {
 			xs = append(xs, strings.TrimPrefix(fmt.Sprint(p), "/"))
 		}
 	}
-	if base == "" || (len(xs) > 0 && !strings.HasSuffix(base, "/")) {
-		base += "/"
+	if baseURL.Path == "" || (len(xs) > 0 && !strings.HasSuffix(baseURL.Path, "/")) {
+		baseURL.Path += "/"
 	}
-	qs := ps.Encode()
-	if len(qs) > 0 {
-		qs = "?" + qs
-	}
-	return base + path.Join(xs...) + qs
+	baseURL.Path += path.Join(xs...)
+	baseURL.RawQuery = ps.Encode()
+	return baseURL.String()
 }
