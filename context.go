@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -326,10 +327,11 @@ func filterRenderError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := err.(*net.OpError); ok {
+	var netErr *net.OpError
+	if errors.As(err, &netErr) {
 		return nil
 	}
-	if err == syscall.EPIPE {
+	if errors.Is(err, syscall.EPIPE) {
 		return nil
 	}
 	return err
@@ -373,9 +375,9 @@ func (ctx *Context) String(format string, a ...any) error {
 	return filterRenderError(err)
 }
 
-// StatusText writes status text from seted status code tnto response writer
+// StatusText writes status text from seted status code into response writer
 func (ctx *Context) StatusText() error {
-	return ctx.String(http.StatusText(ctx.statusCode()))
+	return ctx.String("%s", http.StatusText(ctx.statusCode()))
 }
 
 // CopyFrom copies src reader into response writer
