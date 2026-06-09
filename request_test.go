@@ -183,6 +183,60 @@ func TestRequestFormFileMissingKey(t *testing.T) {
 	assert.Nil(t, h3)
 }
 
+func TestRequestQueryValue(t *testing.T) {
+	r := httptest.NewRequest("GET", "/?a=1&b=a%20b%20&c=1,234%20&neg=-12&f=-3.5", nil)
+	ctx := Context{Request: r}
+
+	assert.Equal(t, "1", ctx.QueryValueTrimSpace("a"))
+	assert.Equal(t, "a b", ctx.QueryValueTrimSpace("b"))
+	assert.Equal(t, "1,234", ctx.QueryValueTrimSpace("c"))
+	assert.Equal(t, "1234", ctx.QueryValueTrimSpaceComma("c"))
+
+	assert.Equal(t, 1, ctx.QueryValueInt("a"))
+	assert.Equal(t, 1234, ctx.QueryValueInt("c"))
+	assert.Equal(t, -12, ctx.QueryValueInt("neg"))
+	assert.Equal(t, 0, ctx.QueryValueInt("b")) // not a number
+
+	assert.Equal(t, int64(1234), ctx.QueryValueInt64("c"))
+	assert.Equal(t, float32(1), ctx.QueryValueFloat32("a"))
+	assert.Equal(t, float64(1234), ctx.QueryValueFloat64("c"))
+	assert.Equal(t, -3.5, ctx.QueryValueFloat64("f"))
+}
+
+func TestRequestValueSlices(t *testing.T) {
+	t.Run("FormValues and PostFormValues", func(t *testing.T) {
+		r := httptest.NewRequest("POST", "/?q=z", bytes.NewBufferString("a=1&a=2&b=3"))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		ctx := Context{Request: r}
+
+		assert.Equal(t, []string{"1", "2"}, ctx.FormValues("a"))
+		assert.Equal(t, []string{"1", "2"}, ctx.PostFormValues("a"))
+		assert.Equal(t, []string{"3"}, ctx.PostFormValues("b"))
+		// Form merges query + body; PostForm is body only
+		assert.Equal(t, []string{"z"}, ctx.FormValues("q"))
+		assert.Empty(t, ctx.PostFormValues("q"))
+		assert.Empty(t, ctx.FormValues("missing"))
+	})
+
+	t.Run("QueryValues", func(t *testing.T) {
+		r := httptest.NewRequest("GET", "/?a=1&a=2&b=3", nil)
+		ctx := Context{Request: r}
+
+		assert.Equal(t, []string{"1", "2"}, ctx.QueryValues("a"))
+		assert.Equal(t, []string{"3"}, ctx.QueryValues("b"))
+		assert.Empty(t, ctx.QueryValues("missing"))
+	})
+
+	t.Run("PostFormValues parses lazily", func(t *testing.T) {
+		// PostFormValues is the first form access, so it must trigger parsing
+		r := httptest.NewRequest("POST", "/", bytes.NewBufferString("x=1&x=2"))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		ctx := Context{Request: r}
+
+		assert.Equal(t, []string{"1", "2"}, ctx.PostFormValues("x"))
+	})
+}
+
 func TestRequestFormFileHeaderParseError(t *testing.T) {
 	// A multipart Content-Type with a malformed body makes ParseMultipartForm
 	// fail, and FormFileHeader propagates that error.

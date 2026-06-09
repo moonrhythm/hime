@@ -84,6 +84,63 @@ func (ctx *Context) PostFormValueFloat64(key string) float64 {
 	return float64(x)
 }
 
+// QueryValueTrimSpace trims space from query value
+func (ctx *Context) QueryValueTrimSpace(key string) string {
+	return strings.TrimSpace(ctx.Request.URL.Query().Get(key))
+}
+
+// QueryValueTrimSpaceComma trims space and remove comma from query value
+func (ctx *Context) QueryValueTrimSpaceComma(key string) string {
+	return removeComma(strings.TrimSpace(ctx.Request.URL.Query().Get(key)))
+}
+
+// QueryValueInt converts query value to int
+func (ctx *Context) QueryValueInt(key string) int {
+	x, _ := strconv.Atoi(ctx.QueryValueTrimSpaceComma(key))
+	return x
+}
+
+// QueryValueInt64 converts query value to int64
+func (ctx *Context) QueryValueInt64(key string) int64 {
+	x, _ := strconv.ParseInt(ctx.QueryValueTrimSpaceComma(key), 10, 64)
+	return x
+}
+
+// QueryValueFloat32 converts query value to float32
+func (ctx *Context) QueryValueFloat32(key string) float32 {
+	x, _ := strconv.ParseFloat(ctx.QueryValueTrimSpaceComma(key), 32)
+	return float32(x)
+}
+
+// QueryValueFloat64 converts query value to float64
+func (ctx *Context) QueryValueFloat64(key string) float64 {
+	x, _ := strconv.ParseFloat(ctx.QueryValueTrimSpaceComma(key), 64)
+	return float64(x)
+}
+
+// FormValues returns all form values associated with the given key,
+// parsing the form first if necessary (query and body values)
+func (ctx *Context) FormValues(key string) []string {
+	if ctx.Request.Form == nil {
+		ctx.Request.ParseMultipartForm(defaultMaxMemory)
+	}
+	return ctx.Request.Form[key]
+}
+
+// PostFormValues returns all post form values associated with the given key,
+// parsing the form first if necessary (body values only)
+func (ctx *Context) PostFormValues(key string) []string {
+	if ctx.Request.PostForm == nil {
+		ctx.Request.ParseMultipartForm(defaultMaxMemory)
+	}
+	return ctx.Request.PostForm[key]
+}
+
+// QueryValues returns all query string values associated with the given key
+func (ctx *Context) QueryValues(key string) []string {
+	return ctx.Request.URL.Query()[key]
+}
+
 // FormFileNotEmpty returns file from r.FormFile
 // only when file size is not empty,
 // or return http.ErrMissingFile if file is empty
