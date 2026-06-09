@@ -41,6 +41,7 @@ Response "results" are methods that write to the response and return `error` (me
 - **ETag**: when enabled (`App.ETag` or `ctx.ETag(true)`), `View`/`Component`/`Render`/`JSON`/`XML`/`HTML` compute a weak ETag over the rendered bytes and return `304` on `If-None-Match` match (`setETag`). This forces buffering of output.
 - **`filterRenderError`** swallows broken-pipe / `net.OpError` / `EPIPE` errors so client disconnects aren't treated as handler failures.
 - `request.go` adds typed value helpers that trim spaces and strip commas, in three parallel families — `FormValue*` (query+body), `PostFormValue*` (body), and `QueryValue*` (query only) — plus multi-value slice getters (`FormValues`/`PostFormValues`/`QueryValues`) and `FormFileNotEmpty`/`FormFileHeader`.
+- `cookie.go` adds opt-in signed cookies: a `CookieSigner` interface plus an HMAC-SHA256 reference impl (`NewHMACCookieSigner`). Set `app.CookieSigner` (a public field, like `app.ETag`) to enable `AddSignedCookie`/`SignedCookieValue`, which read the signer off the app and panic if it's unset. The signer binds the cookie name into the MAC and verifies in constant time; it signs but does not encrypt. No lock-in — you supply your own signer.
 - Rendering buffers come from a shared `sync.Pool` in `pool.go` (`getBytes`/`putBytes`) — reuse it for any new buffered output.
 
 ### Templates and components (`template.go`)

@@ -149,3 +149,19 @@ func ExampleSafeRedirectPath() {
 	fmt.Println(hime.SafeRedirectPath("https://evil.example.com/account"))
 	// Output: /account
 }
+
+func ExampleHMACCookieSigner() {
+	signer := hime.NewHMACCookieSigner([]byte("a-32-byte-or-longer-secret-key!!"))
+
+	signed, _ := signer.Sign("session", "user42")
+	value, err := signer.Verify("session", signed)
+	fmt.Println(value, err == nil)
+
+	// the cookie name is bound into the signature, so reusing the value
+	// under a different name fails verification
+	_, err = signer.Verify("other", signed)
+	fmt.Println(err)
+	// Output:
+	// user42 true
+	// hime: invalid signed cookie
+}
