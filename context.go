@@ -42,8 +42,9 @@ type Context struct {
 	app *App
 	w   http.ResponseWriter
 
-	code int
-	etag bool
+	code  int
+	etag  bool
+	flash map[string][]string
 }
 
 // Deadline implements context.Context
