@@ -26,6 +26,10 @@ type App struct {
 	parent          *template.Template
 
 	ETag bool
+
+	// CookieSigner signs and verifies cookies for AddSignedCookie and
+	// SignedCookieValue. It is nil by default; set it to enable signed cookies.
+	CookieSigner CookieSigner
 }
 
 type ctxKeyApp struct{}
@@ -59,12 +63,13 @@ func (app *App) Clone() *App {
 			TLSConfig:          app.srv.TLSConfig.Clone(),
 			BaseContext:        app.srv.BaseContext,
 		},
-		handler:  app.handler,
-		routes:   cloneRoutes(app.routes),
-		globals:  cloneMap(&app.globals),
-		template: cloneTmpl(app.template),
-		parent:   template.Must(app.parent.Clone()),
-		ETag:     app.ETag,
+		handler:      app.handler,
+		routes:       cloneRoutes(app.routes),
+		globals:      cloneMap(&app.globals),
+		template:     cloneTmpl(app.template),
+		parent:       template.Must(app.parent.Clone()),
+		ETag:         app.ETag,
+		CookieSigner: app.CookieSigner,
 	}
 	x.srv.Handler = x
 	x.setupParent()
