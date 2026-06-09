@@ -1,7 +1,9 @@
 package hime
 
 import (
+	"context"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -96,5 +98,46 @@ func TestRoute(t *testing.T) {
 			}))
 			app.ServeHTTP(w, r)
 		})
+	})
+}
+
+func TestRouteWithParams(t *testing.T) {
+	app := New()
+	app.Routes(Routes{"user": "/user"})
+
+	assert.Equal(t, "/user?id=10", app.Route("user", url.Values{"id": []string{"10"}}))
+	assert.Equal(t, "/user?id=10", app.Route("user", map[string]string{"id": "10"}))
+	assert.Equal(t, "/user/10", app.Route("user", "10"))
+	assert.Equal(t, "/user?id=3", app.Route("user", &Param{Name: "id", Value: 3}))
+}
+
+func TestRoutesMerge(t *testing.T) {
+	app := New()
+	app.Routes(Routes{"a": "/1"})
+	app.Routes(Routes{"b": "/2"})
+	app.Routes(Routes{"a": "/3"})
+
+	assert.Equal(t, "/3", app.Route("a"))
+	assert.Equal(t, "/2", app.Route("b"))
+}
+
+func TestRouteNotFoundErrorType(t *testing.T) {
+	app := New()
+	app.Routes(Routes{"a": "/1"})
+
+	defer func() {
+		r := recover()
+		assert.IsType(t, &ErrRouteNotFound{}, r)
+		if err, ok := r.(error); assert.True(t, ok) {
+			assert.Contains(t, err.Error(), "route 'missing' not found")
+		}
+	}()
+	app.Route("missing")
+	t.Fatal("expected panic")
+}
+
+func TestRouteFuncWithoutApp(t *testing.T) {
+	assert.PanicsWithValue(t, ErrAppNotFound, func() {
+		Route(context.Background(), "x")
 	})
 }

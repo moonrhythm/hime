@@ -2,3 +2,5 @@
 .idea/
 *.tmp
 *.log
+coverage.out
+coverage.html

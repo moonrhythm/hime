@@ -2,6 +2,7 @@ package hime
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net/http"
 	"testing"
@@ -178,4 +179,76 @@ func TestTLSConfig(t *testing.T) {
 	t.Run("Profile invalid", func(t *testing.T) {
 		assert.Panics(t, func() { (&TLS{Profile: "super-good"}).config() })
 	})
+}
+
+func TestParseTLSVersionSSL30AndCase(t *testing.T) {
+	assert.Equal(t, uint16(tls.VersionSSL30), parseTLSVersion("ssl3.0"))
+	assert.Equal(t, uint16(tls.VersionTLS12), parseTLSVersion("TLS1.2"))
+	assert.Equal(t, uint16(tls.VersionTLS13), parseTLSVersion("Tls1.3"))
+}
+
+func TestTLSProfilesDetail(t *testing.T) {
+	assert.Equal(t, uint16(tls.VersionTLS12), Restricted().MinVersion)
+	assert.Equal(t, uint16(tls.VersionTLS12), Modern().MinVersion)
+	assert.Equal(t, uint16(tls.VersionTLS10), Compatible().MinVersion)
+
+	assert.Len(t, Restricted().CipherSuites, 6)
+	assert.Len(t, Modern().CipherSuites, 10)
+	assert.Len(t, Compatible().CipherSuites, 15)
+
+	// only Compatible includes the legacy 3DES cipher
+	assert.Contains(t, Compatible().CipherSuites, uint16(tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA))
+	assert.NotContains(t, Restricted().CipherSuites, uint16(tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA))
+}
+
+func TestTLSConfigVersionOverride(t *testing.T) {
+	c := (&TLS{Profile: "modern", MinVersion: "tls1.3", MaxVersion: "tls1.3"}).config()
+	assert.Equal(t, uint16(tls.VersionTLS13), c.MinVersion)
+	assert.Equal(t, uint16(tls.VersionTLS13), c.MaxVersion)
+}
+
+func TestTLSConfigCurvesOverrideProfile(t *testing.T) {
+	c := (&TLS{Profile: "restricted", Curves: []string{"p384"}}).config()
+	assert.Equal(t, []tls.CurveID{tls.CurveP384}, c.CurvePreferences)
+}
+
+func TestTLSConfigEmptyProfile(t *testing.T) {
+	c := (&TLS{}).config()
+	assert.NotNil(t, c)
+	assert.Empty(t, c.CipherSuites)
+	assert.Equal(t, uint16(0), c.MinVersion)
+	assert.Equal(t, uint16(0), c.MaxVersion)
+}
+
+func TestSelfSignInvalidAlgo(t *testing.T) {
+	opt := &SelfSign{}
+	opt.Key.Algo = "invalid"
+	assert.EqualError(t, opt.config(&tls.Config{}), "invalid self-sign key algo 'invalid'")
+}
+
+func TestSelfSignInvalidSizeMessage(t *testing.T) {
+	opt := &SelfSign{}
+	opt.Key.Algo = "ecdsa"
+	opt.Key.Size = 999
+	assert.EqualError(t, opt.config(&tls.Config{}), "invalid self-sign key size '999'")
+}
+
+func TestSelfSignCertContents(t *testing.T) {
+	tc := tls.Config{}
+	opt := &SelfSign{CN: "example.com", Hosts: []string{"10.0.0.1", "::1", "example.com"}}
+
+	if assert.NoError(t, opt.config(&tc)) && assert.Len(t, tc.Certificates, 1) {
+		cert, err := x509.ParseCertificate(tc.Certificates[0].Certificate[0])
+		assert.NoError(t, err)
+		assert.Equal(t, "example.com", cert.Subject.CommonName)
+		assert.Len(t, cert.IPAddresses, 2)
+		assert.Len(t, cert.DNSNames, 1)
+		assert.Equal(t, "example.com", cert.DNSNames[0])
+	}
+}
+
+func TestLoadTLSCertKey(t *testing.T) {
+	c := &tls.Config{}
+	assert.NoError(t, loadTLSCertKey(c, "testdata/server.crt", "testdata/server.key"))
+	assert.Len(t, c.Certificates, 1)
 }

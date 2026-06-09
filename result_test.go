@@ -1,10 +1,13 @@
 package hime
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -79,4 +82,29 @@ func TestPanicInView(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
 	})
+}
+
+func TestMatchETag(t *testing.T) {
+	t.Parallel()
+
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("If-None-Match", `W/"1-x", W/"5-abc", W/"10-y"`)
+
+	// matches any entry in the comma-separated list, tolerating whitespace
+	assert.True(t, matchETag(r, `W/"5-abc"`))
+	assert.True(t, matchETag(r, `W/"1-x"`))
+	assert.False(t, matchETag(r, `W/"5-zzz"`))
+}
+
+func TestFilterRenderError(t *testing.T) {
+	t.Parallel()
+
+	// connection-style errors are swallowed
+	assert.NoError(t, filterRenderError(nil))
+	assert.NoError(t, filterRenderError(&net.OpError{Op: "write", Err: errors.New("broken pipe")}))
+	assert.NoError(t, filterRenderError(syscall.EPIPE))
+
+	// real errors are propagated unchanged
+	realErr := errors.New("real error")
+	assert.Equal(t, realErr, filterRenderError(realErr))
 }

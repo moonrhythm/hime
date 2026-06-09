@@ -220,7 +220,7 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 }
 
 func (tp *Template) newComponent(name string, parser func(t *template.Template) *template.Template) {
-	if _, ok := tp.list[name]; ok {
+	if _, ok := tp.components[name]; ok {
 		panic(newErrComponentDuplicate(name))
 	}
 
