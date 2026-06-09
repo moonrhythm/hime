@@ -36,11 +36,11 @@ The key mechanism: `App.ServeHTTP` / `App.ServeHandler` wrap the downstream hand
 ### Context and result helpers (`context.go`, `request.go`)
 `Context` embeds `*http.Request` and itself implements `context.Context` (delegating to the request's context). Construct it with `NewContext(w, r)`.
 
-Response "results" are methods that write to the response and return `error` (meant to be returned from a `Handler`): `View`, `Component`, `Render`, `JSON`, `HTML`, `String`, `Bytes`, `CopyFrom`, `File`, `Redirect`/`SafeRedirect`/`RedirectTo`/`RedirectBack`, `Error`, `NotFound`, `NoContent`, `StatusText`. Status is set fluently via `ctx.Status(code)`.
+Response "results" are methods that write to the response and return `error` (meant to be returned from a `Handler`): `View`, `Component`, `Render`, `JSON`, `XML`, `HTML`, `String`, `Bytes`, `CopyFrom`, `File`, `Redirect`/`SafeRedirect`/`RedirectTo`/`RedirectBack`, `Error`, `NotFound`, `NoContent`, `StatusText`. Status is set fluently via `ctx.Status(code)` and read back via `ctx.StatusCode()`. Request bodies bind via `BindJSON`/`BindXML`.
 
-- **ETag**: when enabled (`App.ETag` or `ctx.ETag(true)`), `View`/`Component`/`Render`/`JSON`/`HTML` compute a weak ETag over the rendered bytes and return `304` on `If-None-Match` match (`setETag`). This forces buffering of output.
+- **ETag**: when enabled (`App.ETag` or `ctx.ETag(true)`), `View`/`Component`/`Render`/`JSON`/`XML`/`HTML` compute a weak ETag over the rendered bytes and return `304` on `If-None-Match` match (`setETag`). This forces buffering of output.
 - **`filterRenderError`** swallows broken-pipe / `net.OpError` / `EPIPE` errors so client disconnects aren't treated as handler failures.
-- `request.go` adds typed form helpers (`FormValueInt`, `PostFormValueFloat64`, etc.) that trim spaces and strip commas, plus `FormFileNotEmpty`/`FormFileHeader`.
+- `request.go` adds typed value helpers that trim spaces and strip commas, in three parallel families — `FormValue*` (query+body), `PostFormValue*` (body), and `QueryValue*` (query only) — plus multi-value slice getters (`FormValues`/`PostFormValues`/`QueryValues`) and `FormFileNotEmpty`/`FormFileHeader`.
 - Rendering buffers come from a shared `sync.Pool` in `pool.go` (`getBytes`/`putBytes`) — reuse it for any new buffered output.
 
 ### Templates and components (`template.go`)

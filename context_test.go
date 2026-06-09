@@ -3,6 +3,7 @@ package hime_test
 import (
 	"bytes"
 	"context"
+	"encoding/xml"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -919,6 +920,15 @@ func TestContextETag304(t *testing.T) {
 			return ctx.Render(`hello, {{.}}`, "world")
 		})
 	})
+
+	t.Run("XML", func(t *testing.T) {
+		etag304Case(t, func(ctx *hime.Context) error {
+			return ctx.XML(struct {
+				XMLName xml.Name `xml:"item"`
+				V       string   `xml:"v"`
+			}{V: "x"})
+		})
+	})
 }
 
 func TestContextComponentETag304(t *testing.T) {
@@ -1099,6 +1109,75 @@ func TestContextRenderParseError(t *testing.T) {
 	ctx := hime.NewAppContext(hime.New(), w, r)
 
 	assert.Error(t, ctx.Render("{{.", nil))
+}
+
+func TestContextXML(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	payload := struct {
+		XMLName xml.Name `xml:"item"`
+		Name    string   `xml:"name"`
+		Value   int      `xml:"value"`
+	}{Name: "hime", Value: 7}
+
+	assert.NoError(t, ctx.XML(payload))
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/xml; charset=utf-8", w.Header().Get("Content-Type"))
+	assert.Equal(t, "<item><name>hime</name><value>7</value></item>", w.Body.String())
+}
+
+func TestContextXMLError(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	// channels cannot be marshalled to xml
+	assert.Error(t, ctx.XML(make(chan int)))
+}
+
+func TestContextBindXML(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`<item><name>hime</name></item>`))
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	var body struct {
+		Name string `xml:"name"`
+	}
+	assert.NoError(t, ctx.BindXML(&body))
+	assert.Equal(t, "hime", body.Name)
+}
+
+func TestContextBindXMLInvalid(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`<item><name>hime`))
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	var body struct {
+		Name string `xml:"name"`
+	}
+	assert.Error(t, ctx.BindXML(&body))
+}
+
+func TestContextStatusCode(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	assert.Equal(t, http.StatusOK, ctx.StatusCode()) // default when unset
+	ctx.Status(http.StatusTeapot)
+	assert.Equal(t, http.StatusTeapot, ctx.StatusCode())
 }
 
 func TestContextETagOverride(t *testing.T) {

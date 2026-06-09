@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"html/template"
@@ -100,7 +101,9 @@ func (ctx *Context) Param(name string, value any) *Param {
 	return &Param{Name: name, Value: value}
 }
 
-func (ctx *Context) statusCode() int {
+// StatusCode returns the status code set via Status,
+// defaulting to http.StatusOK when none was set
+func (ctx *Context) StatusCode() int {
 	if ctx.code == 0 {
 		return http.StatusOK
 	}
@@ -125,7 +128,7 @@ func (ctx *Context) statusCodeError() int {
 }
 
 func (ctx *Context) writeHeader() {
-	ctx.w.WriteHeader(ctx.statusCode())
+	ctx.w.WriteHeader(ctx.StatusCode())
 }
 
 // ETag overrides etag setting
@@ -212,7 +215,7 @@ func (ctx *Context) NoContent() error {
 }
 
 func (ctx *Context) setETag(b []byte) bool {
-	if ctx.etag && ctx.statusCode() == http.StatusOK {
+	if ctx.etag && ctx.StatusCode() == http.StatusOK {
 		et := etag(b)
 		ctx.w.Header().Set("ETag", et)
 
@@ -355,6 +358,24 @@ func (ctx *Context) JSON(data any) error {
 	return ctx.CopyFrom(buf)
 }
 
+// XML encodes given data into xml then writes to response writer
+func (ctx *Context) XML(data any) error {
+	buf := getBytes()
+	defer putBytes(buf)
+
+	err := xml.NewEncoder(buf).Encode(data)
+	if err != nil {
+		return err
+	}
+
+	if ctx.setETag(buf.Bytes()) {
+		return nil
+	}
+
+	ctx.setContentType("application/xml; charset=utf-8")
+	return ctx.CopyFrom(buf)
+}
+
 // HTML writes html to response writer
 func (ctx *Context) HTML(data string) error {
 	if ctx.setETag([]byte(data)) {
@@ -377,7 +398,7 @@ func (ctx *Context) String(format string, a ...any) error {
 
 // StatusText writes status text from seted status code into response writer
 func (ctx *Context) StatusText() error {
-	return ctx.String("%s", http.StatusText(ctx.statusCode()))
+	return ctx.String("%s", http.StatusText(ctx.StatusCode()))
 }
 
 // CopyFrom copies src reader into response writer
@@ -429,6 +450,11 @@ func (ctx *Context) DelHeader(key string) {
 // BindJSON binds request body using json decoder
 func (ctx *Context) BindJSON(v any) error {
 	return json.NewDecoder(ctx.Body).Decode(v)
+}
+
+// BindXML binds request body using xml decoder
+func (ctx *Context) BindXML(v any) error {
+	return xml.NewDecoder(ctx.Body).Decode(v)
 }
 
 type CookieOptions struct {
