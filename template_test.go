@@ -443,6 +443,54 @@ func TestTfParam(t *testing.T) {
 	assert.Equal(t, &Param{Name: "id", Value: 1}, tfParam("id", 1))
 }
 
+func TestTfDict(t *testing.T) {
+	m, err := tfDict("a", 1, "b", "x")
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]any{"a": 1, "b": "x"}, m)
+
+	_, err = tfDict("a")
+	assert.Error(t, err) // odd number of args
+
+	_, err = tfDict(1, "v")
+	assert.Error(t, err) // non-string key
+}
+
+func TestTfJSON(t *testing.T) {
+	got, err := tfJSON(map[string]any{"a": 1})
+	assert.NoError(t, err)
+	assert.Equal(t, template.JS(`{"a":1}`), got)
+
+	// <, >, & are escaped so the output can not break out of a <script> tag
+	got, err = tfJSON("</script>")
+	assert.NoError(t, err)
+	assert.NotContains(t, string(got), "</")
+
+	// unmarshalable values propagate the error
+	_, err = tfJSON(make(chan int))
+	assert.Error(t, err)
+}
+
+func TestTemplateDictAndJSONFuncs(t *testing.T) {
+	t.Run("dict passes multiple values to a component", func(t *testing.T) {
+		tp := New().Template()
+		tp.ParseComponent("kv", `{{.k}}={{.v}}`)
+		tp.Parse("t", `{{component "kv" (dict "k" "x" "v" 5)}}`)
+
+		b := bytes.Buffer{}
+		assert.NoError(t, tp.list["t"].Execute(&b, nil))
+		assert.Equal(t, "x=5", b.String())
+	})
+
+	t.Run("json renders trusted in a script context", func(t *testing.T) {
+		tp := New().Template()
+		tp.Parse("t", `<script>var s = {{json .}}</script>`)
+
+		b := bytes.Buffer{}
+		assert.NoError(t, tp.list["t"].Execute(&b, map[string]any{"a": 1}))
+		assert.Equal(t, `<script>var s = {"a":1}</script>`, b.String())
+	})
+}
+
 func TestTemplateComponentMultiple(t *testing.T) {
 	tp := New().Template()
 	tp.Component(

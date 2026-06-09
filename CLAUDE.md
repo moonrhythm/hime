@@ -51,7 +51,7 @@ Three distinct rendering concepts, all built from `app.parent` (a base `*templat
 2. **Components** (`app.component`) — reusable fragments rendered by `ctx.Component(name, data)` or inside templates via the `{{component "name" .}}` func. Loaded via `ParseComponent*` / `Component`.
 3. **Ad-hoc** — `ctx.Render(tmplText, data)` parses raw template text on the fly, **caching the parsed result** in `app.cachedComponent` (keyed by sha1+len of the text).
 
-Built-in template funcs registered on `parent` (`setupParent`): `param`, `templateName`, `component`, `route`, `global`. Optional HTML/CSS/JS minification via `github.com/tdewolff/minify/v2` is enabled with `Template().Minify()` and applied at execute time (`tmpl.Execute`). Loading a duplicate template/component name panics.
+Built-in template funcs registered on `parent` (`setupParent`): `param`, `templateName`, `component`, `route`, `global`, `dict` (build a map for multi-value component args, since `html/template` has no map literal), and `json` (marshal to `template.JS` for inline `<script>` data). `ctx.RenderComponentToString` renders a component to a string for composing responses (e.g. htmx out-of-band swaps). Optional HTML/CSS/JS minification via `github.com/tdewolff/minify/v2` is enabled with `Template().Minify()` and applied at execute time (`tmpl.Execute`). Loading a duplicate template/component name panics.
 
 ### Routes and globals (`route.go`, `global.go`)
 - **Routes**: a `name → path` map. Register with `app.Routes(...)`; resolve with `app.Route(name, params...)`, `ctx.Route(...)`, `ctx.RedirectTo(...)`, the `route` template func, or package-level `hime.Route(ctx, ...)`. A missing route **panics** (`ErrRouteNotFound`).

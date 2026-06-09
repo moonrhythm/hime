@@ -274,6 +274,25 @@ func (ctx *Context) Component(name string, data any) error {
 	return ctx.CopyFrom(buf)
 }
 
+// RenderComponentToString renders the named component to a string instead of
+// writing it to the response, for composing responses (such as htmx
+// out-of-band swaps) from several components. It panics if the component is not
+// found, matching Component.
+func (ctx *Context) RenderComponentToString(name string, data any) (string, error) {
+	t, ok := ctx.app.component[name]
+	if !ok {
+		panic(newErrComponentNotFound(name))
+	}
+
+	buf := getBytes()
+	defer putBytes(buf)
+
+	if err := t.Execute(buf, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
 // Render renders html template
 func (ctx *Context) Render(tmpl string, data any) error {
 	hash := sha1.Sum([]byte(tmpl))

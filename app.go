@@ -179,6 +179,8 @@ func (app *App) setupParent() {
 		"component":    app.renderComponent,
 		"route":        app.Route,
 		"global":       app.Global,
+		"dict":         tfDict,
+		"json":         tfJSON,
 	})
 }
 

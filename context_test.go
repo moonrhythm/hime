@@ -1180,6 +1180,25 @@ func TestContextStatusCode(t *testing.T) {
 	assert.Equal(t, http.StatusTeapot, ctx.StatusCode())
 }
 
+func TestContextRenderComponentToString(t *testing.T) {
+	t.Parallel()
+
+	app := hime.New()
+	app.Template().Component(template.Must(template.New("badge").Parse(`<b>{{.}}</b>`)))
+	ctx := hime.NewAppContext(app, httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+
+	s, err := ctx.RenderComponentToString("badge", "new")
+	assert.NoError(t, err)
+	assert.Equal(t, "<b>new</b>", s)
+
+	assert.Panics(t, func() { ctx.RenderComponentToString("missing", nil) })
+
+	// execute errors are returned
+	app.Template().Component(template.Must(template.New("bad").Parse(`{{.A.B}}`)))
+	_, err = ctx.RenderComponentToString("bad", map[string]any{"A": "not-a-struct"})
+	assert.Error(t, err)
+}
+
 func TestContextETagOverride(t *testing.T) {
 	t.Parallel()
 
