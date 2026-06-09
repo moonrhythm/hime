@@ -15,12 +15,9 @@ go test ./...                       # run all tests
 go test -run TestApp ./...          # run a single top-level test
 go test -run 'TestApp/Clone' ./...  # run a single subtest (tests use t.Run subtests heavily)
 go vet ./...                        # static checks (part of CI)
-
-# full coverage run as CI does it
-go test -coverprofile=coverage.txt -covermode=atomic -coverpkg=./... ./...
 ```
 
-CI (`.github/workflows/test.yaml`) runs `go vet` then the coverage test on Go 1.25. Tests rely on fixtures in `testdata/` (templates, YAML configs, `server.crt`/`server.key`). Some tests bind real ports (`:8081`, `:8082`) and `time.Sleep` — they run with `t.Parallel()`.
+CI (`.github/workflows/test.yaml`) runs `go vet` then `go test ./...` on Go 1.25. Tests rely on fixtures in `testdata/` (templates, YAML configs, `server.crt`/`server.key`). Some tests bind real ports (`:8081`, `:8082`) and `time.Sleep` — they run with `t.Parallel()`.
 
 ## Architecture
 
