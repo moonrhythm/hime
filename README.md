@@ -1,6 +1,6 @@
 # Hime
 
-[![codecov](https://codecov.io/gh/moonrhythm/hime/branch/master/graph/badge.svg)](https://codecov.io/gh/moonrhythm/hime)
+[![Test](https://github.com/moonrhythm/hime/actions/workflows/test.yaml/badge.svg)](https://github.com/moonrhythm/hime/actions/workflows/test.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/moonrhythm/hime)](https://goreportcard.com/report/github.com/moonrhythm/hime)
 [![GoDoc](https://godoc.org/github.com/moonrhythm/hime?status.svg)](https://godoc.org/github.com/moonrhythm/hime)
 
