@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -141,4 +142,55 @@ func TestRequest(t *testing.T) {
 			assert.Empty(t, h)
 		})
 	})
+}
+
+func TestRequestFormValueEdgeCases(t *testing.T) {
+	r := httptest.NewRequest("GET", "/?neg=-123&negc=-1,234&f=-3.14&sci=1e3&fstr=3.14&commas=,,&consec=1,,2", nil)
+	ctx := Context{Request: r}
+
+	assert.Equal(t, -123, ctx.FormValueInt("neg"))
+	assert.Equal(t, -1234, ctx.FormValueInt("negc"))
+	assert.Equal(t, int64(-1234), ctx.FormValueInt64("negc"))
+	assert.Equal(t, -3.14, ctx.FormValueFloat64("f"))
+	assert.Equal(t, float64(1000), ctx.FormValueFloat64("sci"))
+	assert.Equal(t, 0, ctx.FormValueInt("fstr")) // strconv.Atoi fails on "3.14", returns 0
+	assert.Equal(t, "", ctx.FormValueTrimSpaceComma("commas"))
+	assert.Equal(t, "12", ctx.FormValueTrimSpaceComma("consec"))
+}
+
+func TestRequestFormFileMissingKey(t *testing.T) {
+	b := bytes.Buffer{}
+	w := multipart.NewWriter(&b)
+	fw, _ := w.CreateFormFile("f1", "f1-name")
+	fw.Write([]byte("data"))
+	w.Close()
+
+	r := httptest.NewRequest("POST", "/", &b)
+	r.Header.Set("Content-Type", w.FormDataContentType())
+	ctx := Context{Request: r}
+
+	f, h, err := ctx.FormFileNotEmpty("missing")
+	assert.Equal(t, http.ErrMissingFile, err)
+	assert.Nil(t, f)
+	assert.Nil(t, h)
+
+	h2, err := ctx.FormFileHeader("missing")
+	assert.Equal(t, http.ErrMissingFile, err)
+	assert.Nil(t, h2)
+
+	h3, err := ctx.FormFileHeaderNotEmpty("missing")
+	assert.Equal(t, http.ErrMissingFile, err)
+	assert.Nil(t, h3)
+}
+
+func TestRequestFormFileHeaderParseError(t *testing.T) {
+	// A multipart Content-Type with a malformed body makes ParseMultipartForm
+	// fail, and FormFileHeader propagates that error.
+	r := httptest.NewRequest("POST", "/", strings.NewReader("not a valid multipart body"))
+	r.Header.Set("Content-Type", "multipart/form-data; boundary=xxx")
+	ctx := Context{Request: r}
+
+	h, err := ctx.FormFileHeader("f")
+	assert.Error(t, err)
+	assert.Nil(t, h)
 }

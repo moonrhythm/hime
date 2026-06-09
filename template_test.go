@@ -372,3 +372,86 @@ list:
 		assert.Len(t, cloneTmpl(map[string]*tmpl{"a": {}}), 1)
 	})
 }
+
+func TestTemplateComponentDuplicate(t *testing.T) {
+	t.Run("ParseComponent duplicate name panics", func(t *testing.T) {
+		tp := New().Template()
+		tp.ParseComponent("c", "first")
+		assert.Panics(t, func() { tp.ParseComponent("c", "second") })
+	})
+
+	t.Run("ParseComponentFile duplicate name panics", func(t *testing.T) {
+		tp := New().Template()
+		tp.Dir("testdata")
+		tp.ParseComponentFile("c", "component1.tmpl")
+		assert.Panics(t, func() { tp.ParseComponentFile("c", "component1.tmpl") })
+	})
+
+	t.Run("ParseComponent then Parse with same name are independent namespaces", func(t *testing.T) {
+		tp := New().Template()
+		tp.ParseComponent("x", "comp")
+		assert.NotPanics(t, func() { tp.Parse("x", "tmpl") })
+	})
+}
+
+func TestTemplateRenderComponent(t *testing.T) {
+	t.Run("renders registered component", func(t *testing.T) {
+		app := New()
+		app.Template().Component(template.Must(template.New("c").Parse(`hello, {{.}}`)))
+		assert.Equal(t, template.HTML("hello, hime"), app.renderComponent("c", "hime"))
+	})
+
+	t.Run("no data arg", func(t *testing.T) {
+		app := New()
+		app.Template().Component(template.Must(template.New("c").Parse(`static`)))
+		assert.Equal(t, template.HTML("static"), app.renderComponent("c"))
+	})
+
+	t.Run("not found panics", func(t *testing.T) {
+		app := New()
+		assert.Panics(t, func() { app.renderComponent("missing") })
+	})
+
+	t.Run("too many data args panics", func(t *testing.T) {
+		app := New()
+		app.Template().Component(template.Must(template.New("c").Parse(`x`)))
+		assert.Panics(t, func() { app.renderComponent("c", "a", "b") })
+	})
+
+	t.Run("execute error panics", func(t *testing.T) {
+		app := New()
+		app.Template().Component(template.Must(template.New("c").Parse(`{{.A.B}}`)))
+		assert.Panics(t, func() { app.renderComponent("c", map[string]any{"A": "not-a-struct"}) })
+	})
+}
+
+func TestTemplateConfigDelims(t *testing.T) {
+	// Config only applies Delims when exactly two are provided; otherwise
+	// the default {{ }} delimiters remain in effect.
+	t.Run("single delim is ignored", func(t *testing.T) {
+		tp := New().Template()
+		tp.Config(TemplateConfig{Delims: []string{"[["}})
+		tp.Parse("t", `{{ "x" }}`)
+
+		b := bytes.Buffer{}
+		assert.NoError(t, tp.list["t"].Execute(&b, nil))
+		assert.Equal(t, "x", b.String())
+	})
+}
+
+func TestTfParam(t *testing.T) {
+	assert.Equal(t, &Param{Name: "id", Value: 1}, tfParam("id", 1))
+}
+
+func TestTemplateComponentMultiple(t *testing.T) {
+	tp := New().Template()
+	tp.Component(
+		template.Must(template.New("c1").Parse(`one`)),
+		template.Must(template.New("c2").Parse(`two`)),
+	)
+	tp.Parse("t", `{{component "c1"}}-{{component "c2"}}`)
+
+	b := bytes.Buffer{}
+	assert.NoError(t, tp.list["t"].Execute(&b, nil))
+	assert.Equal(t, "one-two", b.String())
+}

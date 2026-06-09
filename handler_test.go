@@ -64,4 +64,42 @@ func TestHandler(t *testing.T) {
 			app.ServeHTTP(w, r)
 		})
 	})
+
+	t.Run("wrapped context.Canceled does not panic", func(t *testing.T) {
+		app := New()
+		app.Handler(Handler(func(ctx *Context) error {
+			return fmt.Errorf("operation failed: %w", context.Canceled)
+		}))
+
+		assert.NotPanics(t, func() {
+			invokeHandler(app, "GET", "/", nil)
+		})
+	})
+
+	t.Run("context.DeadlineExceeded panics", func(t *testing.T) {
+		// Only context.Canceled is swallowed; DeadlineExceeded is treated
+		// as a real error and panics.
+		app := New()
+		app.Handler(Handler(func(ctx *Context) error {
+			return context.DeadlineExceeded
+		}))
+
+		assert.Panics(t, func() {
+			invokeHandler(app, "GET", "/", nil)
+		})
+	})
+
+	t.Run("panic value is the returned error", func(t *testing.T) {
+		wantErr := fmt.Errorf("boom")
+		app := New()
+		app.Handler(Handler(func(ctx *Context) error {
+			return wantErr
+		}))
+
+		defer func() {
+			assert.Equal(t, wantErr, recover())
+		}()
+		invokeHandler(app, "GET", "/", nil)
+		t.Fatal("expected panic")
+	})
 }

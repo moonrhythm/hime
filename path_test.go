@@ -85,3 +85,59 @@ func TestSafeRedirectPath(t *testing.T) {
 		assert.Equal(t, c.Output, SafeRedirectPath(c.Input))
 	}
 }
+
+func TestBuildPathInvalidURL(t *testing.T) {
+	t.Parallel()
+
+	// invalid percent-encoding makes url.Parse fail, which buildPath turns
+	// into a panic.
+	assert.Panics(t, func() { buildPath("%zz") })
+}
+
+func TestSafeRedirectPathInvalid(t *testing.T) {
+	t.Parallel()
+
+	// url.ParseRequestURI rejects the input, so SafeRedirectPath defaults to "/".
+	assert.Equal(t, "/", SafeRedirectPath("%zz"))
+}
+
+func TestSafeRedirectPathClean(t *testing.T) {
+	t.Parallel()
+
+	// SafeRedirectPath runs path.Clean, normalizing traversal sequences.
+	cases := []struct {
+		Input  string
+		Output string
+	}{
+		{"/a/../../etc/passwd", "/etc/passwd"},
+		{"/a/./b", "/a/b"},
+		{"/foo/..", "/"},
+	}
+	for _, c := range cases {
+		assert.Equal(t, c.Output, SafeRedirectPath(c.Input), "input: %s", c.Input)
+	}
+}
+
+func TestBuildPathParamMultiValue(t *testing.T) {
+	t.Parallel()
+
+	// Same query key from base and params is appended, not replaced.
+	assert.Equal(t, "/a?x=1&x=2", buildPath("/a?x=1", url.Values{"x": []string{"2"}}))
+	assert.Equal(t, "/a?x=1&x=2", buildPath("/a", map[string]string{"x": "1"}, map[string]string{"x": "2"}))
+}
+
+func TestBuildPathTraversalNotCleaned(t *testing.T) {
+	t.Parallel()
+
+	// Unlike SafeRedirectPath, buildPath uses path.Join (not path.Clean) for
+	// path params, so leading ".." segments are preserved.
+	assert.Equal(t, "/a/../../etc/passwd", buildPath("/a", "../../etc/passwd"))
+}
+
+func TestBuildPathZeroValues(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "/a?z=0", buildPath("/a", map[string]any{"z": 0}))
+	assert.Equal(t, "/a?z=false", buildPath("/a", map[string]any{"z": false}))
+	assert.Equal(t, "/a?z=%3Cnil%3E", buildPath("/a", map[string]any{"z": nil}))
+}

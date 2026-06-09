@@ -60,3 +60,39 @@ func TestConfig(t *testing.T) {
 		})
 	})
 }
+
+func TestConfigMerge(t *testing.T) {
+	t.Parallel()
+
+	// Multiple Config calls accumulate; colliding keys take the latest value.
+	app := New()
+	app.Config(AppConfig{
+		Globals: Globals{"a": "1"},
+		Routes:  Routes{"r1": "/1"},
+	})
+	app.Config(AppConfig{
+		Globals: Globals{"b": "2", "a": "1override"},
+		Routes:  Routes{"r2": "/2"},
+	})
+
+	assert.Equal(t, "1override", app.Global("a"))
+	assert.Equal(t, "2", app.Global("b"))
+	assert.Equal(t, "/1", app.Route("r1"))
+	assert.Equal(t, "/2", app.Route("r2"))
+}
+
+func TestConfigParseNilData(t *testing.T) {
+	t.Parallel()
+
+	app := New()
+	assert.NotPanics(t, func() { app.ParseConfig(nil) })
+	assert.Equal(t, 0, mapLen(&app.globals))
+	assert.Len(t, app.routes, 0)
+	assert.Len(t, app.template, 0)
+}
+
+func TestConfigParseConfigFileEmptyName(t *testing.T) {
+	t.Parallel()
+
+	assert.Panics(t, func() { New().ParseConfigFile("") })
+}

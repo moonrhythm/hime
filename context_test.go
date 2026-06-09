@@ -856,3 +856,272 @@ func TestContext(t *testing.T) {
 		assert.Equal(t, "a=; Max-Age=0", w.Header()["Set-Cookie"][1])
 	})
 }
+
+func TestContextETagNon200(t *testing.T) {
+	t.Parallel()
+
+	// ETag is only computed for 200 responses.
+	app := hime.New()
+	app.ETag = true
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(app, w, r)
+
+	assert.NoError(t, ctx.Status(http.StatusCreated).JSON(map[string]any{"a": 1}))
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Empty(t, w.Header().Get("ETag"))
+}
+
+// etag304Case runs render once to capture the ETag, then re-runs with
+// If-None-Match and asserts a 304 with an empty body.
+func etag304Case(t *testing.T, render func(ctx *hime.Context) error) {
+	t.Helper()
+
+	app := hime.New()
+	app.ETag = true
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(app, w, r)
+	assert.NoError(t, render(ctx))
+	etag := w.Header().Get("ETag")
+	if !assert.NotEmpty(t, etag) {
+		return
+	}
+
+	w2 := httptest.NewRecorder()
+	r2 := httptest.NewRequest(http.MethodGet, "/", nil)
+	r2.Header.Set("If-None-Match", etag)
+	ctx2 := hime.NewAppContext(app, w2, r2)
+	assert.NoError(t, render(ctx2))
+	assert.Equal(t, http.StatusNotModified, w2.Code)
+	assert.Empty(t, w2.Body.String())
+}
+
+func TestContextETag304(t *testing.T) {
+	t.Parallel()
+
+	t.Run("JSON", func(t *testing.T) {
+		etag304Case(t, func(ctx *hime.Context) error {
+			return ctx.JSON(map[string]any{"a": 1})
+		})
+	})
+
+	t.Run("HTML", func(t *testing.T) {
+		etag304Case(t, func(ctx *hime.Context) error {
+			return ctx.HTML(`<h1>hi</h1>`)
+		})
+	})
+
+	t.Run("Render", func(t *testing.T) {
+		etag304Case(t, func(ctx *hime.Context) error {
+			return ctx.Render(`hello, {{.}}`, "world")
+		})
+	})
+}
+
+func TestContextComponentETag304(t *testing.T) {
+	t.Parallel()
+
+	app := hime.New()
+	app.ETag = true
+	app.Template().Component(template.Must(template.New("c").Parse(`component`)))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(app, w, r)
+	assert.NoError(t, ctx.Component("c", nil))
+	etag := w.Header().Get("ETag")
+	if !assert.NotEmpty(t, etag) {
+		return
+	}
+
+	w2 := httptest.NewRecorder()
+	r2 := httptest.NewRequest(http.MethodGet, "/", nil)
+	r2.Header.Set("If-None-Match", etag)
+	ctx2 := hime.NewAppContext(app, w2, r2)
+	assert.NoError(t, ctx2.Component("c", nil))
+	assert.Equal(t, http.StatusNotModified, w2.Code)
+	assert.Empty(t, w2.Body.String())
+}
+
+func TestContextDelCookieWithOptions(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	ctx.DelCookie("session", &hime.CookieOptions{
+		Path:     "/admin",
+		Domain:   "example.com",
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	sc := w.Header().Get("Set-Cookie")
+	assert.Contains(t, sc, "session=")
+	assert.Contains(t, sc, "Max-Age=0")
+	assert.Contains(t, sc, "Path=/admin")
+	assert.Contains(t, sc, "Domain=example.com")
+	assert.Contains(t, sc, "Secure")
+	assert.Contains(t, sc, "HttpOnly")
+	assert.Contains(t, sc, "SameSite=Lax")
+}
+
+func TestContextAddCookieNilOptions(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	ctx.AddCookie("x", "y", nil)
+	assert.Equal(t, "x=y", w.Header().Get("Set-Cookie"))
+}
+
+func TestContextCookieValueMissing(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	assert.Equal(t, "", ctx.CookieValue("missing"))
+}
+
+func TestContextJSONError(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	assert.Error(t, ctx.JSON(make(chan int)))
+}
+
+func TestContextBindJSONInvalid(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{invalid"))
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	var v map[string]any
+	assert.Error(t, ctx.BindJSON(&v))
+}
+
+func TestContextFileNotFound(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	assert.NoError(t, ctx.File("testdata/does-not-exist.txt"))
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestContextRedirectInvalidURL(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	assert.Panics(t, func() { ctx.Redirect("%zz") })
+}
+
+func TestContextSafeRedirectDangerous(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	assert.NoError(t, ctx.SafeRedirect("https://evil.com/path"))
+	assert.Equal(t, "/path", w.Header().Get("Location"))
+}
+
+func TestContextStringFormat(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	assert.NoError(t, ctx.String("hello %s %d", "world", 42))
+	assert.Equal(t, "hello world 42", w.Body.String())
+}
+
+func TestContextSetContentTypeRespected(t *testing.T) {
+	t.Parallel()
+
+	// a pre-set Content-Type is not overridden by a write method
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	ctx.SetHeader("Content-Type", "application/xml")
+	assert.NoError(t, ctx.HTML("<x/>"))
+	assert.Equal(t, "application/xml", w.Header().Get("Content-Type"))
+}
+
+func TestContextErrorStatusCode(t *testing.T) {
+	t.Parallel()
+
+	t.Run("preserves 4xx", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := hime.NewAppContext(hime.New(), w, r)
+
+		assert.NoError(t, ctx.Status(http.StatusUnauthorized).Error("nope"))
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
+
+	t.Run("promotes <400 to 500", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := hime.NewAppContext(hime.New(), w, r)
+
+		assert.NoError(t, ctx.Status(http.StatusOK).Error("nope"))
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestContextRenderParseError(t *testing.T) {
+	t.Parallel()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := hime.NewAppContext(hime.New(), w, r)
+
+	assert.Error(t, ctx.Render("{{.", nil))
+}
+
+func TestContextETagOverride(t *testing.T) {
+	t.Parallel()
+
+	t.Run("enable on a non-ETag app", func(t *testing.T) {
+		app := hime.New() // app.ETag defaults to false
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.ETag(true).JSON(map[string]any{"a": 1}))
+		assert.NotEmpty(t, w.Header().Get("ETag"))
+	})
+
+	t.Run("disable on an ETag app", func(t *testing.T) {
+		app := hime.New()
+		app.ETag = true
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.ETag(false).JSON(map[string]any{"a": 1}))
+		assert.Empty(t, w.Header().Get("ETag"))
+	})
+}

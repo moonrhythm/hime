@@ -181,3 +181,22 @@ func TestApp(t *testing.T) {
 		assert.Equal(t, "Hello", w.Body.String())
 	})
 }
+
+func TestAppSetServerNil(t *testing.T) {
+	t.Parallel()
+
+	assert.Panics(t, func() { New().SetServer(nil) })
+}
+
+func TestAppCloneNilTLSConfig(t *testing.T) {
+	t.Parallel()
+
+	// A fresh app has a nil TLSConfig; cloning must not panic and must
+	// preserve the nil TLSConfig (crypto/tls Clone handles nil receivers).
+	app := New()
+	assert.Nil(t, app.Server().TLSConfig)
+
+	var cloned *App
+	assert.NotPanics(t, func() { cloned = app.Clone() })
+	assert.Nil(t, cloned.Server().TLSConfig)
+}

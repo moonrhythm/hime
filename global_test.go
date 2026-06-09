@@ -1,6 +1,7 @@
 package hime
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -63,4 +64,30 @@ func TestGlobal(t *testing.T) {
 			app.ServeHTTP(w, r)
 		})
 	})
+}
+
+func TestGlobalFuncWithoutApp(t *testing.T) {
+	assert.PanicsWithValue(t, ErrAppNotFound, func() {
+		Global(context.Background(), "key1")
+	})
+}
+
+func TestGlobalsMerge(t *testing.T) {
+	app := New()
+	app.Globals(Globals{"k1": "v1"})
+	app.Globals(Globals{"k2": "v2", "k1": "v1b"})
+
+	assert.Equal(t, "v1b", app.Global("k1"))
+	assert.Equal(t, "v2", app.Global("k2"))
+}
+
+func TestGlobalZeroValueVsMissing(t *testing.T) {
+	// Global discards the "found" boolean from sync.Map.Load, so a stored
+	// zero value and a missing key both surface as their natural value/nil.
+	app := New()
+	app.Globals(Globals{"empty": "", "zero": 0})
+
+	assert.Equal(t, "", app.Global("empty"))
+	assert.Equal(t, 0, app.Global("zero"))
+	assert.Nil(t, app.Global("missing"))
 }
