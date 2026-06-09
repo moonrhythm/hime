@@ -1,6 +1,8 @@
 package hime
 
 import (
+	"encoding/json"
+	"errors"
 	"html/template"
 	"io"
 	"io/fs"
@@ -369,4 +371,33 @@ func cloneTmpl(xs map[string]*tmpl) map[string]*tmpl {
 
 func tfParam(name string, value any) *Param {
 	return &Param{Name: name, Value: value}
+}
+
+// tfDict builds a map from alternating key/value arguments. html/template has
+// no map literal, so this is how multiple values are passed to a component or
+// partial: {{component "card" (dict "title" .T "body" .B)}}.
+func tfDict(v ...any) (map[string]any, error) {
+	if len(v)%2 != 0 {
+		return nil, errors.New("hime: dict requires an even number of arguments")
+	}
+	m := make(map[string]any, len(v)/2)
+	for i := 0; i < len(v); i += 2 {
+		key, ok := v[i].(string)
+		if !ok {
+			return nil, errors.New("hime: dict keys must be strings")
+		}
+		m[key] = v[i+1]
+	}
+	return m, nil
+}
+
+// tfJSON marshals v to JSON for embedding in a script context, e.g.
+// <script>var state = {{json .State}}</script>. The result is marked
+// template.JS; encoding/json escapes <, >, and &, so it is safe inside <script>.
+func tfJSON(v any) (template.JS, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	return template.JS(b), nil
 }
