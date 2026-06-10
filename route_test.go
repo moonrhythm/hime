@@ -141,3 +141,69 @@ func TestRouteFuncWithoutApp(t *testing.T) {
 		Route(context.Background(), "x")
 	})
 }
+
+func TestContextIsRoute(t *testing.T) {
+	app := New()
+	app.Routes(Routes{
+		"home":     "/",
+		"admin":    "/admin",
+		"users":    "/admin/users",
+		"filtered": "/items?tab=1",
+		"docs":     "/docs/", // trailing slash is normalized away
+	})
+
+	isRoute := func(path, name string) bool {
+		r := httptest.NewRequest("GET", path, nil)
+		return NewAppContext(app, httptest.NewRecorder(), r).IsRoute(name)
+	}
+
+	t.Run("exact match", func(t *testing.T) {
+		assert.True(t, isRoute("/admin", "admin"))
+	})
+
+	t.Run("most specific route wins on a sub-path", func(t *testing.T) {
+		assert.True(t, isRoute("/admin/users/42", "users"))
+		assert.False(t, isRoute("/admin/users/42", "admin")) // deeper route matches
+		assert.False(t, isRoute("/admin/users/42", "home"))
+	})
+
+	t.Run("section matches its sub-paths when nothing deeper does", func(t *testing.T) {
+		assert.True(t, isRoute("/admin/settings", "admin"))
+	})
+
+	t.Run("segment aware", func(t *testing.T) {
+		assert.False(t, isRoute("/administrators", "admin"))
+	})
+
+	t.Run("root only on exact path", func(t *testing.T) {
+		assert.True(t, isRoute("/", "home"))
+		assert.False(t, isRoute("/admin", "home"))
+	})
+
+	t.Run("query is ignored in both route and request", func(t *testing.T) {
+		assert.True(t, isRoute("/items?x=1", "filtered"))
+	})
+
+	t.Run("trailing slash in route path is ignored", func(t *testing.T) {
+		assert.True(t, isRoute("/docs", "docs"))       // matches without the slash
+		assert.True(t, isRoute("/docs/intro", "docs")) // and on sub-paths
+	})
+
+	t.Run("panics on unknown route", func(t *testing.T) {
+		assert.Panics(t, func() { isRoute("/", "missing") })
+	})
+}
+
+func TestContextIsRouteInTemplate(t *testing.T) {
+	app := New()
+	app.Routes(Routes{"home": "/", "about": "/about"})
+	app.Template().Parse("nav", `{{if .IsRoute "about"}}active{{end}}`)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/about", nil)
+	ctx := NewAppContext(app, w, r)
+
+	// passing ctx as the view data lets the template call its methods
+	assert.NoError(t, ctx.View("nav", ctx))
+	assert.Equal(t, "active", w.Body.String())
+}

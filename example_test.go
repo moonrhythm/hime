@@ -150,6 +150,18 @@ func ExampleSafeRedirectPath() {
 	// Output: /account
 }
 
+func ExampleContext_IsRoute() {
+	app := hime.New()
+	app.Routes(hime.Routes{"home": "/", "about": "/about"})
+
+	r := httptest.NewRequest(http.MethodGet, "/about", nil)
+	ctx := hime.NewAppContext(app, httptest.NewRecorder(), r)
+
+	// in a template, pass ctx as the data: {{if .IsRoute "about"}}active{{end}}
+	fmt.Println(ctx.IsRoute("about"), ctx.IsRoute("home"))
+	// Output: true false
+}
+
 func ExampleContext_FormState() {
 	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("email=bad"))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
