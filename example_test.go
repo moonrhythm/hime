@@ -150,6 +150,20 @@ func ExampleSafeRedirectPath() {
 	// Output: /account
 }
 
+func ExampleContext_FormState() {
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("email=bad"))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx := hime.NewAppContext(hime.New(), httptest.NewRecorder(), r)
+
+	form := ctx.FormState()
+	if !strings.Contains(form.Value("email"), "@") {
+		form.AddError("email", "invalid email")
+	}
+	// on error, pass form to the view to re-render with the value + message
+	fmt.Println(form.Value("email"), form.HasErrors(), form.Error("email"))
+	// Output: bad true invalid email
+}
+
 func ExampleHMACCookieSigner() {
 	signer := hime.NewHMACCookieSigner([]byte("a-32-byte-or-longer-secret-key!!"))
 

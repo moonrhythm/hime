@@ -44,6 +44,7 @@ Response "results" are methods that write to the response and return `error` (me
 - `cookie.go` adds opt-in signed cookies: a `CookieSigner` interface plus an HMAC-SHA256 reference impl (`NewHMACCookieSigner`). Set `app.CookieSigner` (a public field, like `app.ETag`) to enable `AddSignedCookie`/`SignedCookieValue`, which read the signer off the app and panic if it's unset. The signer binds the cookie name into the MAC and verifies in constant time; it signs but does not encrypt. No lock-in — you supply your own signer.
 - `htmx.go` adds opt-in [htmx](https://htmx.org) helpers on `Context`: `IsHTMX()` (detect the `HX-Request` header), `HTMXRedirect`/`HTMXRefresh`, and chainable `HTMXReswap`/`HTMXRetarget`/`HTMXTrigger` that set `HX-*` response headers. Thin wrappers, no client runtime beyond htmx itself.
 - `flash.go` adds stateless flash messages (`AddFlash`/`Flashes`) for the post/redirect/get pattern, carried in a plain base64-JSON cookie (`flash`) that's cleared on read. Unsigned — non-sensitive UX only; the `flash` field on `Context` accumulates outgoing messages within a request.
+- `form.go` adds `ctx.FormState()` → a `*FormState` holding submitted values (copied from the parsed form) plus per-field validation errors (`Value`/`Values`/`SetValue`/`AddError`/`Error`/`Errors`/`HasError`/`HasErrors`), for re-rendering a form after a failed submission.
 - Rendering buffers come from a shared `sync.Pool` in `pool.go` (`getBytes`/`putBytes`) — reuse it for any new buffered output.
 
 ### Templates and components (`template.go`)
