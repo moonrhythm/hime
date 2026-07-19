@@ -1348,11 +1348,11 @@ func TestContextViewPartial(t *testing.T) {
 			} else {
 				assert.Contains(t, w.Body.String(), "<nav>nav</nav>")
 			}
-			assertHTMXVary(t, w)
+			assert.Empty(t, w.Header().Get("Vary"), "ViewPartial must not set Vary; that is the caller's VaryHTMX call")
 		})
 	}
 
-	t.Run("vary on etag 304", func(t *testing.T) {
+	t.Run("etag 304", func(t *testing.T) {
 		app := newFragmentApp(false)
 		app.ETag = true
 
@@ -1372,7 +1372,6 @@ func TestContextViewPartial(t *testing.T) {
 		assert.NoError(t, hime.NewAppContext(app, w2, r2).ViewPartial("page", "content", nil))
 		assert.Equal(t, w2.Code, http.StatusNotModified)
 		assert.Empty(t, w2.Body.String())
-		assertHTMXVary(t, w2)
 	})
 }
 
@@ -1420,11 +1419,7 @@ func TestContextHTMXAwareRedirect(t *testing.T) {
 				assert.Equal(t, w.Header().Get("Location"), "/signin")
 				assert.Empty(t, w.Header().Get("HX-Redirect"))
 			}
-			if tc.flag {
-				assertHTMXVary(t, w)
-			} else {
-				assert.Empty(t, w.Header().Get("Vary"))
-			}
+			assert.Empty(t, w.Header().Get("Vary"), "Redirect must not set Vary; that is the caller's VaryHTMX call")
 		})
 	}
 

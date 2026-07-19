@@ -46,7 +46,7 @@ func settings(ctx *hime.Context) error {
 
 Notes:
 
-- `ViewPartial` and htmx-aware redirects automatically add `Vary: HX-Request, HX-Boosted, HX-History-Restore-Request`, so caches never mix full pages and fragments. When you branch on `IsHTMX`/`IsBoosted`/`WantsPartial` yourself, call `ctx.VaryHTMX()` (chainable); branching on `HX-Target` too? Add `ctx.AddHeader("Vary", "HX-Target")` as well.
+- Caching: hime never sets `Vary` for you. If htmx-branching responses (`ViewPartial`, predicate branches) are cacheable — a CDN in front, or `app.ETag` revalidation — call the chainable `ctx.VaryHTMX()` so caches never mix full pages and fragments (`Vary: HX-Request, HX-Boosted, HX-History-Restore-Request`); branching on `HX-Target` too? Add `ctx.AddHeader("Vary", "HX-Target")` as well. Serving HTML with `Cache-Control: no-store` or `no-cache` (common for authenticated apps) needs none of this. Beware: with no `Cache-Control` at all, browsers and proxies may heuristically cache GET responses — set one or set Vary.
 - Set `app.HTMXAwareRedirect = true` and the `Redirect` family answers htmx partial requests with `HX-Redirect` + 204 instead of a 3xx — post/redirect/get (with flash messages) works unchanged over htmx.
 - `#` is reserved in template names: `ctx.View("page#form", data)` renders only that `{{block}}`/`{{define}}` of the view.
 - Out-of-band swaps are a template pattern, not an API — put a conditional attribute on an id-carrying element inside the fragment you render (pass ctx as view data):

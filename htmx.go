@@ -19,9 +19,11 @@ var htmxVaryHeaders = []string{
 // VaryHTMX appends the htmx request headers that affect response body selection
 // (HX-Request, HX-Boosted, HX-History-Restore-Request) to Vary, deduplicated
 // (case-insensitive) and after any pre-existing values, so caches never mix
-// full pages, boosted pages, and fragments. ViewPartial and htmx-aware
-// redirects call it automatically; call it yourself whenever a handler
-// branches on IsHTMX, IsBoosted, or WantsPartial. It returns ctx for chaining.
+// full pages, boosted pages, and fragments. Hime never calls it for you: call
+// it whenever a response that branches on IsHTMX, IsBoosted, WantsPartial, or
+// ViewPartial is cacheable (a CDN in front, or ETag revalidation). Responses
+// served with Cache-Control: no-store or no-cache do not need it. It returns
+// ctx for chaining.
 func (ctx *Context) VaryHTMX() *Context {
 	existing := make(map[string]bool)
 	for _, v := range ctx.w.Header().Values("Vary") {
@@ -65,8 +67,8 @@ func (ctx *Context) IsBoosted() bool {
 // WantsPartial reports whether the handler may respond with a page fragment
 // instead of a full document: an htmx request that is not boosted and not a
 // history restore. Boosted and history-restore requests need full documents.
-// ViewPartial calls it (and VaryHTMX) for you; when branching on it directly,
-// also call VaryHTMX so caches keep the variants apart.
+// ViewPartial branches on it for you; on cacheable responses, also call
+// VaryHTMX so caches keep the variants apart.
 func (ctx *Context) WantsPartial() bool {
 	return ctx.IsHTMX() && !ctx.IsBoosted() &&
 		ctx.Request.Header.Get("HX-History-Restore-Request") != "true"
