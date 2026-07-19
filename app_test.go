@@ -64,6 +64,7 @@ func TestApp(t *testing.T) {
 			"w": "x",
 		})
 		app.srv.TLSConfig = Compatible()
+		app.HTMXAwareRedirect = true
 
 		app2 := app.Clone()
 		assert.NotNil(t, app2)
@@ -80,6 +81,7 @@ func TestApp(t *testing.T) {
 		assert.Equal(t, app.Global("q"), "z")
 		assert.Equal(t, app2.Global("q"), "p")
 		assert.NotNil(t, app2.srv.TLSConfig)
+		assert.True(t, app2.HTMXAwareRedirect)
 	})
 
 	t.Run("SelfSign empty param", func(t *testing.T) {

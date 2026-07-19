@@ -1,0 +1,13 @@
+{{define "root"}}
+<html>
+<body>
+<nav>nav</nav>
+{{block "content" .}}
+<div id="content">full content</div>
+{{end}}
+{{block "form" .}}
+<form id="form"><input name="email"></form>
+{{end}}
+</body>
+</html>
+{{end}}

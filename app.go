@@ -30,6 +30,12 @@ type App struct {
 	// CookieSigner signs and verifies cookies for AddSignedCookie and
 	// SignedCookieValue. It is nil by default; set it to enable signed cookies.
 	CookieSigner CookieSigner
+
+	// HTMXAwareRedirect, when true, makes Redirect (and helpers that call it)
+	// emit HX-Redirect + 204 for partial htmx requests instead of a 3xx.
+	// Opt-in so existing apps that branch around Redirect themselves are not
+	// broken by a silent behavior change.
+	HTMXAwareRedirect bool
 }
 
 type ctxKeyApp struct{}
@@ -63,13 +69,14 @@ func (app *App) Clone() *App {
 			TLSConfig:          app.srv.TLSConfig.Clone(),
 			BaseContext:        app.srv.BaseContext,
 		},
-		handler:      app.handler,
-		routes:       cloneRoutes(app.routes),
-		globals:      cloneMap(&app.globals),
-		template:     cloneTmpl(app.template),
-		parent:       template.Must(app.parent.Clone()),
-		ETag:         app.ETag,
-		CookieSigner: app.CookieSigner,
+		handler:           app.handler,
+		routes:            cloneRoutes(app.routes),
+		globals:           cloneMap(&app.globals),
+		template:          cloneTmpl(app.template),
+		parent:            template.Must(app.parent.Clone()),
+		ETag:              app.ETag,
+		CookieSigner:      app.CookieSigner,
+		HTMXAwareRedirect: app.HTMXAwareRedirect,
 	}
 	x.srv.Handler = x
 	x.setupParent()

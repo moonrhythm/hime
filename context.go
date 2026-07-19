@@ -45,6 +45,12 @@ type Context struct {
 	code  int
 	etag  bool
 	flash map[string][]string
+
+	// htmx trigger maps accumulate events across repeated HTMXTrigger* calls
+	// (one map per timing). Each call re-serializes into the response header.
+	htmxTrigger            map[string]json.RawMessage
+	htmxTriggerAfterSwap   map[string]json.RawMessage
+	htmxTriggerAfterSettle map[string]json.RawMessage
 }
 
 // Deadline implements context.Context
@@ -144,9 +150,19 @@ func (ctx *Context) Handle(h http.Handler) error {
 	return nil
 }
 
-// Redirect redirects to given url
+// Redirect redirects to given url.
+// When app.HTMXAwareRedirect is set and the request WantsPartial, it emits
+// HX-Redirect + 204 instead of a 3xx so htmx performs a full client-side
+// navigation rather than swapping the target page into a fragment.
+// On this htmx path an explicit status set via ctx.Status is ignored — the
+// response is always 204, because a 3xx would make htmx swap the redirect
+// target into the fragment.
 func (ctx *Context) Redirect(url string, params ...any) error {
 	p := buildPath(url, params...)
+	if ctx.app.HTMXAwareRedirect && ctx.WantsPartial() {
+		ctx.SetHeader("HX-Redirect", p)
+		return ctx.NoContent()
+	}
 	http.Redirect(ctx.w, ctx.Request, p, ctx.statusCodeRedirect())
 	return nil
 }
@@ -229,11 +245,19 @@ func (ctx *Context) setETag(b []byte) bool {
 	return false
 }
 
-// View renders view
+// View renders view. name may be "view#fragment" to execute only the named
+// {{define}}/{{block}} associated with that view (see ViewPartial).
 func (ctx *Context) View(name string, data any) error {
-	t, ok := ctx.app.template[name]
+	base, frag, hasFrag := strings.Cut(name, "#")
+	t, ok := ctx.app.template[base]
 	if !ok {
 		panic(newErrTemplateNotFound(name))
+	}
+	if hasFrag {
+		t = t.lookup(frag)
+		if t == nil {
+			panic(newErrTemplateNotFound(name))
+		}
 	}
 
 	buf := getBytes()
@@ -250,6 +274,16 @@ func (ctx *Context) View(name string, data any) error {
 
 	ctx.setContentType("text/html; charset=utf-8")
 	return ctx.CopyFrom(buf)
+}
+
+// ViewPartial renders the full view when the client needs a complete document,
+// or only the named fragment when WantsPartial is true. Always sets Vary as a
+// side effect of reading the htmx request headers.
+func (ctx *Context) ViewPartial(name, fragment string, data any) error {
+	if ctx.WantsPartial() {
+		return ctx.View(name+"#"+fragment, data)
+	}
+	return ctx.View(name, data)
 }
 
 // Component renders component
