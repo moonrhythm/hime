@@ -55,11 +55,11 @@ func TestContextIsHTMX(t *testing.T) {
 
 	ctx, w := newHTMXContext(true)
 	assert.True(t, ctx.IsHTMX())
-	assertHTMXVary(t, w)
+	assert.Empty(t, w.Header().Get("Vary"), "predicates must not mutate the response")
 
 	ctx, w = newHTMXContext(false)
 	assert.False(t, ctx.IsHTMX())
-	assertHTMXVary(t, w)
+	assert.Empty(t, w.Header().Get("Vary"))
 }
 
 func TestContextIsBoosted(t *testing.T) {
@@ -70,11 +70,11 @@ func TestContextIsBoosted(t *testing.T) {
 		"HX-Boosted": "true",
 	})
 	assert.True(t, ctx.IsBoosted())
-	assertHTMXVary(t, w)
+	assert.Empty(t, w.Header().Get("Vary"), "predicates must not mutate the response")
 
 	ctx, w = newHTMXContext(true)
 	assert.False(t, ctx.IsBoosted())
-	assertHTMXVary(t, w)
+	assert.Empty(t, w.Header().Get("Vary"))
 }
 
 func TestContextWantsPartial(t *testing.T) {
@@ -103,7 +103,7 @@ func TestContextWantsPartial(t *testing.T) {
 			t.Parallel()
 			ctx, w := newHTMXContextHeaders(tc.headers)
 			assert.Equal(t, tc.want, ctx.WantsPartial())
-			assertHTMXVary(t, w)
+			assert.Empty(t, w.Header().Get("Vary"), "predicates must not mutate the response")
 		})
 	}
 }
@@ -114,9 +114,9 @@ func TestContextVaryHTMX(t *testing.T) {
 	t.Run("emitted once with all three values", func(t *testing.T) {
 		t.Parallel()
 		ctx, w := newHTMXContext(true)
-		ctx.IsHTMX()
-		ctx.IsBoosted()
-		ctx.WantsPartial()
+		assert.Same(t, ctx, ctx.VaryHTMX())
+		ctx.VaryHTMX()
+		ctx.VaryHTMX()
 		assertHTMXVary(t, w)
 
 		// exactly one Vary entry containing the three tokens (no duplicates)
@@ -135,7 +135,7 @@ func TestContextVaryHTMX(t *testing.T) {
 		t.Parallel()
 		ctx, w := newHTMXContext(true)
 		ctx.AddHeader("Vary", "Accept-Encoding")
-		ctx.IsHTMX()
+		ctx.VaryHTMX()
 		tokens := varyTokens(w)
 		assert.True(t, tokens["accept-encoding"])
 		assertHTMXVary(t, w)
@@ -155,8 +155,7 @@ func TestContextVaryHTMX(t *testing.T) {
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
 		r.Header.Set("HX-Request", "true")
 		ctx := hime.NewAppContext(app, w, r)
-		assert.True(t, ctx.IsHTMX())
-		assert.NoError(t, ctx.View("index", nil))
+		assert.NoError(t, ctx.VaryHTMX().View("index", nil))
 		etag := w.Header().Get("ETag")
 		assert.NotEmpty(t, etag)
 		assertHTMXVary(t, w)
@@ -167,8 +166,7 @@ func TestContextVaryHTMX(t *testing.T) {
 		r.Header.Set("HX-Request", "true")
 		r.Header.Set("If-None-Match", etag)
 		ctx = hime.NewAppContext(app, w, r)
-		assert.True(t, ctx.IsHTMX())
-		assert.NoError(t, ctx.View("index", nil))
+		assert.NoError(t, ctx.VaryHTMX().View("index", nil))
 		assert.Equal(t, http.StatusNotModified, w.Code)
 		assertHTMXVary(t, w)
 	})

@@ -159,9 +159,12 @@ func (ctx *Context) Handle(h http.Handler) error {
 // target into the fragment.
 func (ctx *Context) Redirect(url string, params ...any) error {
 	p := buildPath(url, params...)
-	if ctx.app.HTMXAwareRedirect && ctx.WantsPartial() {
-		ctx.SetHeader("HX-Redirect", p)
-		return ctx.NoContent()
+	if ctx.app.HTMXAwareRedirect {
+		ctx.VaryHTMX()
+		if ctx.WantsPartial() {
+			ctx.SetHeader("HX-Redirect", p)
+			return ctx.NoContent()
+		}
 	}
 	http.Redirect(ctx.w, ctx.Request, p, ctx.statusCodeRedirect())
 	return nil
@@ -277,9 +280,10 @@ func (ctx *Context) View(name string, data any) error {
 }
 
 // ViewPartial renders the full view when the client needs a complete document,
-// or only the named fragment when WantsPartial is true. Always sets Vary as a
-// side effect of reading the htmx request headers.
+// or only the named fragment when WantsPartial is true. It calls VaryHTMX so
+// caches keep the full and fragment variants apart.
 func (ctx *Context) ViewPartial(name, fragment string, data any) error {
+	ctx.VaryHTMX()
 	if ctx.WantsPartial() {
 		return ctx.View(name+"#"+fragment, data)
 	}

@@ -1420,6 +1420,11 @@ func TestContextHTMXAwareRedirect(t *testing.T) {
 				assert.Equal(t, w.Header().Get("Location"), "/signin")
 				assert.Empty(t, w.Header().Get("HX-Redirect"))
 			}
+			if tc.flag {
+				assertHTMXVary(t, w)
+			} else {
+				assert.Empty(t, w.Header().Get("Vary"))
+			}
 		})
 	}
 

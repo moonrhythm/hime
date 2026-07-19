@@ -16,10 +16,13 @@ var htmxVaryHeaders = []string{
 	"HX-History-Restore-Request",
 }
 
-// varyHTMX appends the htmx request headers that affect response body selection
-// to Vary, deduplicated (case-insensitive) and after any pre-existing values.
-// Called by every predicate that reads those headers.
-func (ctx *Context) varyHTMX() {
+// VaryHTMX appends the htmx request headers that affect response body selection
+// (HX-Request, HX-Boosted, HX-History-Restore-Request) to Vary, deduplicated
+// (case-insensitive) and after any pre-existing values, so caches never mix
+// full pages, boosted pages, and fragments. ViewPartial and htmx-aware
+// redirects call it automatically; call it yourself whenever a handler
+// branches on IsHTMX, IsBoosted, or WantsPartial. It returns ctx for chaining.
+func (ctx *Context) VaryHTMX() *Context {
 	existing := make(map[string]bool)
 	for _, v := range ctx.w.Header().Values("Vary") {
 		for _, part := range strings.Split(v, ",") {
@@ -39,29 +42,31 @@ func (ctx *Context) varyHTMX() {
 		existing[strings.ToLower(h)] = true
 	}
 	if len(toAdd) == 0 {
-		return
+		return ctx
 	}
 	ctx.AddHeader("Vary", strings.Join(toAdd, ", "))
+	return ctx
 }
 
 // IsHTMX reports whether the request was made by htmx, via the HX-Request
-// header. Reading the header emits the corresponding Vary values.
+// header. When a handler branches on it, also call VaryHTMX so caches keep
+// the variants apart.
 func (ctx *Context) IsHTMX() bool {
-	ctx.varyHTMX()
 	return ctx.Request.Header.Get("HX-Request") == "true"
 }
 
 // IsBoosted reports whether the request was made via htmx boost
-// (HX-Boosted == "true"). Reading the header emits the corresponding Vary values.
+// (HX-Boosted == "true"). When a handler branches on it, also call VaryHTMX
+// so caches keep the variants apart.
 func (ctx *Context) IsBoosted() bool {
-	ctx.varyHTMX()
 	return ctx.Request.Header.Get("HX-Boosted") == "true"
 }
 
 // WantsPartial reports whether the handler may respond with a page fragment
 // instead of a full document: an htmx request that is not boosted and not a
 // history restore. Boosted and history-restore requests need full documents.
-// Reading the headers emits the corresponding Vary values.
+// ViewPartial calls it (and VaryHTMX) for you; when branching on it directly,
+// also call VaryHTMX so caches keep the variants apart.
 func (ctx *Context) WantsPartial() bool {
 	return ctx.IsHTMX() && !ctx.IsBoosted() &&
 		ctx.Request.Header.Get("HX-History-Restore-Request") != "true"
