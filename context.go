@@ -503,6 +503,15 @@ func (ctx *Context) DelHeader(key string) {
 	ctx.w.Header().Del(key)
 }
 
+// NoCache marks the response as non-cacheable by browser and shared caches
+// (Cache-Control: no-store). Responses served with it never need VaryHTMX.
+// It does not affect htmx's history snapshot (use hx-history="false" for
+// that). It returns ctx for chaining.
+func (ctx *Context) NoCache() *Context {
+	ctx.SetHeader("Cache-Control", "no-store")
+	return ctx
+}
+
 // BindJSON binds request body using json decoder
 func (ctx *Context) BindJSON(v any) error {
 	return json.NewDecoder(ctx.Body).Decode(v)

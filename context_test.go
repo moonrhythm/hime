@@ -161,6 +161,17 @@ func TestContext(t *testing.T) {
 		assert.Empty(t, w.Header().Get("Vary"))
 	})
 
+	t.Run("NoCache", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Same(t, ctx, ctx.NoCache())
+		assert.Equal(t, w.Header().Get("Cache-Control"), "no-store")
+	})
+
 	t.Run("Status", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
