@@ -503,3 +503,23 @@ func TestTemplateComponentMultiple(t *testing.T) {
 	assert.NoError(t, tp.list["t"].Execute(&b, nil))
 	assert.Equal(t, "one-two", b.String())
 }
+
+func TestTemplateFragmentSeparatorRejected(t *testing.T) {
+	t.Parallel()
+
+	// '#' is reserved as the View fragment separator (e.g. "page#form").
+	t.Run("Parse template name with #", func(t *testing.T) {
+		tp := New().Template()
+		assert.Panics(t, func() { tp.Parse("bad#name", "data") })
+	})
+
+	t.Run("ParseComponent name with #", func(t *testing.T) {
+		tp := New().Template()
+		assert.Panics(t, func() { tp.ParseComponent("bad#c", "data") })
+	})
+
+	t.Run("Component name with #", func(t *testing.T) {
+		tp := New().Template()
+		assert.Panics(t, func() { tp.Component(template.Must(template.New("bad#c").Parse(`a`))) })
+	})
+}

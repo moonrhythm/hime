@@ -161,6 +161,17 @@ func TestContext(t *testing.T) {
 		assert.Empty(t, w.Header().Get("Vary"))
 	})
 
+	t.Run("NoCache", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		app := hime.New()
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.Same(t, ctx, ctx.NoCache())
+		assert.Equal(t, w.Header().Get("Cache-Control"), "no-store")
+	})
+
 	t.Run("Status", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -1221,5 +1232,248 @@ func TestContextETagOverride(t *testing.T) {
 
 		assert.NoError(t, ctx.ETag(false).JSON(map[string]any{"a": 1}))
 		assert.Empty(t, w.Header().Get("ETag"))
+	})
+}
+
+func newFragmentApp(minify bool) *hime.App {
+	app := hime.New()
+	tmpl := app.Template()
+	if minify {
+		tmpl.Minify()
+	}
+	tmpl.Dir("testdata")
+	tmpl.Root("root")
+	tmpl.ParseFiles("page", "fragments.tmpl")
+	return app
+}
+
+func TestContextViewFragment(t *testing.T) {
+	t.Parallel()
+
+	t.Run("fragment renders block only", func(t *testing.T) {
+		app := newFragmentApp(false)
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.View("page#content", nil))
+		assert.Equal(t, w.Code, http.StatusOK)
+		assert.Contains(t, w.Body.String(), `<div id="content">full content</div>`)
+		assert.NotContains(t, w.Body.String(), "<nav>")
+	})
+
+	t.Run("full view contains fragment", func(t *testing.T) {
+		app := newFragmentApp(false)
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.View("page", nil))
+		assert.Contains(t, w.Body.String(), "<nav>nav</nav>")
+		assert.Contains(t, w.Body.String(), `<div id="content">full content</div>`)
+	})
+
+	t.Run("missing fragment panics with full name", func(t *testing.T) {
+		app := newFragmentApp(false)
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.PanicsWithError(t, "hime: template 'page#nope' not found", func() { ctx.View("page#nope", nil) })
+	})
+
+	t.Run("missing view panics with full name", func(t *testing.T) {
+		app := hime.New()
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.PanicsWithError(t, "hime: template 'nope#frag' not found", func() { ctx.View("nope#frag", nil) })
+	})
+
+	t.Run("minify parity", func(t *testing.T) {
+		app := newFragmentApp(true)
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		assert.NoError(t, hime.NewAppContext(app, w, r).View("page", nil))
+		full := w.Body.String()
+
+		w2 := httptest.NewRecorder()
+		r2 := httptest.NewRequest(http.MethodGet, "/", nil)
+		assert.NoError(t, hime.NewAppContext(app, w2, r2).View("page#content", nil))
+		frag := strings.TrimSpace(w2.Body.String())
+
+		assert.NotEmpty(t, frag)
+		assert.Contains(t, full, frag)
+	})
+
+	t.Run("etag differs from full page", func(t *testing.T) {
+		app := newFragmentApp(false)
+		app.ETag = true
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		assert.NoError(t, hime.NewAppContext(app, w, r).View("page", nil))
+		etagFull := w.Header().Get("ETag")
+
+		w2 := httptest.NewRecorder()
+		r2 := httptest.NewRequest(http.MethodGet, "/", nil)
+		assert.NoError(t, hime.NewAppContext(app, w2, r2).View("page#content", nil))
+		etagFrag := w2.Header().Get("ETag")
+
+		assert.NotEmpty(t, etagFull)
+		assert.NotEmpty(t, etagFrag)
+		assert.NotEqual(t, etagFull, etagFrag)
+	})
+}
+
+func TestContextViewPartial(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		headers  map[string]string
+		fragment bool
+	}{
+		{"plain", nil, false},
+		{"partial htmx", map[string]string{"HX-Request": "true"}, true},
+		{"boosted", map[string]string{"HX-Request": "true", "HX-Boosted": "true"}, false},
+		{"history restore", map[string]string{"HX-Request": "true", "HX-History-Restore-Request": "true"}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := newFragmentApp(false)
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "/", nil)
+			for k, v := range tc.headers {
+				r.Header.Set(k, v)
+			}
+			ctx := hime.NewAppContext(app, w, r)
+
+			assert.NoError(t, ctx.ViewPartial("page", "content", nil))
+			assert.Equal(t, w.Code, http.StatusOK)
+			assert.Contains(t, w.Body.String(), `<div id="content">full content</div>`)
+			if tc.fragment {
+				assert.NotContains(t, w.Body.String(), "<nav>")
+			} else {
+				assert.Contains(t, w.Body.String(), "<nav>nav</nav>")
+			}
+			assert.Empty(t, w.Header().Get("Vary"), "ViewPartial must not set Vary; that is the caller's VaryHTMX call")
+		})
+	}
+
+	t.Run("etag 304", func(t *testing.T) {
+		app := newFragmentApp(false)
+		app.ETag = true
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		r.Header.Set("HX-Request", "true")
+		assert.NoError(t, hime.NewAppContext(app, w, r).ViewPartial("page", "content", nil))
+		etag := w.Header().Get("ETag")
+		if !assert.NotEmpty(t, etag) {
+			return
+		}
+
+		w2 := httptest.NewRecorder()
+		r2 := httptest.NewRequest(http.MethodGet, "/", nil)
+		r2.Header.Set("HX-Request", "true")
+		r2.Header.Set("If-None-Match", etag)
+		assert.NoError(t, hime.NewAppContext(app, w2, r2).ViewPartial("page", "content", nil))
+		assert.Equal(t, w2.Code, http.StatusNotModified)
+		assert.Empty(t, w2.Body.String())
+	})
+}
+
+func TestContextHTMXAwareRedirect(t *testing.T) {
+	t.Parallel()
+
+	htmxPartial := map[string]string{"HX-Request": "true"}
+	htmxBoosted := map[string]string{"HX-Request": "true", "HX-Boosted": "true"}
+	htmxRestore := map[string]string{"HX-Request": "true", "HX-History-Restore-Request": "true"}
+
+	cases := []struct {
+		name     string
+		flag     bool
+		method   string
+		headers  map[string]string
+		wantCode int
+		wantHX   string
+	}{
+		{"flag off plain GET", false, http.MethodGet, nil, http.StatusFound, ""},
+		{"flag off partial POST", false, http.MethodPost, htmxPartial, http.StatusSeeOther, ""},
+		{"flag on plain GET", true, http.MethodGet, nil, http.StatusFound, ""},
+		{"flag on plain POST", true, http.MethodPost, nil, http.StatusSeeOther, ""},
+		{"flag on partial GET", true, http.MethodGet, htmxPartial, http.StatusNoContent, "/signin"},
+		{"flag on partial POST", true, http.MethodPost, htmxPartial, http.StatusNoContent, "/signin"},
+		{"flag on boosted POST", true, http.MethodPost, htmxBoosted, http.StatusSeeOther, ""},
+		{"flag on history restore GET", true, http.MethodGet, htmxRestore, http.StatusFound, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := hime.New()
+			app.HTMXAwareRedirect = tc.flag
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(tc.method, "/", nil)
+			for k, v := range tc.headers {
+				r.Header.Set(k, v)
+			}
+			ctx := hime.NewAppContext(app, w, r)
+
+			assert.NoError(t, ctx.Redirect("/signin"))
+			assert.Equal(t, w.Code, tc.wantCode)
+			if tc.wantHX != "" {
+				assert.Equal(t, w.Header().Get("HX-Redirect"), tc.wantHX)
+				assert.Empty(t, w.Header().Get("Location"))
+			} else {
+				assert.Equal(t, w.Header().Get("Location"), "/signin")
+				assert.Empty(t, w.Header().Get("HX-Redirect"))
+			}
+			assert.Empty(t, w.Header().Get("Vary"), "Redirect must not set Vary; that is the caller's VaryHTMX call")
+		})
+	}
+
+	t.Run("SafeRedirect sanitizes before HX-Redirect", func(t *testing.T) {
+		app := hime.New()
+		app.HTMXAwareRedirect = true
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		r.Header.Set("HX-Request", "true")
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.SafeRedirect("https://google.com"))
+		assert.Equal(t, w.Code, http.StatusNoContent)
+		assert.Equal(t, w.Header().Get("HX-Redirect"), "/")
+		assert.Empty(t, w.Header().Get("Location"))
+	})
+
+	t.Run("RedirectTo partial", func(t *testing.T) {
+		app := hime.New()
+		app.HTMXAwareRedirect = true
+		app.Routes(hime.Routes{
+			"route1": "/route/1",
+		})
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		r.Header.Set("HX-Request", "true")
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectTo("route1"))
+		assert.Equal(t, w.Code, http.StatusNoContent)
+		assert.Equal(t, w.Header().Get("HX-Redirect"), "/route/1")
+	})
+
+	t.Run("RedirectToGet partial", func(t *testing.T) {
+		app := hime.New()
+		app.HTMXAwareRedirect = true
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/submit", nil)
+		r.Header.Set("HX-Request", "true")
+		ctx := hime.NewAppContext(app, w, r)
+
+		assert.NoError(t, ctx.RedirectToGet())
+		assert.Equal(t, w.Code, http.StatusNoContent)
+		assert.Equal(t, w.Header().Get("HX-Redirect"), "/submit")
 	})
 }

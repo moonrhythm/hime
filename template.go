@@ -71,6 +71,24 @@ func (t *tmpl) Execute(w io.Writer, data any) error {
 	return t.m.Minify("text/html", w, buf)
 }
 
+// lookup returns a *tmpl for a named template ({{define}}/{{block}}) in t's
+// associated set, preserving minifier settings. Returns nil if not found.
+func (t *tmpl) lookup(name string) *tmpl {
+	lt := t.Template.Lookup(name)
+	if lt == nil {
+		return nil
+	}
+	return &tmpl{Template: lt, m: t.m}
+}
+
+// rejectFragmentSep panics if name contains '#', which is reserved as the
+// View fragment separator (e.g. "page#form").
+func rejectFragmentSep(kind, name string) {
+	if strings.Contains(name, "#") {
+		panicf("%s name must not contain '#': %s", kind, name)
+	}
+}
+
 // Template is template loader
 type Template struct {
 	parent     *template.Template
@@ -197,6 +215,7 @@ func (tp *Template) Preload(filename ...string) {
 }
 
 func (tp *Template) newTemplate(name string, parser func(t *template.Template) *template.Template) {
+	rejectFragmentSep("template", name)
 	if _, ok := tp.list[name]; ok {
 		panic(newErrTemplateDuplicate(name))
 	}
@@ -222,6 +241,7 @@ func (tp *Template) newTemplate(name string, parser func(t *template.Template) *
 }
 
 func (tp *Template) newComponent(name string, parser func(t *template.Template) *template.Template) {
+	rejectFragmentSep("component", name)
 	if _, ok := tp.components[name]; ok {
 		panic(newErrComponentDuplicate(name))
 	}
@@ -291,6 +311,7 @@ func (tp *Template) Component(ts ...*template.Template) {
 		if name == "" {
 			panicf("can not load empty name component")
 		}
+		rejectFragmentSep("component", name)
 
 		if _, ok := tp.components[name]; ok {
 			panicf("component '%s' already exists", name)
