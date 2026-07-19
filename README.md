@@ -64,7 +64,7 @@ Notes:
   <meta name="htmx-config" content='{"responseHandling":[{"code":"422","swap":true},{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":false,"error":true}]}'>
   ```
 
-- CSRF: set `SameSite=Lax` (or `Strict`) explicitly on your session cookie and never mutate state on GET — that alone stops classic cross-site form CSRF in modern browsers. For defense-in-depth (untrusted subdomains are still "same-site"), reject mutating requests whose `Sec-Fetch-Site` header is cross-origin — a few lines of your own middleware; hime ships none. If you use token middleware anyway, wire it with `hx-headers`, e.g. `<body hx-headers='{"X-CSRF-Token": "{{.Token}}"}'>`, and prefer per-session tokens (or set `hx-history="false"`) since htmx snapshots pages into localStorage.
+- CSRF: set `SameSite=Lax` (or `Strict`) explicitly on your session cookie and never mutate state on GET — that alone stops classic cross-site form CSRF in modern browsers. For defense-in-depth (untrusted subdomains are still "same-site"), wrap your handler with the standard library's [`http.NewCrossOriginProtection`](https://pkg.go.dev/net/http#CrossOriginProtection): `app.Handler(cop.Handler(mux))` — hime adds nothing because it composes directly. If you use token middleware anyway, wire it with `hx-headers`, e.g. `<body hx-headers='{"X-CSRF-Token": "{{.Token}}"}'>`, and prefer per-session tokens (or set `hx-history="false"`) since htmx snapshots pages into localStorage.
 
 ## License
 
