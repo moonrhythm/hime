@@ -86,6 +86,33 @@ func TestSafeRedirectPath(t *testing.T) {
 	}
 }
 
+func TestURLStrictColonHost(t *testing.T) {
+	t.Parallel()
+
+	// Go 1.26 url.Parse rejects a host with an extra colon and an unbracketed
+	// IPv6 address. ParseRequestURI shares that rejection, so SafeRedirectPath
+	// falls back to "/". Bracketed IPv6 stays valid.
+	t.Run("SafeRedirectPath", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t, "/", SafeRedirectPath("http://localhost:80:80/ok?x=1"))
+		assert.Equal(t, "/", SafeRedirectPath("http://::1/ok?x=1"))
+		assert.Equal(t, "/ok?x=1", SafeRedirectPath("http://[::1]/ok?x=1"))
+	})
+
+	t.Run("Route", func(t *testing.T) {
+		t.Parallel()
+		app := New()
+		app.Routes(Routes{
+			"extra": "http://localhost:80:80/ok",
+			"bare":  "http://::1/ok",
+			"v6":    "http://[::1]/ok",
+		})
+		assert.Panics(t, func() { app.Route("extra") })
+		assert.Panics(t, func() { app.Route("bare") })
+		assert.Equal(t, "http://[::1]/ok", app.Route("v6"))
+	})
+}
+
 func TestBuildPathInvalidURL(t *testing.T) {
 	t.Parallel()
 

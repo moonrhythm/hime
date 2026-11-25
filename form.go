@@ -1,6 +1,9 @@
 package hime
 
-import "net/url"
+import (
+	"net/url"
+	"slices"
+)
 
 // FormState holds submitted form values together with per-field validation
 // errors, so a form can be re-rendered with the user's input after a failed
@@ -21,7 +24,7 @@ func (ctx *Context) FormState() *FormState {
 	// copy, so SetValue does not mutate the request's parsed form
 	values := make(url.Values, len(ctx.Request.Form))
 	for k, vs := range ctx.Request.Form {
-		values[k] = append([]string(nil), vs...)
+		values[k] = slices.Clone(vs)
 	}
 
 	return &FormState{

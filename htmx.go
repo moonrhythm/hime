@@ -2,6 +2,7 @@ package hime
 
 import (
 	"encoding/json"
+	"maps"
 	"slices"
 	"strings"
 )
@@ -27,7 +28,7 @@ var htmxVaryHeaders = []string{
 func (ctx *Context) VaryHTMX() *Context {
 	existing := make(map[string]bool)
 	for _, v := range ctx.w.Header().Values("Vary") {
-		for _, part := range strings.Split(v, ",") {
+		for part := range strings.SplitSeq(v, ",") {
 			part = strings.TrimSpace(part)
 			if part != "" {
 				existing[strings.ToLower(part)] = true
@@ -185,11 +186,7 @@ func (ctx *Context) mergeHTMXTrigger(m *map[string]json.RawMessage, header, even
 		}
 	}
 	if allBare {
-		names := make([]string, 0, len(*m))
-		for name := range *m {
-			names = append(names, name)
-		}
-		slices.Sort(names)
+		names := slices.Sorted(maps.Keys(*m))
 		ctx.SetHeader(header, strings.Join(names, ", "))
 		return ctx
 	}

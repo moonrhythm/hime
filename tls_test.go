@@ -192,6 +192,13 @@ func TestTLSProfilesDetail(t *testing.T) {
 	assert.Equal(t, uint16(tls.VersionTLS12), Modern().MinVersion)
 	assert.Equal(t, uint16(tls.VersionTLS10), Compatible().MinVersion)
 
+	// Explicit curves only. Go 1.26's default hybrid ML-KEM curves stay off
+	// because each profile sets CurvePreferences itself.
+	wantCurves := []tls.CurveID{tls.X25519, tls.CurveP256}
+	assert.Equal(t, wantCurves, Restricted().CurvePreferences)
+	assert.Equal(t, wantCurves, Modern().CurvePreferences)
+	assert.Equal(t, wantCurves, Compatible().CurvePreferences)
+
 	assert.Len(t, Restricted().CipherSuites, 6)
 	assert.Len(t, Modern().CipherSuites, 10)
 	assert.Len(t, Compatible().CipherSuites, 15)
@@ -240,6 +247,7 @@ func TestSelfSignCertContents(t *testing.T) {
 	if assert.NoError(t, opt.config(&tc)) && assert.Len(t, tc.Certificates, 1) {
 		cert, err := x509.ParseCertificate(tc.Certificates[0].Certificate[0])
 		assert.NoError(t, err)
+		assert.NotNil(t, tc.Certificates[0].PrivateKey)
 		assert.Equal(t, "example.com", cert.Subject.CommonName)
 		assert.Len(t, cert.IPAddresses, 2)
 		assert.Len(t, cert.DNSNames, 1)

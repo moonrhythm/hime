@@ -1,6 +1,7 @@
 package hime_test
 
 import (
+	"bytes"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -109,7 +110,7 @@ func TestHMACCookieSigner(t *testing.T) {
 
 	t.Run("key is copied", func(t *testing.T) {
 		t.Parallel()
-		key := append([]byte(nil), testCookieKey...)
+		key := bytes.Clone(testCookieKey)
 		s := hime.NewHMACCookieSigner(key)
 		signed, _ := s.Sign("session", "user42")
 

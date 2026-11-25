@@ -32,7 +32,7 @@ func newHTMXContextHeaders(headers map[string]string) (*hime.Context, *httptest.
 func varyTokens(w *httptest.ResponseRecorder) map[string]bool {
 	m := make(map[string]bool)
 	for _, v := range w.Header().Values("Vary") {
-		for _, part := range strings.Split(v, ",") {
+		for part := range strings.SplitSeq(v, ",") {
 			part = strings.TrimSpace(part)
 			if part != "" {
 				m[strings.ToLower(part)] = true
@@ -122,7 +122,7 @@ func TestContextVaryHTMX(t *testing.T) {
 		// exactly one Vary entry containing the three tokens (no duplicates)
 		var count int
 		for _, v := range w.Header().Values("Vary") {
-			for _, part := range strings.Split(v, ",") {
+			for part := range strings.SplitSeq(v, ",") {
 				if strings.EqualFold(strings.TrimSpace(part), "HX-Request") {
 					count++
 				}

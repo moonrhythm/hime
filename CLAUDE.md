@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Hime is a minimalist Go web framework built on top of `net/http`. Its core design principle (see `README.md`): it ships **no router or middleware of its own** so it composes with any `net/http`-compatible router, middleware, or handler. Hime only adds an app container, a request `Context` with response helpers, named routes, globals, and an `html/template`-based view/component system.
 
-The module is `github.com/moonrhythm/hime` and requires **Go 1.25**. It is a library (no `main` package).
+The module is `github.com/moonrhythm/hime` and requires **Go 1.26**. It is a library (no `main` package).
 
 ## Commands
 
@@ -17,7 +17,7 @@ go test -run 'TestApp/Clone' ./...  # run a single subtest (tests use t.Run subt
 go vet ./...                        # static checks (part of CI)
 ```
 
-CI (`.github/workflows/test.yaml`) runs `go vet` then `go test ./...` on Go 1.25. Tests rely on fixtures in `testdata/` (templates, YAML configs, `server.crt`/`server.key`). Some tests bind real ports (`:8081`, `:8082`) and `time.Sleep` — they run with `t.Parallel()`.
+CI (`.github/workflows/test.yaml`) runs `go vet` then `go test ./...` on Go 1.26. Tests rely on fixtures in `testdata/` (templates, YAML configs, `server.crt`/`server.key`). Some tests bind real ports (`:8081`, `:8082`) and `time.Sleep` — they run with `t.Parallel()`.
 
 ## Architecture
 

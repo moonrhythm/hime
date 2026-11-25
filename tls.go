@@ -10,6 +10,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"maps"
 	"math/big"
 	"net"
 	"net/http"
@@ -99,15 +100,7 @@ type TLS struct {
 }
 
 func cloneTLSNextProto(xs map[string]func(*http.Server, *tls.Conn, http.Handler)) map[string]func(*http.Server, *tls.Conn, http.Handler) {
-	if xs == nil {
-		return nil
-	}
-
-	rs := make(map[string]func(*http.Server, *tls.Conn, http.Handler))
-	for k, v := range xs {
-		rs[k] = v
-	}
-	return rs
+	return maps.Clone(xs)
 }
 
 func parseTLSVersion(s string) uint16 {

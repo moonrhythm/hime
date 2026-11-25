@@ -2,6 +2,7 @@ package hime
 
 import (
 	"context"
+	"maps"
 	"strings"
 )
 
@@ -9,14 +10,7 @@ import (
 type Routes map[string]string
 
 func cloneRoutes(xs Routes) Routes {
-	if xs == nil {
-		return nil
-	}
-	rs := make(Routes)
-	for k, v := range xs {
-		rs[k] = v
-	}
-	return rs
+	return maps.Clone(xs)
 }
 
 // Routes registers route name and path
@@ -24,9 +18,7 @@ func (app *App) Routes(routes Routes) {
 	if app.routes == nil {
 		app.routes = make(Routes)
 	}
-	for name, path := range routes {
-		app.routes[name] = path
-	}
+	maps.Copy(app.routes, routes)
 }
 
 // Route gets route path from given name

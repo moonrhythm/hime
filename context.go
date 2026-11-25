@@ -386,8 +386,7 @@ func filterRenderError(err error) error {
 	if err == nil {
 		return nil
 	}
-	var netErr *net.OpError
-	if errors.As(err, &netErr) {
+	if _, ok := errors.AsType[*net.OpError](err); ok {
 		return nil
 	}
 	if errors.Is(err, syscall.EPIPE) {
@@ -577,8 +576,7 @@ func etag(b []byte) string {
 }
 
 func matchETag(r *http.Request, etag string) bool {
-	reqETags := strings.Split(r.Header.Get("If-None-Match"), ",")
-	for _, reqETag := range reqETags {
+	for reqETag := range strings.SplitSeq(r.Header.Get("If-None-Match"), ",") {
 		reqETag = strings.TrimSpace(reqETag)
 		if reqETag == etag {
 			return true

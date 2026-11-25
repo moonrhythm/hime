@@ -1,6 +1,7 @@
 package hime
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -87,7 +88,7 @@ func NewHMACCookieSigner(key []byte) *HMACCookieSigner {
 	if len(key) == 0 {
 		panicf("cookie signer key must not be empty")
 	}
-	return &HMACCookieSigner{key: append([]byte(nil), key...)}
+	return &HMACCookieSigner{key: bytes.Clone(key)}
 }
 
 // mac computes HMAC-SHA256 over name, a NUL separator, then value. A cookie

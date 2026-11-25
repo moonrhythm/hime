@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path"
 	"strings"
@@ -379,15 +380,7 @@ func joinTemplateDir(dir string, filenames ...string) []string {
 }
 
 func cloneTmpl(xs map[string]*tmpl) map[string]*tmpl {
-	if xs == nil {
-		return nil
-	}
-
-	rs := make(map[string]*tmpl)
-	for k, v := range xs {
-		rs[k] = v
-	}
-	return rs
+	return maps.Clone(xs)
 }
 
 func tfParam(name string, value any) *Param {

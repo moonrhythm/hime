@@ -13,12 +13,12 @@ import (
 
 // App is the hime app
 type App struct {
-	srv           *parapet.Server
-	handler       http.Handler
-	routes        Routes
-	globals       sync.Map
-	onceServeHTTP sync.Once
-	serveHandler  http.Handler
+	srv          *parapet.Server
+	handler      http.Handler
+	routes       Routes
+	globals      sync.Map
+	serveOnce    func()
+	serveHandler http.Handler
 
 	template        map[string]*tmpl
 	component       map[string]*tmpl
@@ -45,6 +45,7 @@ func New() *App {
 	app := &App{}
 	app.SetServer(&parapet.Server{})
 	app.setupParent()
+	app.initServeOnce()
 	return app
 }
 
@@ -80,8 +81,19 @@ func (app *App) Clone() *App {
 	}
 	x.srv.Handler = x
 	x.setupParent()
+	x.initServeOnce()
 
 	return x
+}
+
+func (app *App) initServeOnce() {
+	app.serveOnce = sync.OnceFunc(func() {
+		app.serveHandler = app.handler
+		if app.serveHandler == nil {
+			app.serveHandler = http.DefaultServeMux
+		}
+		app.serveHandler = app.ServeHandler(app.serveHandler)
+	})
 }
 
 // Address sets server address
@@ -95,15 +107,7 @@ func (app *App) Handler(h http.Handler) {
 }
 
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	app.onceServeHTTP.Do(func() {
-		app.serveHandler = app.handler
-		if app.serveHandler == nil {
-			app.serveHandler = http.DefaultServeMux
-		}
-
-		app.serveHandler = app.ServeHandler(app.serveHandler)
-	})
-
+	app.serveOnce()
 	app.serveHandler.ServeHTTP(w, r)
 }
 
