@@ -89,6 +89,65 @@ func TestHandler(t *testing.T) {
 		})
 	})
 
+	t.Run("Error does not panic", func(t *testing.T) {
+		app := New()
+		app.Handler(Handler(func(ctx *Context) error {
+			return ctx.Status(http.StatusForbidden).Error("nope")
+		}))
+
+		w := httptest.NewRecorder()
+		assert.NotPanics(t, func() {
+			app.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+		})
+		assert.Equal(t, http.StatusForbidden, w.Code)
+		assert.Equal(t, "nope\n", w.Body.String())
+	})
+
+	t.Run("NotFound does not panic", func(t *testing.T) {
+		app := New()
+		app.Handler(Handler(func(ctx *Context) error {
+			return ctx.NotFound()
+		}))
+
+		w := httptest.NewRecorder()
+		assert.NotPanics(t, func() {
+			app.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+		})
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Equal(t, "404 page not found\n", w.Body.String())
+	})
+
+	t.Run("wrapped ErrResponseWritten does not panic", func(t *testing.T) {
+		app := New()
+		app.Handler(Handler(func(ctx *Context) error {
+			return fmt.Errorf("load: %w", ctx.Status(http.StatusBadRequest).Error("bad"))
+		}))
+
+		w := httptest.NewRecorder()
+		assert.NotPanics(t, func() {
+			app.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+		})
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, "bad\n", w.Body.String())
+	})
+
+	t.Run("helper Error stops a second write", func(t *testing.T) {
+		app := New()
+		app.Handler(Handler(func(ctx *Context) error {
+			if err := ctx.Status(http.StatusForbidden).Error("forbidden"); err != nil {
+				return err
+			}
+			return ctx.String("page")
+		}))
+
+		w := httptest.NewRecorder()
+		assert.NotPanics(t, func() {
+			app.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+		})
+		assert.Equal(t, http.StatusForbidden, w.Code)
+		assert.Equal(t, "forbidden\n", w.Body.String())
+	})
+
 	t.Run("panic value is the returned error", func(t *testing.T) {
 		wantErr := fmt.Errorf("boom")
 		app := New()

@@ -31,7 +31,7 @@ The key mechanism: `App.ServeHTTP` / `App.ServeHandler` wrap the downstream hand
 `App.Clone()` deep-copies server settings, routes, globals, and templates — used to derive variant apps (e.g. per-host) from a base.
 
 ### Handler and the error-as-panic convention (`handler.go`)
-`type Handler func(*Context) error` adapts to `http.Handler`. In `ServeHTTP`, a returned error is treated as fatal: `nil` and `context.Canceled` are swallowed, **everything else panics**. There is no built-in error rendering — recovery is expected to come from parapet/middleware upstream. When adding handler logic, return errors only for truly exceptional cases; use the `Context` result helpers for normal responses.
+`type Handler func(*Context) error` adapts to `http.Handler`. In `ServeHTTP`, a returned error is treated as fatal: `nil`, `context.Canceled`, and `ErrResponseWritten` (from `Error` and `NotFound`, including when wrapped) are swallowed, **everything else panics**. There is no built-in error rendering — recovery is expected to come from parapet/middleware upstream. When adding handler logic, return errors only for truly exceptional cases; use the `Context` result helpers for normal responses.
 
 ### Context and result helpers (`context.go`, `request.go`)
 `Context` embeds `*http.Request` and itself implements `context.Context` (delegating to the request's context). Construct it with `NewContext(w, r)`.

@@ -33,6 +33,7 @@ func TestErrorMessages(t *testing.T) {
 	assert.Equal(t, "hime: component 'c' not found", newErrComponentNotFound("c").Error())
 	assert.Equal(t, "hime: component 'c' already exists", newErrComponentDuplicate("c").Error())
 	assert.Equal(t, "hime: app not found", ErrAppNotFound.Error())
+	assert.Equal(t, "hime: response already written", ErrResponseWritten.Error())
 }
 
 func TestPanicf(t *testing.T) {

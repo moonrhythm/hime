@@ -15,6 +15,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err == nil:
 	case errors.Is(err, context.Canceled):
+	case errors.Is(err, ErrResponseWritten):
 	default:
 		panic(err)
 	}

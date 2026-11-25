@@ -214,7 +214,7 @@ func TestContext(t *testing.T) {
 		app := hime.New()
 		ctx := hime.NewAppContext(app, w, r)
 
-		assert.NoError(t, ctx.NotFound())
+		assert.ErrorIs(t, ctx.NotFound(), hime.ErrResponseWritten)
 		assert.Equal(t, w.Code, http.StatusNotFound)
 		assert.Equal(t, w.Body.String(), "404 page not found\n")
 	})
@@ -291,7 +291,7 @@ func TestContext(t *testing.T) {
 		app := hime.New()
 		ctx := hime.NewAppContext(app, w, r)
 
-		assert.NoError(t, ctx.Error("some error"))
+		assert.ErrorIs(t, ctx.Error("some error"), hime.ErrResponseWritten)
 		assert.Equal(t, w.Code, http.StatusInternalServerError)
 		assert.Equal(t, w.Header().Get("Content-Type"), "text/plain; charset=utf-8")
 		assert.Equal(t, w.Body.String(), "some error\n")
@@ -304,7 +304,7 @@ func TestContext(t *testing.T) {
 		app := hime.New()
 		ctx := hime.NewAppContext(app, w, r)
 
-		assert.NoError(t, ctx.Status(http.StatusNotFound).Error("some error"))
+		assert.ErrorIs(t, ctx.Status(http.StatusNotFound).Error("some error"), hime.ErrResponseWritten)
 		assert.Equal(t, w.Code, http.StatusNotFound)
 		assert.Equal(t, w.Header().Get("Content-Type"), "text/plain; charset=utf-8")
 		assert.Equal(t, w.Body.String(), "some error\n")
@@ -1098,7 +1098,7 @@ func TestContextErrorStatusCode(t *testing.T) {
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
 		ctx := hime.NewAppContext(hime.New(), w, r)
 
-		assert.NoError(t, ctx.Status(http.StatusUnauthorized).Error("nope"))
+		assert.ErrorIs(t, ctx.Status(http.StatusUnauthorized).Error("nope"), hime.ErrResponseWritten)
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
 
@@ -1107,7 +1107,7 @@ func TestContextErrorStatusCode(t *testing.T) {
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
 		ctx := hime.NewAppContext(hime.New(), w, r)
 
-		assert.NoError(t, ctx.Status(http.StatusOK).Error("nope"))
+		assert.ErrorIs(t, ctx.Status(http.StatusOK).Error("nope"), hime.ErrResponseWritten)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 }
