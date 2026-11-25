@@ -213,16 +213,18 @@ func (ctx *Context) SafeRedirectBack(fallback string) error {
 	return ctx.SafeRedirect(u)
 }
 
-// Error calls http.Error
+// Error writes the status and body, then returns ErrResponseWritten.
+// Propagate that error so the caller does not write again.
 func (ctx *Context) Error(error string) error {
 	http.Error(ctx.w, error, ctx.statusCodeError())
-	return nil
+	return ErrResponseWritten
 }
 
-// NotFound calls http.NotFound
+// NotFound writes a 404, then returns ErrResponseWritten.
+// Propagate that error so the caller does not write again.
 func (ctx *Context) NotFound() error {
 	http.NotFound(ctx.w, ctx.Request)
-	return nil
+	return ErrResponseWritten
 }
 
 // NoContent writes http.StatusNoContent into response writer
