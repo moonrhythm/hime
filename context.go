@@ -227,6 +227,63 @@ func (ctx *Context) NotFound() error {
 	return ErrResponseWritten
 }
 
+// statusError writes code and message, then returns ErrResponseWritten.
+// An empty message uses the status text.
+func (ctx *Context) statusError(code int, message string) error {
+	if message == "" {
+		message = http.StatusText(code)
+	}
+	return ctx.Status(code).Error(message)
+}
+
+// BadRequest writes 400 and message, then returns ErrResponseWritten.
+// An empty message uses "Bad Request".
+func (ctx *Context) BadRequest(message string) error {
+	return ctx.statusError(http.StatusBadRequest, message)
+}
+
+// Unauthorized writes 401 and message, then returns ErrResponseWritten.
+// An empty message uses "Unauthorized".
+func (ctx *Context) Unauthorized(message string) error {
+	return ctx.statusError(http.StatusUnauthorized, message)
+}
+
+// Forbidden writes 403 and message, then returns ErrResponseWritten.
+// An empty message uses "Forbidden".
+func (ctx *Context) Forbidden(message string) error {
+	return ctx.statusError(http.StatusForbidden, message)
+}
+
+// Conflict writes 409 and message, then returns ErrResponseWritten.
+// An empty message uses "Conflict".
+func (ctx *Context) Conflict(message string) error {
+	return ctx.statusError(http.StatusConflict, message)
+}
+
+// UnprocessableEntity writes 422 and message, then returns ErrResponseWritten.
+// An empty message uses "Unprocessable Entity".
+func (ctx *Context) UnprocessableEntity(message string) error {
+	return ctx.statusError(http.StatusUnprocessableEntity, message)
+}
+
+// TooManyRequests writes 429 and message, then returns ErrResponseWritten.
+// An empty message uses "Too Many Requests".
+func (ctx *Context) TooManyRequests(message string) error {
+	return ctx.statusError(http.StatusTooManyRequests, message)
+}
+
+// InternalServerError writes 500 and message, then returns ErrResponseWritten.
+// An empty message uses "Internal Server Error".
+func (ctx *Context) InternalServerError(message string) error {
+	return ctx.statusError(http.StatusInternalServerError, message)
+}
+
+// ServiceUnavailable writes 503 and message, then returns ErrResponseWritten.
+// An empty message uses "Service Unavailable".
+func (ctx *Context) ServiceUnavailable(message string) error {
+	return ctx.statusError(http.StatusServiceUnavailable, message)
+}
+
 // NoContent writes http.StatusNoContent into response writer
 func (ctx *Context) NoContent() error {
 	ctx.w.WriteHeader(http.StatusNoContent)

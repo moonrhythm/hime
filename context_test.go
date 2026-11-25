@@ -207,6 +207,52 @@ func TestContext(t *testing.T) {
 		assert.Empty(t, w.Body.String())
 	})
 
+	t.Run("Status helpers", func(t *testing.T) {
+		tests := []struct {
+			name string
+			code int
+			text string
+			call func(*hime.Context, string) error
+		}{
+			{"BadRequest", http.StatusBadRequest, "Bad Request", (*hime.Context).BadRequest},
+			{"Unauthorized", http.StatusUnauthorized, "Unauthorized", (*hime.Context).Unauthorized},
+			{"Forbidden", http.StatusForbidden, "Forbidden", (*hime.Context).Forbidden},
+			{"Conflict", http.StatusConflict, "Conflict", (*hime.Context).Conflict},
+			{"UnprocessableEntity", http.StatusUnprocessableEntity, "Unprocessable Entity", (*hime.Context).UnprocessableEntity},
+			{"TooManyRequests", http.StatusTooManyRequests, "Too Many Requests", (*hime.Context).TooManyRequests},
+			{"InternalServerError", http.StatusInternalServerError, "Internal Server Error", (*hime.Context).InternalServerError},
+			{"ServiceUnavailable", http.StatusServiceUnavailable, "Service Unavailable", (*hime.Context).ServiceUnavailable},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest(http.MethodGet, "/", nil)
+				ctx := hime.NewAppContext(hime.New(), w, r)
+
+				assert.ErrorIs(t, tt.call(ctx, "nope"), hime.ErrResponseWritten)
+				assert.Equal(t, tt.code, w.Code)
+				assert.Equal(t, "text/plain; charset=utf-8", w.Header().Get("Content-Type"))
+				assert.Equal(t, "nope\n", w.Body.String())
+
+				w = httptest.NewRecorder()
+				ctx = hime.NewAppContext(hime.New(), w, r)
+				assert.ErrorIs(t, tt.call(ctx, ""), hime.ErrResponseWritten)
+				assert.Equal(t, tt.code, w.Code)
+				assert.Equal(t, tt.text+"\n", w.Body.String())
+			})
+		}
+	})
+
+	t.Run("Forbidden overrides an earlier status", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		ctx := hime.NewAppContext(hime.New(), w, r)
+
+		assert.ErrorIs(t, ctx.Status(http.StatusOK).Forbidden("no"), hime.ErrResponseWritten)
+		assert.Equal(t, http.StatusForbidden, w.Code)
+		assert.Equal(t, "no\n", w.Body.String())
+	})
+
 	t.Run("NotFound", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/", nil)

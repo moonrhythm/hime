@@ -9,10 +9,11 @@ import (
 var (
 	ErrAppNotFound = errors.New("hime: app not found")
 
-	// ErrResponseWritten is returned by Error and NotFound after the status
-	// and body have been written. Handler treats it as handled, including
-	// when wrapped, so a helper can return it and the caller stops instead
-	// of writing a second response.
+	// ErrResponseWritten is returned by Error, NotFound, and the status
+	// helpers (BadRequest, Forbidden, and the rest) after the status and
+	// body have been written. Handler treats it as handled, including when
+	// wrapped, so a helper can return it and the caller stops instead of
+	// writing a second response.
 	ErrResponseWritten = errors.New("hime: response already written")
 )
 

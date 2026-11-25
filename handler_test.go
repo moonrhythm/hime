@@ -103,6 +103,23 @@ func TestHandler(t *testing.T) {
 		assert.Equal(t, "nope\n", w.Body.String())
 	})
 
+	t.Run("Forbidden does not panic", func(t *testing.T) {
+		app := New()
+		app.Handler(Handler(func(ctx *Context) error {
+			if err := ctx.Forbidden("nope"); err != nil {
+				return err
+			}
+			return ctx.String("page")
+		}))
+
+		w := httptest.NewRecorder()
+		assert.NotPanics(t, func() {
+			app.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+		})
+		assert.Equal(t, http.StatusForbidden, w.Code)
+		assert.Equal(t, "nope\n", w.Body.String())
+	})
+
 	t.Run("NotFound does not panic", func(t *testing.T) {
 		app := New()
 		app.Handler(Handler(func(ctx *Context) error {
